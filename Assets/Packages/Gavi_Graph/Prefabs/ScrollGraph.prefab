@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2522317169118580376
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2522317169118580379}
+  - component: {fileID: 2522317169118580378}
+  m_Layer: 0
+  m_Name: ScrollGraph
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2522317169118580379
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2522317169118580376}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -11, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2522317169118580378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2522317169118580376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebabe3a3de566374eb4e376482bb57f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_showGraph: 1
+  m_maxNumberPoints: 50
+  m_initialBatchSize: 1
+  m_minHighestValue: 1
+  m_maxHighestValue: 1
+  m_allowOvershot: 1
+  m_relativePosition: {x: 0, y: 0, z: 0}
+  m_width: 2
+  m_height: 2
+  m_stripeNumberHorizontal: 4
+  m_rescaleYTime: 0.3
+  m_rescaleYLerpFactor: 0.97
+  m_initialMaxChartValueY: 1
+  m_showHorizontalTexts: 0
+  m_textCurrentRelativePosition: {x: 0, y: 0, z: 0}
+  m_textFirstRelativePosition: {x: -0.1, y: 0.2, z: 0}
+  m_textsStripesVerticalRelativePosition: {x: 0, y: -0.2, z: 0}
+  m_textsStripesHorizontalRelativePosition: {x: -0.5, y: 0, z: 0}
+  m_textStripeCurrentNumberRelativePosition: {x: 0, y: -0.4, z: 0}
+  m_lineRendererValuesPrefab: {fileID: 1912740607375662, guid: f261288b4609bdb4c8575e53ddd9f50c, type: 3}
+  m_lineRendererStripesPrefab: {fileID: 1912740607375662, guid: 66672d286a018f74a9224f2a2b42bb05, type: 3}
+  m_lineRendererGraphPrefab: {fileID: 1912740607375662, guid: 7358c4664df578d4aaffe8c5816035d6, type: 3}
+  m_emptyPrefab: {fileID: 6063609801935780576, guid: 493a00e4f0e347549878e0371d235586, type: 3}
+  m_textCurrentPrefab: {fileID: 1769974343195756, guid: b1f3637c8586aa145a98d0da62a53f58, type: 3}
+  m_textMinPrefab: {fileID: 0}
+  m_textFirstPrefab: {fileID: 1769974343195756, guid: b6bd083861167f247bf9072b166428c9, type: 3}
+  m_textStripesHorizontalPrefab: {fileID: 1769974343195756, guid: 090dc94d9dc876a49ad7c9821bc41c84, type: 3}
+  m_textStripesVerticalPrefab: {fileID: 1769974343195756, guid: 163dc8de31a62cd4396bc955e0deea0e, type: 3}
+  m_stripeDistVertical: 0
