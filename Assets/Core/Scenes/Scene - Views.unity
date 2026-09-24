@@ -273,7 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5106eedeb8439641a87c0ed0c54b650, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: 6f29e37367a15914989a74998d40ed79, type: 3}
+  _clip: {fileID: 8300000, guid: 7ebaf3193cf3efc42aa973998fc93e3b, type: 3}
   _audioSettings:
     _prefabSettings: {fileID: 0}
     _amplitudeModifierOverallRedirection: 0
