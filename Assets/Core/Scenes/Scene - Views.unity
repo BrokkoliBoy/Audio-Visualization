@@ -23623,12 +23623,12 @@ MonoBehaviour:
   _keyCodePrevAudio: 283
   _audioPlayer: {fileID: 1738238474}
   _audioClips:
+  - {fileID: 560796816}
   - {fileID: 2052354974}
   - {fileID: 9742849}
+  - {fileID: 819917774}
   - {fileID: 148223552}
   - {fileID: 1058278750}
-  - {fileID: 560796816}
-  - {fileID: 819917774}
   _audioStartIndex: 0
 --- !u!114 &1495652579
 MonoBehaviour:
