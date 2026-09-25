@@ -1,35 +1,47 @@
 # Audio Visualization
 
-## What is it?
-A simple audio visualization based on momentary audio frequency from ~2017-2019.
+An audio-reactive visual effects sandbox built around a small, hand-rolled node-based "pipeline" for
+routing live audio data into object properties — no code required per new effect.
 
+## Why I built this
 
-## State
-Technical features: Pretty much finished.
-Content: Open end. Three levels are finished. I can easily come back to create more content if I ever want to.
-
-
-## Goal
-This projected started as a 'side quest' when in another project I wanted to make some wall move depending on some song that is playing right now. I soon realized that I could do all kinds of fancy stuff with the audio visualization so I created a new project dedicated for it. The goal was to just have fun implementing the audio visualization and come up with some cool scenarios. It also soon became a nice way of expressing my creativity.
-
+This started as a side quest: I wanted a wall in a different project to move along with whatever
+song was playing. I quickly realized the same idea could drive all kinds of visuals, so I split it
+off into its own dedicated project and just had fun seeing what I could build with it. It became a
+nice outlet for creativity beyond "does the gameplay work."
 
 ## Concept
-After creating a dedicated project for the audio visualization, I played around with vertext transformation based on the values of 8 frequency channels utilizing the default Unity audio sampler. A flat area in which the vertices of the plane would move up and change their color depending on the current value of its channel. Lower frequencies apply to the left vertices, higher frequencies apply to the right vertices.<br><br>
 
-But I soon realized, that I could do all kinds of things with the output of the audio sampler. In the end, the sampler gives me back any amount of plain float values depending on the amount of channels you choose. I realized that with these information I could change properties in the wold such as the strength or radius of light sources, the position, scale and rotation of objects or values of particle systems, I could trigger events when certain channels reach certain vaules or even change the game speed depending on the bass/bpm.<br><br>
+The core idea: pull a channel's float value out of Unity's audio spectrum sampler (e.g. the bass
+band), run it through a chain of small transform scripts (add, multiply, clamp, lerp, remap, ...),
+convert the type if needed (into a color, an animation curve, whatever the target expects), and hand
+the result to an "applicator" script that pushes it onto a real component property — a light's
+radius, an object's scale, a particle system's emission rate, a camera's field of view.
 
-Thus I started working on a way to easily and without having to write code change the properties of objects in the world. I implemented something similar to, but as I quickly learned clearly not as good as, visual scripting. I implemented generalized scripts pipeline that can build a supply chain to pull the float value from the audio sampler of any frequency channel (e.g. from the bass channel), transform this value with mathematical operations (e.g. scripts for addition, multiplication, min/max values, lerping etc), transform it into different types if needed (e.g. into colors or animation curves) and finally give this information into an applicator script which applies the float/color/animationCurve/whatever value into the affected components field (such as the radius of a light source, the scale of a transform, the velocity of particles of a particle system or anything else).<br><br>
+Every piece of that chain is a small, reusable `MonoBehaviour` you wire together by dragging
+components onto GameObjects — something like a lightweight, code-free visual-scripting system built
+specifically for "audio in, property out."
 
-All of these scripts have to be implemented once for each mathematical operation, type transformation and component and then you could just mix and match these scripts to quickly apply audio based changes to objects.
+## Under the hood
 
+- **A three-stage module pipeline** — Source (pull data out of the audio system), Transform (math
+  operations, type conversions), Apply ("Modifiables" that push the final value onto a real Unity
+  component property) — with a consistent naming convention (`VoidToFloatModule`,
+  `FloatToFloatModule`, ...) that makes the type flow of any chain readable at a glance.
+- **Configurable spectrum sampling**: FFT bins folded into frequency bands using one of several
+  distribution strategies (constant, explicit per-band Hz values, a predefined 7-band table, or
+  logarithmic — matching how humans actually perceive pitch), plus optional running-average
+  normalization so tracks with very different loudness still visualize at a comparable scale.
+- **Beat-synced effects**: each song carries its own BPM, beat offset, and an animation-curve
+  "beatmap" describing how a beat should hit and decay, driving effects like the camera's zoom pulse.
+- **Multiple independent views**, each with its own audio sampler instance, switchable at runtime
+  without unloading the scene.
 
-## Learnings
+## Credits
 
-### How audio sampling works
-I had no previous knowledge about how audio sampling works before starting this project, nor how audio information is stored in files. I now know the gist of it. But I will be honest with you, this is so long ago that I have probably forgot most of it by now. Still a very intersting topic!
+Four songs used in this project are free-to-use releases from [NCS (NoCopyrightSounds)](https://ncs.io/):
 
-### Namespaces
-I knew about namespaces from college and when reading foreign code, but as someone who at that time hasn't done big projects in which namespaces were neccesssary, I never really used them. I tried to wrap my head around them and tried to give almost all scripts their own namespace hierarchy. It was a mistake that I learned *a lot* from. I ended up with abominations such as TODO. After this fiasko, I ended up using namespaces sparsely in private projects and I primarily use it as a way to keep things ordered in my head. It helps a lot in challenging yourself when it comes to the question 'what namespace does the script I am about to create actually belong to?' and it makes you second guess the purpose of the script, which can lead to more purposeful decisions.
-
-### 'Visual' scripting pipeline
-I liked my idea of being able to put together a pipeline of scripts that allow me to add a few scripts together to quickly change the properties of game objects based on the audio that is being played right now. And the system DOES work it can be used. But one of the main problems was that in my mind I would always only have to pass information to the next script in a one-way manner, but I noticed that TODO
+- Song: DEAF KEV - Invincible [NCS Release] · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/invincible · Watch: http://youtu.be/J2X5mJ3HDYE
+- Song: Lynxie, johnny joined - i still hear your voice · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/istillhearyourvoice · Watch: http://ncs.lnk.to/istillhearyourvoiceAT/youtube
+- Song: L3VI - in motion · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/inmotion · Watch: https://ncs.lnk.to/inmotionAT/youtube
+- Song: SILVER BULLET - Nobody Else · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/S_NobodyElse · Watch: https://ncs.lnk.to/S_NobodyElseAT/youtube

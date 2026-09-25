@@ -74,15 +74,27 @@ Unity version. Confirmed low priority by the dev (2026-09-23), not investigated 
 Per the dev (2026-09-23): View Dumbbell's reflections/lighting broke during an earlier Unity
 version upgrade that moved the project onto HDRP; the view's own materials/lighting setup was only
 ever made for the render pipeline at the time (not adjusted for HDRP), and it was never revisited.
-Not something today's Unity 6.6 upgrade caused or fixed. Current plan is to present only View
-Terrain and the Unity view (see architecture.md's "Naming trap" for why "View Intro" and "the Unity
-view" are the same object), and only look at View Dumbbell again if there's time left over.
+Not something the Unity 6.6 upgrade caused or fixed. It's excluded from `ViewManager`'s active
+rotation (see architecture.md) but left fully intact in the scene, to be revisited later.
 
-## Songs are real, copyrighted, commercially released tracks, committed straight into git
+## `ViewManager.Start()` doesn't deactivate a view left active in the saved scene
 
-`Assets/Assets/Audio/Clips/*.mp3` are full audio files of actual released songs (GRiZ, Jamie
-Berry ft. Rosie Harte, a Stranger Things theme remix, a Jujutsu Kaisen ending theme, two Zelda
-piano arrangements, a radio ad jingle, ...), not royalty-free placeholder audio, and they are
-tracked in git (not gitignored) in a repo whose `origin` remote is a public GitHub repo
-(`BrokkoliBoy/AudioVisualization`). See content-inventory.md for the full list and gotchas this
-raises for showing this repo publicly.
+`SetViewActive(index)` only calls `StopView()` on the previously-current view if `_currentIndex >=
+0`, which it isn't yet on `Start()`. If a view's GameObject was saved with `activeSelf = true` in
+the scene file for any reason (e.g. left that way from testing in the Editor), it stays active
+alongside whichever view `ViewManager` activates on Start, and you get two simultaneous "active"
+views - most visibly noticeable as two `AudioListener`s in the scene at once. Fixed once
+(2026-09-24) by explicitly deactivating every view's GameObject in the saved rest state; if this
+resurfaces, check each view's `activeSelf` in the scene file rather than assuming `ViewManager`'s
+logic is at fault.
+
+## `VoidToFloatClipTimeModule`'s `IsPlaying` check was inverted
+
+`IsValid()` for the `TimePlayed`/`TimeLeft`/`TimePlayedRate` return types checked
+`AudioPlayer.Instance.IsPlaying` where it needed `!AudioPlayer.Instance.IsPlaying` - so the module
+considered itself invalid exactly while music *was* playing, returning `0` for "time played" the
+entire time a song was audibly running. This fed directly into the beat-phase calculation driving
+the camera's FOV zoom (`CameraModifiable` → a chain of Math Modules → `VoidToFloatBeatModule`/
+`VoidToFunctionBeatModule`), so the zoom looked completely frozen instead of pulsing with the beat.
+Fixed 2026-09-25. If a beat-driven effect ever looks static again, check this module's `GetValue()`
+live via the Editor first rather than assuming the beatmap/BPM data itself is wrong.
