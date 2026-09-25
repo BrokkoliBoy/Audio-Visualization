@@ -325,7 +325,7 @@ MonoBehaviour:
       m_RotationOrder: 0
   _overrideSampleSettings: {fileID: 0}
   _bpm: 134
-  _beatOffset: 0.24
+  _beatOffset: 0.01
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
 --- !u!1001 &10213032
@@ -9804,7 +9804,7 @@ MonoBehaviour:
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
   _bpm: 134
-  _beatOffset: 0
+  _beatOffset: 0.016
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
 --- !u!1 &569723161
@@ -13635,7 +13635,7 @@ MonoBehaviour:
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
   _bpm: 140
-  _beatOffset: 0
+  _beatOffset: 0.006
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
 --- !u!4 &819917775
@@ -33200,7 +33200,7 @@ MonoBehaviour:
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
   _bpm: 100
-  _beatOffset: 0.3
+  _beatOffset: -0.05
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
 --- !u!1 &2056558979
