@@ -324,7 +324,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 0
   _overrideSampleSettings: {fileID: 0}
-  _bpm: 110
+  _bpm: 134
   _beatOffset: 0.24
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
@@ -33199,7 +33199,7 @@ MonoBehaviour:
     _amplitudeModifierWeightedOperation: 0
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
-  _bpm: 103
+  _bpm: 100
   _beatOffset: 0.3
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
