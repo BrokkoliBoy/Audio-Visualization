@@ -239,7 +239,7 @@ GameObject:
   - component: {fileID: 9742848}
   - component: {fileID: 9742849}
   m_Layer: 0
-  m_Name: AudioClip - ShawnWasabi_PizzaRolls
+  m_Name: AudioClip - JohnnyJoinedLynxie_IStillHearYourVoice
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9803,7 +9803,7 @@ MonoBehaviour:
     _amplitudeModifierWeightedOperation: 0
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
-  _bpm: 0
+  _bpm: 134
   _beatOffset: 0
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
@@ -13634,7 +13634,7 @@ MonoBehaviour:
     _amplitudeModifierWeightedOperation: 0
     AmplitudeModifierWeightedList: []
   _overrideSampleSettings: {fileID: 0}
-  _bpm: 0
+  _bpm: 140
   _beatOffset: 0
   _beatMapModule: {fileID: 1208483061}
   _useMic: 0
@@ -33155,7 +33155,7 @@ GameObject:
   - component: {fileID: 2052354973}
   - component: {fileID: 2052354974}
   m_Layer: 0
-  m_Name: AudioClip - GRiZFtOrlandoNapier_AFineWayToDie
+  m_Name: AudioClip - DEAFKEV_Invincible
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
