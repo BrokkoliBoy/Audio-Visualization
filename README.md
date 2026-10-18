@@ -1,7 +1,10 @@
 # Audio Visualization
 
-An audio-reactive visual effects sandbox built around a small, hand-rolled node-based "pipeline" for
-routing live audio data into object properties — no code required per new effect.
+**Status:** Finished  |  **Built:** 2017 to 2019  |  **Role:** Solo developer
+
+An audio-reactive visual effects sandbox I built on the side during my studies, around a small,
+hand-rolled node-based "pipeline" for routing live audio data into object properties. No code
+required per new effect.
 
 ## Why I built this
 
@@ -15,27 +18,36 @@ nice outlet for creativity beyond "does the gameplay work."
 The core idea: pull a channel's float value out of Unity's audio spectrum sampler (e.g. the bass
 band), run it through a chain of small transform scripts (add, multiply, clamp, lerp, remap, ...),
 convert the type if needed (into a color, an animation curve, whatever the target expects), and hand
-the result to an "applicator" script that pushes it onto a real component property — a light's
-radius, an object's scale, a particle system's emission rate, a camera's field of view.
+the result to an "applicator" script that pushes it onto a real component property, for example a light's
+radius, an object's scale, a particle system's emission rate or a camera's field of view.
 
 Every piece of that chain is a small, reusable `MonoBehaviour` you wire together by dragging
-components onto GameObjects — something like a lightweight, code-free visual-scripting system built
+components onto GameObjects. It works a bit like a lightweight visual scripting system built
 specifically for "audio in, property out."
+
+## Features
+
+Two switchable visual scenarios ("views"), each with its own audio sampler. Only one of them was built with the pipeline system; the other is the very first thing I made in this project, from before the pipeline existed. Tab / Shift+Tab cycles through the views, R restarts the current one.
+
+Four free-to-use songs plus a 20 to 20,000 Hz test sweep and live microphone input, cycled with F1 / F2.
+
+Beat-synced camera zoom, driven by each song's BPM and an animation-curve "beatmap".
+
+Effects built purely by chaining modules in the Inspector: lights, scale, position, rotation, materials, VFX Graph particles, and camera field of view.
 
 ## Under the hood
 
-- **A three-stage module pipeline** — Source (pull data out of the audio system), Transform (math
-  operations, type conversions), Apply ("Modifiables" that push the final value onto a real Unity
-  component property) — with a consistent naming convention (`VoidToFloatModule`,
-  `FloatToFloatModule`, ...) that makes the type flow of any chain readable at a glance.
-- **Configurable spectrum sampling**: FFT bins folded into frequency bands using one of several
-  distribution strategies (constant, explicit per-band Hz values, a predefined 7-band table, or
-  logarithmic — matching how humans actually perceive pitch), plus optional running-average
-  normalization so tracks with very different loudness still visualize at a comparable scale.
-- **Beat-synced effects**: each song carries its own BPM, beat offset, and an animation-curve
-  "beatmap" describing how a beat should hit and decay, driving effects like the camera's zoom pulse.
-- **Multiple independent views**, each with its own audio sampler instance, switchable at runtime
-  without unloading the scene.
+**A three-stage module pipeline.** Source (pull data out of the audio system), Transform (math operations, type conversions), Apply ("Modifiables" that push the final value onto a real Unity component property), with a consistent naming convention (`VoidToFloatModule`, `FloatToFloatModule`, ...) that makes the type flow of any chain readable at a glance.
+
+**Configurable spectrum sampling.** FFT bins folded into frequency bands using one of several distribution strategies (constant, explicit per-band Hz values, a predefined 7-band table, or logarithmic, which matches how humans perceive pitch), plus optional running-average normalization so tracks with very different loudness still visualize at a comparable scale.
+
+**Beat-synced effects.** Each song carries its own BPM, beat offset, and an animation-curve "beatmap" describing how a beat should hit and decay.
+
+**Independent views.** Each view has its own audio sampler instance and can be switched at runtime without unloading the scene.
+
+## Where it stands
+
+Finished as a sandbox. The dumbbell scene is still in the project but switched off, because its lighting predates the move to HDRP and was never reworked. If I pick this back up, I'd rework that view for HDRP and put it back into the rotation, add more views and effect chains, and clean up the data flow in the module pipeline, which currently only runs one way.
 
 ## Credits
 
