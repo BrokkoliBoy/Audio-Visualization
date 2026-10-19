@@ -19223,7 +19223,8 @@ MonoBehaviour:
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   _colorOutOfBounds: 1
-  _outOfBoundsBrightness: 0.2
+  _outOfBoundsBrightness: 0.075
+  _hideOutOfBounds: 1
   _applyAudio: 1
   _samplesContainer: {fileID: 1555014295}
   _audioShapeSettings:
@@ -38217,6 +38218,7 @@ MonoBehaviour:
   _sliderVolume: {fileID: 1790295977}
   _toggleHdr: {fileID: 1355130511}
   _textHdr: {fileID: 277005744}
+  _enableHdrOnStart: 1
   _textSong: {fileID: 775919127}
   _textView: {fileID: 1293790027}
   _textPause: {fileID: 46789959}

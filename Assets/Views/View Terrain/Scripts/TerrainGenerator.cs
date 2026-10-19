@@ -70,6 +70,8 @@ namespace Gavi
         [Tooltip("Brightness of the height gradient color for vertices outside of all active audio shapes. 1 = unchanged, 0 = black. Only used if _colorOutOfBounds is true.")]
         [Range(0, 1)]
         [SerializeField] private float _outOfBoundsBrightness = 0.2f;
+        [Tooltip("When true, triangles whose three vertices all lie outside of every active audio shape are left out of the mesh, so the unused area is not rendered at all.")]
+        [SerializeField] private bool _hideOutOfBounds;
 
         [Header("--- Audio ---")]
         [Tooltip("When true, the mesh will apply height to the vertices according to audio sample data.")]
@@ -141,6 +143,8 @@ namespace Gavi
         private Mesh _mesh;
         private Vector3[] _vertices;
         private int[] _triangles;
+        private int _triangleCount;
+        private bool[] _outOfBoundsVertices;
 
 
         private float[,] _lastYs;
@@ -196,6 +200,8 @@ namespace Gavi
                 _lastYs = new float[_faceCountX + 1, _faceCountZ + 1];
             if (_colors == null || redoMesh)
                 _colors = new Color[_vertices.Length];
+            if (_outOfBoundsVertices == null || redoMesh)
+                _outOfBoundsVertices = new bool[_vertices.Length];
 
             float scaleModifierX = _terrainSizeX / _faceCountX;
             float scaleModifierY = _terrainSizeY;
@@ -209,6 +215,7 @@ namespace Gavi
                     float y = GetY(x, z);
                     _vertices[i] = new Vector3(x * scaleModifierX, y * scaleModifierY, z * scaleModifierZ);
                     _colors[i] = GetColor(x, y, z);
+                    _outOfBoundsVertices[i] = _hideOutOfBounds && IsOutOfAllShapes(x, z);
                     i++;
                     if (_applyDampening)
                         _lastYs[x, z] = y;
@@ -224,21 +231,33 @@ namespace Gavi
             {
                 for (int x = 0; x < _faceCountX; x++)
                 {
-                    _triangles[triangleIndex + 0] = vertexIndex + 0;
-                    _triangles[triangleIndex + 1] = vertexIndex + 1 + _faceCountX;
-                    _triangles[triangleIndex + 2] = vertexIndex + 1;
-                    //UpdateMesh();
-                    _triangles[triangleIndex + 3] = vertexIndex + 1;
-                    _triangles[triangleIndex + 4] = vertexIndex + 1 + _faceCountX;
-                    _triangles[triangleIndex + 5] = vertexIndex + 2 + _faceCountX;
-                    //UpdateMesh();
+                    int v0 = vertexIndex;
+                    int v1 = vertexIndex + 1;
+                    int v2 = vertexIndex + 1 + _faceCountX;
+                    int v3 = vertexIndex + 2 + _faceCountX;
+
+                    // skip triangles whose three vertices are all outside of every shape
+                    if (!_hideOutOfBounds || !(_outOfBoundsVertices[v0] && _outOfBoundsVertices[v2] && _outOfBoundsVertices[v1]))
+                    {
+                        _triangles[triangleIndex + 0] = v0;
+                        _triangles[triangleIndex + 1] = v2;
+                        _triangles[triangleIndex + 2] = v1;
+                        triangleIndex += 3;
+                    }
+                    if (!_hideOutOfBounds || !(_outOfBoundsVertices[v1] && _outOfBoundsVertices[v2] && _outOfBoundsVertices[v3]))
+                    {
+                        _triangles[triangleIndex + 0] = v1;
+                        _triangles[triangleIndex + 1] = v2;
+                        _triangles[triangleIndex + 2] = v3;
+                        triangleIndex += 3;
+                    }
 
                     vertexIndex++;
-                    triangleIndex += 6;
                     //yield return new WaitForSeconds(0.5f);
                 }
                 vertexIndex++;
             }
+            _triangleCount = triangleIndex;
 
             if (_uvs == null || redoMesh)
                 _uvs = new Vector2[_vertices.Length];
@@ -261,7 +280,7 @@ namespace Gavi
             _mesh.Clear();
             _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             _mesh.vertices = _vertices;
-            _mesh.triangles = _triangles;
+            _mesh.SetTriangles(_triangles, 0, _triangleCount, 0);
             _mesh.RecalculateNormals();
             _mesh.uv = _uvs;
             _mesh.colors = _colors;
