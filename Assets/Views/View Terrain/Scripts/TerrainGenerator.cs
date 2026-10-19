@@ -65,6 +65,11 @@ namespace Gavi
         [SerializeField] private bool _applyColorByHeight;
         [Tooltip("Color gradient of the vertices. Left displays height of 0, right displays height of _terrainSizeY.")]
         [SerializeField] private Gradient _colorHeightGradient;
+        [Tooltip("When true, vertices that lie outside of every active audio shape are darkened by the brightness below. Only the color changes, their height still follows the out of bounds operation.")]
+        [SerializeField] private bool _colorOutOfBounds;
+        [Tooltip("Brightness of the height gradient color for vertices outside of all active audio shapes. 1 = unchanged, 0 = black. Only used if _colorOutOfBounds is true.")]
+        [Range(0, 1)]
+        [SerializeField] private float _outOfBoundsBrightness = 0.2f;
 
         [Header("--- Audio ---")]
         [Tooltip("When true, the mesh will apply height to the vertices according to audio sample data.")]
@@ -89,7 +94,8 @@ namespace Gavi
         [Tooltip("Handles vertices that are out of the shapes bounds. For example, a circle does contain vertices at normalized coordinates (1/1) but the mesh does.")]
         [SerializeField] private OutOfBounds _outOfBoundsOperation = OutOfBounds.InnerBand;
         public OutOfBounds OutOfBoundsOperation { get => _outOfBoundsOperation; set => _outOfBoundsOperation = value; }
-        public enum OutOfBounds { Constant, OuterBand, InnerBand, Average }
+        [Tooltip("Flat: out of bounds vertices stay at the bottom (height 0). Appended last so that existing profiles keep their meaning.")]
+        public enum OutOfBounds { Constant, OuterBand, InnerBand, Average, Flat }
         [Tooltip("Factor to apply to the out of bounds vertices height.")]
         [SerializeField] private float _outOfBoundsFactor = 0.3f;
         public float OutOfBoundsFactor { get => _outOfBoundsFactor; set => _outOfBoundsFactor = value; }
@@ -367,9 +373,14 @@ namespace Gavi
             if (!_applyColorByHeight)
                 return Color.magenta;
 
-            Color color = Color.black;
+            Color color = GetColorByHeight(y);
 
-            color = GetColorByHeight(y);
+            if (_colorOutOfBounds && IsOutOfAllShapes((int)x, (int)z))
+            {
+                color.r *= _outOfBoundsBrightness;
+                color.g *= _outOfBoundsBrightness;
+                color.b *= _outOfBoundsBrightness;
+            }
 
             return color;
         }
@@ -377,6 +388,26 @@ namespace Gavi
         private Color GetColorByHeight(float y)
         {
             return _colorHeightGradient.Evaluate(y);
+        }
+
+        /// <summary>True if audio is applied and the vertex lies in none of the active shapes.</summary>
+        private bool IsOutOfAllShapes(int x, int z)
+        {
+            if (!_applyAudio || _audioShapeSettings.Count == 0)
+                return false;
+
+            bool anyActive = false;
+            foreach (TerrainShape shape in _audioShapeSettings)
+            {
+                if (!shape.ApplyShape)
+                    continue;
+
+                anyActive = true;
+                if (shape.GetNormalizedBandIndexByShape((float)x / _faceCountX, (float)z / _faceCountZ) >= 0)
+                    return false;
+            }
+
+            return anyActive;
         }
         #endregion
 
@@ -396,6 +427,8 @@ namespace Gavi
                 _outOfBoundsFactorValue = _samplesContainer.GetValue(_samplesContainer.BandSize - 1);
             else if (_outOfBoundsOperation == OutOfBounds.InnerBand)
                 _outOfBoundsFactorValue = _samplesContainer.GetValue(0);
+            else if (_outOfBoundsOperation == OutOfBounds.Flat)
+                _outOfBoundsFactorValue = 0;
 
             _outOfBoundsFactorValue *= _outOfBoundsFactor;
 

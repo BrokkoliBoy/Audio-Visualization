@@ -175,10 +175,10 @@ MonoBehaviour:
     m_Value: {r: 0, g: 0, b: 0, a: 1}
   middle:
     m_OverrideState: 1
-    m_Value: {r: 0.019607844, g: 0.003921569, b: 0, a: 1}
+    m_Value: {r: 0.01764706, g: 0.003529412, b: 0, a: 1}
   bottom:
     m_OverrideState: 1
-    m_Value: {r: 0.13207549, g: 0.07289072, b: 0.07459428, a: 1}
+    m_Value: {r: 0.118867934, g: 0.06560165, b: 0.06713485, a: 1}
   gradientDiffusion:
     m_OverrideState: 0
     m_Value: 1

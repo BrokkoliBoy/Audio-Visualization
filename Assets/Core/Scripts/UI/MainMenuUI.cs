@@ -36,6 +36,11 @@ namespace Gavi
 
         [Header("--- Displays ---")]
         [SerializeField] private Slider _sliderVolume;
+        [Tooltip("Optional. Toggles HDR display output. Disabled when the display or Windows HDR setting does not support it.")]
+        [SerializeField] private Toggle _toggleHdr;
+        [SerializeField] private TextMeshProUGUI _textHdr;
+        [Tooltip("If true and HDR output is available, it is switched on when the app starts.")]
+        [SerializeField] private bool _enableHdrOnStart = true;
         [SerializeField] private TextMeshProUGUI _textSong;
         [SerializeField] private TextMeshProUGUI _textView;
         [SerializeField] private TextMeshProUGUI _textPause;
@@ -67,6 +72,8 @@ namespace Gavi
             AddListener(_buttonRestart, () => ViewManager.Instance?.RestartView());
             AddListener(_buttonPause, () => SimpleControl.Instance?.TogglePause());
             AddListener(_buttonQuit, Quit);
+
+            SetupHdrToggle();
 
             if (_sliderVolume != null)
             {
@@ -148,6 +155,32 @@ namespace Gavi
 
             if (_textView != null && ViewManager.Instance != null)
                 _textView.text = GetViewName();
+        }
+
+        private void SetupHdrToggle()
+        {
+            if (_toggleHdr == null)
+                return;
+
+            HDROutputSettings hdr = HDROutputSettings.main;
+            bool supported = hdr != null && hdr.available;
+            _toggleHdr.interactable = supported;
+
+            if (supported && _enableHdrOnStart && !hdr.active)
+                hdr.RequestHDRModeChange(true);
+
+            _toggleHdr.SetIsOnWithoutNotify(supported && (hdr.active || _enableHdrOnStart));
+            _toggleHdr.onValueChanged.AddListener(OnHdrToggled);
+
+            if (_textHdr != null)
+                _textHdr.text = supported ? "HDR output" : "HDR output (not available)";
+        }
+
+        private void OnHdrToggled(bool on)
+        {
+            HDROutputSettings hdr = HDROutputSettings.main;
+            if (hdr != null && hdr.available)
+                hdr.RequestHDRModeChange(on);
         }
 
         private void OnVolumeSliderChanged(float value)
