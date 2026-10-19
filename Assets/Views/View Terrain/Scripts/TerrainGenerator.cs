@@ -64,6 +64,7 @@ namespace Gavi
         [Tooltip("Apply color of the vertices by the height of it.")]
         [SerializeField] private bool _applyColorByHeight;
         [Tooltip("Color gradient of the vertices. Left displays height of 0, right displays height of _terrainSizeY.")]
+        [GradientUsage(true)]
         [SerializeField] private Gradient _colorHeightGradient;
         [Tooltip("When true, vertices that lie outside of every active audio shape are darkened by the brightness below. Only the color changes, their height still follows the out of bounds operation.")]
         [SerializeField] private bool _colorOutOfBounds;
