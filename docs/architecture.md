@@ -76,7 +76,7 @@ needed, and hand it to a Modifiable that actually changes something visible.
   (SetActive toggles the whole scenario on/off), and its own `SpectrumDataContainerModule` (each
   view samples audio independently rather than sharing one global sampler instance).
 - **`ViewManager`** (`Assets/Core/Scripts/Game/Views/ViewManager.cs`) - singleton, holds the
-  ordered `List<View>`, cycles through them on Tab / Shift+Tab, restarts the current one (replays
+  ordered `List<View>`, cycles through them on V / Shift+V, restarts the current one (replays
   the audio from 0) on R. Currently configured with 2 entries (View Terrain, View Intro) - View
   Dumbbell exists in the scene but isn't in this list, so it's excluded from the rotation without
   being deleted. See content-inventory.md and gotchas.md.
@@ -85,7 +85,16 @@ needed, and hand it to a Modifiable that actually changes something visible.
   is wired into `ViewManager`; "View Unity" is an unused, inactive duplicate left in the scene.
 - Song selection is independent of the view: `SimpleControl`
   (`Assets/Core/Scripts/UI/SimpleControl.cs`) owns its own separate `List<AudioClipContainer>` and
-  cycles it on F1 / F2, so any song can play under any view.
+  cycles it on Left / Right arrow (or the menu buttons), so any song can play under any view.
+
+## Menu
+
+`MainMenuUI` (`Assets/Core/Scripts/UI/MainMenuUI.cs`) is a slide-in uGUI panel (bottom right) that
+mirrors every hotkey as a button: song and view switching, restart, pause, a volume slider, and
+quit. M and Esc toggle it. It calls public methods on `SimpleControl` (`NextAudio`, `PreviousAudio`,
+`TogglePause`, `SetVolume`) and `ViewManager` (`NextView`, `PreviousView`, `RestartView`), so the
+buttons and the hotkeys share one code path. `Quit` calls `Application.Quit()` only. The old
+Esc help panel in `BasicUi` was removed. WebGL is not supported (HDRP).
 
 ## Render pipeline
 

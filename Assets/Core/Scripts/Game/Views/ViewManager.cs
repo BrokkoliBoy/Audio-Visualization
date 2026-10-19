@@ -17,9 +17,9 @@ namespace Gavi
         private int _currentIndex = -1;
 
         [Header("Only two KeyCodes allowed.")]
-        [SerializeField] private List<KeyCode> _keyCodesNextView = new List<KeyCode> {KeyCode.Tab};
+        [SerializeField] private List<KeyCode> _keyCodesNextView = new List<KeyCode> {KeyCode.V};
         [Header("Only two KeyCodes allowed.")]
-        [SerializeField] private List<KeyCode> _keyCodePreviousView = new List<KeyCode> {KeyCode.Tab, KeyCode.LeftShift};
+        [SerializeField] private List<KeyCode> _keyCodePreviousView = new List<KeyCode> {KeyCode.V, KeyCode.LeftShift};
 
         [Space]
         [SerializeField] private KeyCode _keyCodeRestartView = KeyCode.R;

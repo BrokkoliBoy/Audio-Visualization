@@ -27,13 +27,27 @@ specifically for "audio in, property out."
 
 ## Features
 
-Two switchable visual scenarios ("views"), each with its own audio sampler. Only one of them was built with the pipeline system; the other is the very first thing I made in this project, from before the pipeline existed. Tab / Shift+Tab cycles through the views, R restarts the current one.
+Two switchable visual scenarios ("views"), each with its own audio sampler. Only one of them was built with the pipeline system; the other is the very first thing I made in this project, from before the pipeline existed.
 
-Four free-to-use songs plus a 20 to 20,000 Hz test sweep and live microphone input, cycled with F1 / F2.
+Four free-to-use songs plus a 20 to 20,000 Hz test sweep and live microphone input, cycled from the menu or with the arrow keys.
 
 Beat-synced camera zoom, driven by each song's BPM and an animation-curve "beatmap".
 
 Effects built purely by chaining modules in the Inspector: lights, scale, position, rotation, materials, VFX Graph particles, and camera field of view.
+
+## Controls
+
+Everything can be done with the menu in the bottom right corner, which slides in and out. The keyboard shortcuts do the same:
+
+| Key | Action |
+|---|---|
+| Left / Right | Previous / next song |
+| Up / Down | Volume (hold) |
+| Space or P | Pause and resume |
+| V / Shift+V | Next / previous view |
+| R | Restart the current view |
+| M or Esc | Show or hide the menu |
+| Tab | Show or hide the Terrain view settings (Terrain view only) |
 
 ## Under the hood
 

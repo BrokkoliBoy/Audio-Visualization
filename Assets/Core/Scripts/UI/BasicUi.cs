@@ -21,7 +21,7 @@ namespace Gavi.Player
         [SerializeField] private GameObject _menuPanel;
         [SerializeField] private GameObject _hudPanel;
 
-        public bool IsInMenuPanel => _menuPanel.gameObject.activeSelf;
+        public bool IsInMenuPanel => (_menuPanel != null && _menuPanel.activeSelf) || (MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen);
         public bool IsInGamePanel => !IsInMenuPanel;
         private enum PanelType { Game, Menu }
         
@@ -45,25 +45,17 @@ namespace Gavi.Player
         private void Update()
         {
             CheckCursorToggle();
-            if (Input.GetKeyDown(KeyCode.Escape))
-                ToggleMenu();
         }
         #endregion
 
 
         #region Panels
-        private void ToggleMenu()
-        {
-            if (IsInMenuPanel)
-                SetPanel(PanelType.Game);
-            else if (IsInGamePanel)
-                SetPanel(PanelType.Menu);
-        }
-
         private void SetPanel(PanelType panel)
         {
-            _hudPanel.SetActive(panel == PanelType.Game);
-            _menuPanel.SetActive(panel == PanelType.Menu);
+            if (_hudPanel != null)
+                _hudPanel.SetActive(panel == PanelType.Game);
+            if (_menuPanel != null)
+                _menuPanel.SetActive(panel == PanelType.Menu);
         }
         #endregion
 

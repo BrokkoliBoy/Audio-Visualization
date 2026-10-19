@@ -10,6 +10,7 @@ namespace Gavi
         public static TerrainViewMenuUI Instance;
         
         [Header("--- Menu Toggle ---")]
+        [SerializeField] private KeyCode _keyCodeToggleMenu = KeyCode.Tab;
         [SerializeField] private float _lerpSpeed = 0.1f;
         
         [Header("- Menu Transforms -")]
@@ -39,6 +40,12 @@ namespace Gavi
                 Utility.Debugger.LogInstanceError(GetType());
             Instance = this;
         }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(_keyCodeToggleMenu))
+                ToggleMenu();
+        }
         #endregion
         
         
@@ -49,7 +56,10 @@ namespace Gavi
                 return;
             
             _menuIsActive = !_menuIsActive;
-            
+
+            if (_menuIsActive && MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen)
+                MainMenuUI.Instance.ToggleMenu();
+
             if (_coroutineMoveCamera != null)
                 StopCoroutine(_coroutineMoveCamera);
             _coroutineMoveCamera = StartCoroutine(MoveCamera(_menuIsActive));
