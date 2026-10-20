@@ -24,6 +24,12 @@ namespace Gavi
         public float PerlinZoom = 0.3f;
         public float PerlinSpeedX = 0;
         public float PerlinSpeedY = 1;
+        [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old profiles.")]
+        public int NoisePattern = 0;
+
+        [Header("- Beat wave -")]
+        public float WaveStrength = 0.25f;
+        public float WaveSpeed = 1f;
 
         [Header("- Smoothing -")]
         public bool ApplySmoothing = true;
@@ -49,12 +55,17 @@ namespace Gavi
         public List<TerrainShapeData> Shapes = new List<TerrainShapeData>() { new TerrainShapeData() };
 
         [Header("- Color -")]
-        [Tooltip("Name of the selected color palette: Default, Custom or the name of a saved palette. Profiles without color data use Default.")]
+        [Tooltip("Name of the palette the colors come from, or Custom. Profiles without color data use the default palette.")]
         public string ColorPaletteName = TerrainColorPalette.DefaultName;
-        [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity. Empty means Default.")]
+        [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity. Empty means the palette of ColorPaletteName.")]
         public List<Vector3> ColorValues = new List<Vector3>();
         public float ColorOverallIntensity = 1f;
-        public float ColorMaxIntensity = 5f;
+        public float BloomThreshold = TerrainColorPalette.DefaultBloomThreshold;
+        public float BloomIntensity = TerrainColorPalette.DefaultBloomIntensity;
+        public float BloomScatter = TerrainColorPalette.DefaultBloomScatter;
+        [Tooltip("Lens dirt on the glow: fixed strength and extra strength on the beat.")]
+        public float DirtStrength = TerrainLensDirt.DefaultStrength;
+        public float DirtBeat = TerrainLensDirt.DefaultBeat;
         #endregion
         
         
@@ -85,7 +96,10 @@ namespace Gavi
             PerlinZoom = profile.PerlinZoom;
             PerlinSpeedX = profile.PerlinSpeedX;
             PerlinSpeedY = profile.PerlinSpeedY;
-            
+            NoisePattern = profile.NoisePattern;
+            WaveStrength = profile.WaveStrength;
+            WaveSpeed = profile.WaveSpeed;
+
             // Smoothing
             ApplySmoothing = profile.ApplySmoothing;
             SmoothWithOutOfBounds = profile.SmoothWithOutOfBounds;
@@ -110,7 +124,11 @@ namespace Gavi
             ColorPaletteName = profile.ColorPaletteName;
             ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
             ColorOverallIntensity = profile.ColorOverallIntensity;
-            ColorMaxIntensity = profile.ColorMaxIntensity;
+            BloomThreshold = profile.BloomThreshold;
+            BloomIntensity = profile.BloomIntensity;
+            BloomScatter = profile.BloomScatter;
+            DirtStrength = profile.DirtStrength;
+            DirtBeat = profile.DirtBeat;
 
             // Shape
             Shapes.Clear();
@@ -133,7 +151,10 @@ namespace Gavi
             PerlinZoom = terrain.PerlinNoiseZoom;
             PerlinSpeedX = terrain.PerlinOffsetSpeed.x;
             PerlinSpeedY = terrain.PerlinOffsetSpeed.y;
-            
+            NoisePattern = terrain.NoisePattern;
+            WaveStrength = terrain.WaveStrength;
+            WaveSpeed = terrain.WaveSpeed;
+
             // Smoothing
             ApplySmoothing = terrain.ApplyAudioSmoothing;
             SmoothWithOutOfBounds = terrain.SmoothLastBandWithOutOfBounds;
@@ -183,7 +204,10 @@ namespace Gavi
             terrain.PerlinStrength = PerlinDepth;
             terrain.PerlinNoiseZoom = PerlinZoom;
             terrain.PerlinOffsetSpeed = new Vector2(PerlinSpeedX, PerlinSpeedY);
-            
+            terrain.NoisePattern = NoisePattern;
+            terrain.WaveStrength = WaveStrength;
+            terrain.WaveSpeed = WaveSpeed;
+
             // Smoothing
             terrain.ApplyAudioSmoothing = ApplySmoothing;
             terrain.SmoothLastBandWithOutOfBounds = SmoothWithOutOfBounds;

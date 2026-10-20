@@ -6,19 +6,22 @@ using UnityEngine;
 namespace Gavi
 {
     /// <summary>
-    /// A saved color look of the terrain: four colors (hue, saturation, menu intensity) plus overall intensity and the
-    /// intensity that menu value 10 stands for. Stored as a small json file next to the terrain profiles.
+    /// A saved color look of the terrain: four colors (hue, saturation, menu intensity), the overall intensity and the
+    /// bloom (glow) settings. Stored as a small json file next to the terrain profiles.
     /// </summary>
     [Serializable]
     public class TerrainColorPalette
     {
-        /// <summary>The built-in palette that reproduces the gradient of the scene.</summary>
+        /// <summary>The palette that is selected when nothing else is chosen. It is a normal file like every other palette.</summary>
         public const string DefaultName = "Pink Neon";
-        /// <summary>Name that profiles saved before the rename use for the built-in palette.</summary>
+        /// <summary>Name that profiles saved before the rename use for the default palette.</summary>
         public const string LegacyDefaultName = "Default";
-
-        public static bool IsDefault(string name) { return name == DefaultName || name == LegacyDefaultName; }
+        /// <summary>Shown when the colors do not come from a saved palette.</summary>
         public const string CustomName = "Custom";
+
+        public const float DefaultBloomThreshold = 0.5f;
+        public const float DefaultBloomIntensity = 0.6f;
+        public const float DefaultBloomScatter = 0.7f;
 
         public const int CurrentFormatVersion = 1;
         public int FormatVersion;
@@ -26,7 +29,9 @@ namespace Gavi
         [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity (0-10, 1 = Unity intensity 0).")]
         public List<Vector3> Colors = new List<Vector3>();
         public float OverallIntensity = 1f;
-        public float MaxIntensity = 5f;
+        public float BloomThreshold = DefaultBloomThreshold;
+        public float BloomIntensity = DefaultBloomIntensity;
+        public float BloomScatter = DefaultBloomScatter;
 
         public TerrainColorPalette Clone()
         {
@@ -36,7 +41,9 @@ namespace Gavi
                 Name = Name,
                 Colors = new List<Vector3>(Colors),
                 OverallIntensity = OverallIntensity,
-                MaxIntensity = MaxIntensity
+                BloomThreshold = BloomThreshold,
+                BloomIntensity = BloomIntensity,
+                BloomScatter = BloomScatter
             };
         }
     }

@@ -30,6 +30,11 @@ namespace Gavi
         [Tooltip("The value changes by this much across the slow zone.")]
         [SerializeField] private float _snapSlowDelta = 0.1f;
 
+        [Header("--- Curve (optional, not used together with snap) ---")]
+        [Tooltip("Gives small values more room: the curve value sits in the middle of the slider.")]
+        [SerializeField] private bool _useCurve;
+        [SerializeField] private float _curveMidValue = 0.1f;
+
         [Header("--- References ---")]
         [SerializeField] private Slider _slider;
         [SerializeField] private TextMeshProUGUI _textValue;
@@ -88,7 +93,7 @@ namespace Gavi
         private float PositionToValue(float position)
         {
             if (!UseSnap(out float p1, out float a, out float b, out float d))
-                return RangeMin + position * Range;
+                return UseCurve(out float exponent) ? RangeMin + Range * Mathf.Pow(Mathf.Clamp01(position), exponent) : RangeMin + position * Range;
 
             float dp = position - p1;
             float sign = Mathf.Sign(dp);
@@ -106,7 +111,10 @@ namespace Gavi
         private float ValueToPosition(float value)
         {
             if (!UseSnap(out float p1, out float a, out float b, out float d))
-                return Utility.Utility.MapValuePercent(RangeMin, RangeMax, value, true);
+            {
+                float linear = Utility.Utility.MapValuePercent(RangeMin, RangeMax, value, true);
+                return UseCurve(out float exponent) ? Mathf.Pow(linear, 1f / exponent) : linear;
+            }
 
             float dv = value - _snapValue;
             if (Mathf.Approximately(dv, 0f))
@@ -137,6 +145,14 @@ namespace Gavi
             // The snap needs room on both sides, otherwise the slider stays linear.
             return _useSnap && p1 > slowEnd && p1 < 1f - slowEnd && delta > 0f
                 && delta < _snapValue - RangeMin && delta < RangeMax - _snapValue;
+        }
+
+        /// <summary>Power curve value = min + range * position^exponent, with the exponent chosen so that the curve value sits at position 0.5.</summary>
+        private bool UseCurve(out float exponent)
+        {
+            float middle = (_curveMidValue - RangeMin) / Range;
+            exponent = middle > 0f && middle < 1f ? Mathf.Log(middle) / Mathf.Log(0.5f) : 1f;
+            return _useCurve && !_useSnap && middle > 0f && middle < 1f;
         }
         #endregion
 

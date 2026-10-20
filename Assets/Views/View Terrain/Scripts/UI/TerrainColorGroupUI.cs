@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.UI;
 
 namespace Gavi
@@ -8,8 +10,9 @@ namespace Gavi
     /// <summary>
     /// Color tab of the terrain menu. Four colors (hue, saturation, intensity) are written into the keys of the
     /// terrain height gradient. Each color owns a few keys of the gradient. The keys keep their hue, saturation
-    /// and intensity relative to the first (reference) key of their color, so the default palette reproduces the
-    /// gradient from the scene exactly.
+    /// and intensity relative to the first (reference) key of their color, so the palette made from the reference
+    /// keys reproduces the gradient from the scene exactly.
+    /// The bloom (glow) of the terrain volume is part of the look and saved with the palette.
     /// Palettes can be saved to disk and are part of the terrain profiles.
     /// </summary>
     public class TerrainColorGroupUI : TerrainGroupUI
@@ -29,9 +32,18 @@ namespace Gavi
         [Tooltip("Multiplies the color of the whole gradient. 1 = unchanged.")]
         [SerializeField] private SliderG _sliderOverallIntensity;
         [SerializeField] private float _defaultOverallIntensity = 1f;
-        [Tooltip("Debug: Unity intensity (exposure value) that menu intensity 10 stands for.")]
-        [SerializeField] private SliderG _sliderMaxIntensity;
-        [SerializeField] private float _defaultMaxIntensity = 5f;
+
+        [Header("--- Bloom ---")]
+        [Tooltip("Volume of the terrain view. Its profile is copied at runtime, so the profile asset stays unchanged.")]
+        [SerializeField] private Volume _bloomVolume;
+        [SerializeField] private SliderG _sliderBloomThreshold;
+        [SerializeField] private SliderG _sliderBloomIntensity;
+        [SerializeField] private SliderG _sliderBloomScatter;
+
+        [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
+        [SerializeField] private TerrainLensDirt _lensDirt;
+        [SerializeField] private SliderG _sliderDirtStrength;
+        [SerializeField] private SliderG _sliderDirtBeat;
 
         [Header("--- Gradient keys ---")]
         [Tooltip("For every key of the terrain gradient: which color (index of the entries) it belongs to.")]
@@ -49,16 +61,24 @@ namespace Gavi
         private float[] _referenceSaturation;
         private float[] _referenceIntensity;
 
-        private List<TerrainColorPalette> _userPalettes = new List<TerrainColorPalette>();
-        private string _paletteName = TerrainColorPalette.DefaultName;
+        private List<TerrainColorPalette> _palettes = new List<TerrainColorPalette>();
+        /// <summary>Palette the current values started from. Null = the values do not come from a saved palette (Custom).</summary>
+        private string _baseName;
+        /// <summary>True when the values were changed after the palette was selected.</summary>
+        private bool _modified;
+        private bool _rebuildPending;
+        private Bloom _bloom;
         private bool _ready;
         private bool _suppress;
         private float _deleteConfirmUntil;
 
-        private float MaxIntensity => _sliderMaxIntensity != null ? _sliderMaxIntensity.Value : _defaultMaxIntensity;
         private float OverallIntensity => _sliderOverallIntensity != null ? _sliderOverallIntensity.Value : _defaultOverallIntensity;
-        private bool IsDefault => _paletteName == TerrainColorPalette.DefaultName;
-        private bool IsUserPalette => FindUserPalette(_paletteName) != null;
+        private float BloomThreshold => _sliderBloomThreshold != null ? _sliderBloomThreshold.Value : TerrainColorPalette.DefaultBloomThreshold;
+        private float BloomIntensity => _sliderBloomIntensity != null ? _sliderBloomIntensity.Value : TerrainColorPalette.DefaultBloomIntensity;
+        private float BloomScatter => _sliderBloomScatter != null ? _sliderBloomScatter.Value : TerrainColorPalette.DefaultBloomScatter;
+        private float DirtStrength => _sliderDirtStrength != null ? _sliderDirtStrength.Value : TerrainLensDirt.DefaultStrength;
+        private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
+        private bool IsSavedPalette => _baseName != null && FindPalette(_baseName) != null;
 
 
         #region Mono
@@ -77,17 +97,14 @@ namespace Gavi
             BuildTemplate();
 
             _suppress = true;
-            if (_sliderMaxIntensity != null)
-            {
-                _sliderMaxIntensity.Value = _defaultMaxIntensity;
-                _sliderMaxIntensity.OnValueChangedFloat.AddListener(OnIntensitySliderChanged);
-            }
-            if (_sliderOverallIntensity != null)
-            {
-                _sliderOverallIntensity.Value = _defaultOverallIntensity;
-                _sliderOverallIntensity.OnValueChangedFloat.AddListener(OnIntensitySliderChanged);
-            }
+            ListenToSlider(_sliderOverallIntensity, _defaultOverallIntensity, OnOverallIntensityChanged);
+            ListenToSlider(_sliderBloomThreshold, TerrainColorPalette.DefaultBloomThreshold, OnBloomChanged);
+            ListenToSlider(_sliderBloomIntensity, TerrainColorPalette.DefaultBloomIntensity, OnBloomChanged);
+            ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
+            ListenToSlider(_sliderDirtStrength, TerrainLensDirt.DefaultStrength, OnDirtChanged);
+            ListenToSlider(_sliderDirtBeat, TerrainLensDirt.DefaultBeat, OnDirtChanged);
             _suppress = false;
+            ApplyDirt();
 
             foreach (TerrainColorEntryUI entry in _entries)
                 entry.Changed += OnEntryChanged;
@@ -99,14 +116,16 @@ namespace Gavi
             if (_buttonDelete != null)
                 _buttonDelete.onClick.AddListener(OnPressedDelete);
 
-            _userPalettes = TerrainColorPaletteStore.LoadAll();
+            _palettes = TerrainColorPaletteStore.LoadAll();
             _ready = true;
-            SelectDefault();
+            SelectStartPalette();
             RebuildDropdown();
         }
 
         private void Update()
         {
+            if (_rebuildPending)
+                RebuildDropdown();
             if (_deleteConfirmUntil > 0f && Time.unscaledTime > _deleteConfirmUntil)
                 ResetDeleteButton();
         }
@@ -116,6 +135,14 @@ namespace Gavi
             foreach (TerrainColorEntryUI entry in _entries)
                 if (entry != null)
                     entry.Changed -= OnEntryChanged;
+        }
+
+        private static void ListenToSlider(SliderG slider, float startValue, UnityEngine.Events.UnityAction<float> listener)
+        {
+            if (slider == null)
+                return;
+            slider.Value = startValue;
+            slider.OnValueChangedFloat.AddListener(listener);
         }
         #endregion
 
@@ -127,9 +154,13 @@ namespace Gavi
             if (!_ready)
                 return;
 
-            profile.ColorPaletteName = _paletteName;
+            profile.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
             profile.ColorOverallIntensity = OverallIntensity;
-            profile.ColorMaxIntensity = MaxIntensity;
+            profile.BloomThreshold = BloomThreshold;
+            profile.BloomIntensity = BloomIntensity;
+            profile.BloomScatter = BloomScatter;
+            profile.DirtStrength = DirtStrength;
+            profile.DirtBeat = DirtBeat;
             profile.ColorValues = new List<Vector3>();
             foreach (TerrainColorEntryUI entry in _entries)
                 profile.ColorValues.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
@@ -141,26 +172,52 @@ namespace Gavi
             if (!_ready)
                 return;
 
-            string name = string.IsNullOrEmpty(profile.ColorPaletteName) ? TerrainColorPalette.DefaultName : profile.ColorPaletteName;
+            // The lens dirt belongs to the profile whether or not the profile carries its own color values.
+            SetDirtSliders(profile.DirtStrength, profile.DirtBeat);
+            ApplyDirt();
+
+            string name = profile.ColorPaletteName;
+            if (string.IsNullOrEmpty(name) || name == TerrainColorPalette.LegacyDefaultName)
+                name = TerrainColorPalette.DefaultName;
+            TerrainColorPalette palette = FindPalette(name);
             bool hasValues = profile.ColorValues != null && profile.ColorValues.Count == _entries.Count;
 
-            _suppress = true;
-            SetIntensitySliders(profile.ColorOverallIntensity, profile.ColorMaxIntensity);
+            if (!hasValues)
+            {
+                // Profiles without own color values use the palette of their name.
+                if (palette != null)
+                    ApplyPalette(palette);
+                else
+                    ShowOriginalGradient();
+                RebuildDropdown();
+                return;
+            }
 
-            if (TerrainColorPalette.IsDefault(name) || !hasValues)
-            {
-                SelectDefault();
-            }
-            else
-            {
-                for (int c = 0; c < _entries.Count; c++)
-                    _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
-                _paletteName = FindUserPalette(name) != null ? name : TerrainColorPalette.CustomName;
-                ApplyEntriesToGradient();
-            }
+            _suppress = true;
+            SetSliders(profile.ColorOverallIntensity, profile.BloomThreshold, profile.BloomIntensity, profile.BloomScatter);
+            for (int c = 0; c < _entries.Count; c++)
+                _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
             _suppress = false;
 
+            _baseName = palette != null ? palette.Name : null;
+            _modified = palette != null && !Matches(palette, profile);
+            ShowNameInInputField();
+            ApplyEntriesToGradient();
+            ApplyBloom();
             RebuildDropdown();
+        }
+
+        private static bool Matches(TerrainColorPalette palette, TerrainSettingsProfile profile)
+        {
+            if (palette.Colors.Count != profile.ColorValues.Count)
+                return false;
+            for (int c = 0; c < palette.Colors.Count; c++)
+                if ((palette.Colors[c] - profile.ColorValues[c]).magnitude > 0.001f)
+                    return false;
+            return Mathf.Abs(palette.OverallIntensity - profile.ColorOverallIntensity) < 0.001f
+                && Mathf.Abs(palette.BloomThreshold - profile.BloomThreshold) < 0.001f
+                && Mathf.Abs(palette.BloomIntensity - profile.BloomIntensity) < 0.001f
+                && Mathf.Abs(palette.BloomScatter - profile.BloomScatter) < 0.001f;
         }
         #endregion
 
@@ -195,29 +252,67 @@ namespace Gavi
 
 
         #region Palettes
-        private TerrainColorPalette FindUserPalette(string name)
+        private TerrainColorPalette FindPalette(string name)
         {
-            foreach (TerrainColorPalette palette in _userPalettes)
+            foreach (TerrainColorPalette palette in _palettes)
                 if (palette.Name == name)
                     return palette;
             return null;
         }
 
+        /// <summary>Selects the default palette. Without its file the colors of the scene gradient are shown as Custom.</summary>
+        private void SelectStartPalette()
+        {
+            TerrainColorPalette palette = FindPalette(TerrainColorPalette.DefaultName);
+            if (palette != null)
+                ApplyPalette(palette);
+            else
+                ShowOriginalGradient();
+        }
+
+        private void ShowOriginalGradient()
+        {
+            _suppress = true;
+            SetSliders(_defaultOverallIntensity, TerrainColorPalette.DefaultBloomThreshold, TerrainColorPalette.DefaultBloomIntensity, TerrainColorPalette.DefaultBloomScatter);
+            for (int c = 0; c < _entries.Count && c < _referenceHue.Length; c++)
+                _entries[c].SetValues(_referenceHue[c], _referenceSaturation[c], TerrainColorMapping.IntensityToMenu(_referenceIntensity[c]));
+            _suppress = false;
+
+            _baseName = null;
+            _modified = false;
+            ApplyEntriesToGradient();
+            ApplyBloom();
+        }
+
         private void RebuildDropdown()
         {
+            _rebuildPending = false;
             if (_paletteDropdown == null)
                 return;
 
-            var names = new List<string> { TerrainColorPalette.DefaultName };
-            foreach (TerrainColorPalette palette in _userPalettes)
+            var names = new List<string>();
+            foreach (TerrainColorPalette palette in _palettes)
                 names.Add(palette.Name);
-            names.Add(TerrainColorPalette.CustomName);
+
+            // Values that are not from a saved palette show as an extra entry named Custom. A saved palette that was
+            // changed keeps its entry and gets a star.
+            int index;
+            if (_baseName == null)
+            {
+                names.Add(TerrainColorPalette.CustomName);
+                index = names.Count - 1;
+            }
+            else
+            {
+                index = _palettes.FindIndex(p => p.Name == _baseName);
+                if (_modified && index >= 0)
+                    names[index] += " *";
+            }
 
             _paletteDropdown.ClearOptions();
             _paletteDropdown.AddOptions(names);
 
-            int index = names.IndexOf(_paletteName);
-            _paletteDropdown.SetValueWithoutNotify(index >= 0 ? index : names.Count - 1);
+            _paletteDropdown.SetValueWithoutNotify(Mathf.Max(0, index));
             _paletteDropdown.RefreshShownValue();
             RefreshButtons();
         }
@@ -227,78 +322,61 @@ namespace Gavi
             if (!_ready)
                 return;
 
-            int userCount = _userPalettes.Count;
-            if (index == 0)
+            // The last entry (Custom or modified) is only a display, choosing it changes nothing.
+            if (index >= 0 && index < _palettes.Count)
             {
-                _suppress = true;
-                SetIntensitySliders(_defaultOverallIntensity, MaxIntensity);
-                SelectDefault();
-                _suppress = false;
+                ApplyPalette(_palettes[index]);
+                _rebuildPending = true;
+                OnUIValueChanged();
             }
-            else if (index >= 1 && index <= userCount)
-            {
-                ApplyPalette(_userPalettes[index - 1]);
-            }
-            else
-            {
-                _paletteName = TerrainColorPalette.CustomName;
-            }
-
             RefreshButtons();
-            OnUIValueChanged();
         }
 
         private void ApplyPalette(TerrainColorPalette palette)
         {
             _suppress = true;
-            SetIntensitySliders(palette.OverallIntensity, palette.MaxIntensity);
+            SetSliders(palette.OverallIntensity, palette.BloomThreshold, palette.BloomIntensity, palette.BloomScatter);
             for (int c = 0; c < _entries.Count && c < palette.Colors.Count; c++)
                 _entries[c].SetValues(palette.Colors[c].x, palette.Colors[c].y, palette.Colors[c].z);
-            _paletteName = palette.Name;
             _suppress = false;
+
+            _baseName = palette.Name;
+            _modified = false;
+            ShowNameInInputField();
             ApplyEntriesToGradient();
+            ApplyBloom();
         }
 
-        private void SelectDefault()
-        {
-            _paletteName = TerrainColorPalette.DefaultName;
-            ShowDefaultInEntries();
-            RestoreOriginalGradient();
-        }
-
-        private void SetIntensitySliders(float overall, float maxIntensity)
+        private void SetSliders(float overall, float bloomThreshold, float bloomIntensity, float bloomScatter)
         {
             bool wasSuppressed = _suppress;
             _suppress = true;
             if (_sliderOverallIntensity != null)
                 _sliderOverallIntensity.Value = overall;
-            if (_sliderMaxIntensity != null)
-                _sliderMaxIntensity.Value = maxIntensity;
+            if (_sliderBloomThreshold != null)
+                _sliderBloomThreshold.Value = bloomThreshold;
+            if (_sliderBloomIntensity != null)
+                _sliderBloomIntensity.Value = bloomIntensity;
+            if (_sliderBloomScatter != null)
+                _sliderBloomScatter.Value = bloomScatter;
             _suppress = wasSuppressed;
         }
 
-        private void ShowDefaultInEntries()
+        private void SetDirtSliders(float strength, float beat)
         {
-            for (int c = 0; c < _entries.Count && c < _referenceHue.Length; c++)
-                _entries[c].SetValues(_referenceHue[c], _referenceSaturation[c], TerrainColorMapping.IntensityToMenu(_referenceIntensity[c], MaxIntensity));
+            bool wasSuppressed = _suppress;
+            _suppress = true;
+            if (_sliderDirtStrength != null)
+                _sliderDirtStrength.Value = strength;
+            if (_sliderDirtBeat != null)
+                _sliderDirtBeat.Value = beat;
+            _suppress = wasSuppressed;
         }
 
-        private void RestoreOriginalGradient()
+        private void ShowNameInInputField()
         {
-            float overall = OverallIntensity;
-            if (Mathf.Approximately(overall, 1f))
-            {
-                _gradient.SetKeys(_originalColorKeys, _originalAlphaKeys);
-                return;
-            }
-
-            var keys = new GradientColorKey[_originalColorKeys.Length];
-            for (int i = 0; i < keys.Length; i++)
-            {
-                Color color = _originalColorKeys[i].color;
-                keys[i] = new GradientColorKey(new Color(color.r * overall, color.g * overall, color.b * overall, 1f), _originalColorKeys[i].time);
-            }
-            _gradient.SetKeys(keys, _originalAlphaKeys);
+            if (_inputFieldName != null && _baseName != null)
+                _inputFieldName.SetTextWithoutNotify(_baseName);
         }
         #endregion
 
@@ -309,34 +387,38 @@ namespace Gavi
             string name = _inputFieldName != null ? _inputFieldName.text.Trim() : "";
             if (string.IsNullOrEmpty(name))
                 name = "My Palette";
-            if (TerrainColorPalette.IsDefault(name) || name == TerrainColorPalette.CustomName)
+            if (name == TerrainColorPalette.CustomName)
                 name += " copy";
 
             var palette = new TerrainColorPalette
             {
                 Name = name,
                 OverallIntensity = OverallIntensity,
-                MaxIntensity = MaxIntensity
+                BloomThreshold = BloomThreshold,
+                BloomIntensity = BloomIntensity,
+                BloomScatter = BloomScatter
             };
             foreach (TerrainColorEntryUI entry in _entries)
                 palette.Colors.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
 
-            TerrainColorPalette existing = FindUserPalette(name);
+            TerrainColorPalette existing = FindPalette(name);
             if (existing != null)
-                _userPalettes[_userPalettes.IndexOf(existing)] = palette;
+                _palettes[_palettes.IndexOf(existing)] = palette;
             else
-                _userPalettes.Add(palette);
-            _userPalettes.Sort((a, b) => string.Compare(a.Name, b.Name, System.StringComparison.OrdinalIgnoreCase));
+                _palettes.Add(palette);
+            _palettes.Sort((a, b) => string.Compare(a.Name, b.Name, System.StringComparison.OrdinalIgnoreCase));
 
             TerrainColorPaletteStore.Save(palette);
-            _paletteName = name;
+            _baseName = name;
+            _modified = false;
+            ShowNameInInputField();
             RebuildDropdown();
             OnUIValueChanged();
         }
 
         private void OnPressedDelete()
         {
-            TerrainColorPalette palette = FindUserPalette(_paletteName);
+            TerrainColorPalette palette = _baseName != null ? FindPalette(_baseName) : null;
             if (palette == null)
                 return;
 
@@ -349,9 +431,10 @@ namespace Gavi
                 return;
             }
 
-            _userPalettes.Remove(palette);
+            _palettes.Remove(palette);
             TerrainColorPaletteStore.Delete(palette.Name);
-            _paletteName = TerrainColorPalette.CustomName;
+            _baseName = null;
+            _modified = false;
             ResetDeleteButton();
             RebuildDropdown();
             OnUIValueChanged();
@@ -361,7 +444,7 @@ namespace Gavi
         {
             ResetDeleteButton();
             if (_buttonDelete != null)
-                _buttonDelete.interactable = IsUserPalette;
+                _buttonDelete.interactable = IsSavedPalette;
         }
 
         private void ResetDeleteButton()
@@ -374,48 +457,50 @@ namespace Gavi
 
 
         #region Apply
+        /// <summary>The values differ from the selected palette now. The dropdown shows that with "(modified)".</summary>
+        private void MarkModified()
+        {
+            if (_baseName != null && !_modified)
+            {
+                _modified = true;
+                _rebuildPending = true;
+            }
+        }
+
         private void OnEntryChanged()
         {
             if (_suppress)
                 return;
 
-            _paletteName = TerrainColorPalette.CustomName;
-            if (_paletteDropdown != null)
-            {
-                _paletteDropdown.SetValueWithoutNotify(_userPalettes.Count + 1);
-                _paletteDropdown.RefreshShownValue();
-            }
-            RefreshButtons();
+            MarkModified();
             ApplyEntriesToGradient();
+            ApplyBloom();
             OnUIValueChanged();
         }
 
-        private void OnIntensitySliderChanged(float value)
+        private void OnOverallIntensityChanged(float value)
         {
             if (!_ready || _suppress)
                 return;
 
-            if (IsDefault)
-            {
-                ShowDefaultInEntries();
-                RestoreOriginalGradient();
-            }
-            else
-            {
-                if (_paletteName != TerrainColorPalette.CustomName)
-                {
-                    _paletteName = TerrainColorPalette.CustomName;
-                    RebuildDropdown();
-                }
-                ApplyEntriesToGradient();
-            }
+            MarkModified();
+            ApplyEntriesToGradient();
+            OnUIValueChanged();
+        }
+
+        private void OnBloomChanged(float value)
+        {
+            if (!_ready || _suppress)
+                return;
+
+            MarkModified();
+            ApplyBloom();
             OnUIValueChanged();
         }
 
         private void ApplyEntriesToGradient()
         {
             var keys = new GradientColorKey[_originalColorKeys.Length];
-            float maxIntensity = MaxIntensity;
             float overall = OverallIntensity;
 
             for (int i = 0; i < keys.Length; i++)
@@ -425,13 +510,76 @@ namespace Gavi
 
                 float hue = entry.Hue + _hueOffset[i];
                 float saturation = Mathf.Clamp01(entry.Saturation + _saturationOffset[i]);
-                float intensity = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity, maxIntensity) + _intensityOffset[i];
+                // The intensity is an exposure value, so a factor becomes log2 of it.
+                float intensity = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + _intensityOffset[i]
+                    + Mathf.Log(ColorCompensation(entry), 2f);
 
                 Color color = TerrainColorMapping.ToHdrColor(hue, saturation, intensity);
                 keys[i] = new GradientColorKey(new Color(color.r * overall, color.g * overall, color.b * overall, 1f), _originalColorKeys[i].time);
             }
 
             _gradient.SetKeys(keys, _originalAlphaKeys);
+        }
+
+        private void ApplyBloom()
+        {
+            if (_bloomVolume == null)
+                return;
+            // Volume.profile is a copy of the shared profile, so the asset on disk is not changed.
+            if (_bloom == null && !_bloomVolume.profile.TryGet(out _bloom))
+                return;
+
+            _bloom.threshold.Override(BloomThreshold);
+            _bloom.intensity.Override(BloomIntensity * SaturationCompensation());
+            _bloom.scatter.Override(BloomScatter);
+        }
+
+        private void OnDirtChanged(float value)
+        {
+            if (!_ready || _suppress)
+                return;
+
+            ApplyDirt();
+            OnUIValueChanged();
+        }
+
+        private void ApplyDirt()
+        {
+            if (_lensDirt == null)
+                return;
+            _lensDirt.Strength = DirtStrength;
+            _lensDirt.BeatAmount = DirtBeat;
+        }
+
+        /// <summary>
+        /// A color with less saturation is much brighter than the same color at full saturation (pure blue 7 %,
+        /// pure red 21 %, white 100 % luminance), and the bloom grows with it. Two hidden corrections keep the
+        /// look steady when the saturation drops: the color itself is dimmed by the square root of the luminance
+        /// ratio (our eye sees saturated colors brighter than their luminance), and the bloom intensity is lowered
+        /// by the same factor again, so the glow energy follows the luminance exactly. Saturation 1 changes nothing.
+        /// </summary>
+        private static float ColorCompensation(TerrainColorEntryUI entry)
+        {
+            float full = Luminance(TerrainColorMapping.ToHdrColor(entry.Hue, 1f, 0f));
+            float now = Luminance(TerrainColorMapping.ToHdrColor(entry.Hue, entry.Saturation, 0f));
+            return Mathf.Clamp(Mathf.Sqrt(full / Mathf.Max(0.0001f, now)), MinColorCompensation, 1f);
+        }
+
+        /// <summary>Average of the color compensation over all colors, applied once more to the bloom intensity.</summary>
+        private float SaturationCompensation()
+        {
+            float sum = 0f;
+            foreach (TerrainColorEntryUI entry in _entries)
+                sum += ColorCompensation(entry);
+            return _entries.Count > 0 ? sum / _entries.Count : 1f;
+        }
+
+        /// <summary>Lowest factor the compensation may reach, so that even pure white stays visible.</summary>
+        private const float MinColorCompensation = 0.15f;
+
+        private static float Luminance(Color color)
+        {
+            return 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
         }
         #endregion
     }

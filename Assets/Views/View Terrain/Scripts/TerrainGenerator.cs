@@ -4,6 +4,7 @@ using UnityEngine;
 using Gavi.Utility;
 using Gavi.Audio;
 using Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArrayModules;
+using Gavi.Modules.MathModules.FloatModules;
 
 namespace Gavi
 {
@@ -47,6 +48,32 @@ namespace Gavi
         [Tooltip("Zoom factor of perlin noise.")]
         [SerializeField] private float _noiseZoom = 0.3f;
         public float PerlinNoiseZoom { get => _noiseZoom; set => _noiseZoom = value; }
+        /// <summary>The face count the perlin zoom values were made for. At this face count the zoom is unchanged.</summary>
+        private const float PerlinReferenceFaceCount = 97f;
+        [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
+        [SerializeField] private TerrainNoise.Pattern _noisePattern = TerrainNoise.Pattern.Perlin;
+        public int NoisePattern { get => (int)_noisePattern; set => _noisePattern = (TerrainNoise.Pattern)Mathf.Clamp(value, 0, TerrainNoise.Names.Length - 1); }
+
+        [Header("--- Beat wave ---")]
+        [Tooltip("Beat pulse between 0 and 1. A new wave starts when it jumps up.")]
+        [SerializeField] private FloatModule _beatWaveModule;
+        [Tooltip("Height of the wave that runs outward from the middle on each beat, in terrain heights. 0 = off.")]
+        [SerializeField] private float _waveStrength = 0.25f;
+        public float WaveStrength { get => _waveStrength; set => _waveStrength = value; }
+        [Tooltip("Speed of the wave in half terrain widths per second.")]
+        [SerializeField] private float _waveSpeed = 1f;
+        public float WaveSpeed { get => _waveSpeed; set => _waveSpeed = value; }
+        private const int MaxWaves = 4;
+        private const float WaveWidth = 0.12f;
+        /// <summary>Distance from the middle at which a wave has faded out completely.</summary>
+        private const float WaveReach = 1.6f;
+        private const float WaveMinPulse = 0.15f;
+        private const float WaveMinRise = 0.05f;
+        private const float WaveMinInterval = 0.2f;
+        private readonly float[] _waveStart = new float[MaxWaves];
+        private readonly float[] _waveAmplitude = new float[MaxWaves];
+        private float _lastPulse;
+        private float _lastWaveTime = -10f;
 
         [Header("--- Terrace ---")]
         [Tooltip("Applies a terrace like structure to the mesh. The final terrace value will be clamped to a maximum value of 1 and a minimum value of 0.")]
@@ -194,6 +221,7 @@ namespace Gavi
         {
             // audio preparation
             PrepareAudio();
+            UpdateBeatWave();
 
             bool redoMesh = _vertices == null || (_faceCountX + 1) * (_faceCountZ + 1) != _vertices.Length;
             if (redoMesh)
@@ -302,6 +330,7 @@ namespace Gavi
             y = ApplyAudio(x, y, z);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterAudio)
                 y = ApplyTerrace(y);
+            y = ApplyWave(x, y, z);
             y = ApplyDampening(x, y, z);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterDampening)
                 y = ApplyTerrace(y);
@@ -313,9 +342,60 @@ namespace Gavi
                 return originalY;
 
             float y = originalY;
-            float perlinValue = Mathf.PerlinNoise((x + _perlinOffsetX) * _noiseZoom, (z + _perlinOffsetY) * _noiseZoom);
+            // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
+            float xScaled = x * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX));
+            float zScaled = z * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
+            float perlinValue = TerrainNoise.Evaluate(_noisePattern, xScaled, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
             y *= Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, perlinValue);
             return y;
+        }
+
+        /// <summary>Starts a wave in the middle of the terrain that runs outward. Called by the beat, public for tests.</summary>
+        public void SpawnWave(float amplitude)
+        {
+            int oldest = 0;
+            for (int i = 1; i < MaxWaves; i++)
+                if (_waveStart[i] < _waveStart[oldest])
+                    oldest = i;
+            _waveStart[oldest] = Time.time;
+            _waveAmplitude[oldest] = amplitude;
+            _lastWaveTime = Time.time;
+        }
+
+        /// <summary>Starts a wave when the beat pulse jumps up, but not more often than the minimum interval.</summary>
+        private void UpdateBeatWave()
+        {
+            if (_beatWaveModule == null)
+                return;
+
+            float pulse = Mathf.Clamp01(_beatWaveModule.GetValue());
+            if (_waveStrength > 0f && pulse >= WaveMinPulse && pulse > _lastPulse + WaveMinRise && Time.time - _lastWaveTime >= WaveMinInterval)
+                SpawnWave(pulse);
+            _lastPulse = pulse;
+        }
+
+        /// <summary>Adds the height of all running waves. A wave is a ring around the middle that fades while it grows.</summary>
+        private float ApplyWave(int x, float originalY, int z)
+        {
+            if (_waveStrength <= 0f)
+                return originalY;
+
+            float u = (float)x / _faceCountX * 2f - 1f;
+            float v = (float)z / _faceCountZ * 2f - 1f;
+            float distance = Mathf.Sqrt(u * u + v * v);
+
+            float height = 0f;
+            for (int i = 0; i < MaxWaves; i++)
+            {
+                if (_waveAmplitude[i] <= 0f)
+                    continue;
+                float radius = (Time.time - _waveStart[i]) * _waveSpeed;
+                if (radius > WaveReach)
+                    continue;
+                float offset = (distance - radius) / WaveWidth;
+                height += _waveAmplitude[i] * (1f - radius / WaveReach) * Mathf.Exp(-offset * offset);
+            }
+            return originalY + _waveStrength * height;
         }
         private float ApplyAudio(int x, float originalY, int z)
         {
