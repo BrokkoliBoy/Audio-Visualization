@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Gavi.Modifiables;
 
 namespace Gavi
 {
@@ -49,6 +50,10 @@ namespace Gavi
         [SerializeField] private float _resetSmoothing = 3f;
         [SerializeField] private bool _middleClickResets = true;
         [SerializeField] private bool _useKeys = true;
+        [Tooltip("Reset key. Does the same as a middle click.")]
+        [SerializeField] private KeyCode _resetKey = KeyCode.C;
+        [Tooltip("Keeps the slow sway of the camera rotation (RotationModifiable) while the camera is controlled.")]
+        [SerializeField] private bool _keepSway = true;
 
         private Camera _camera;
         private Vector3 _startPosition;
@@ -68,10 +73,8 @@ namespace Gavi
         private bool _resetting;
         private Vector2 _lastMouse;
 
-        // The rotation this component applied last frame. If the camera has a different one now, another script
-        // (the beat-driven sway of RotationModifiable) has written it and that rotation is the one to orbit with.
-        private Quaternion _lastApplied;
-        private bool _hasApplied;
+        // The slow sway of the camera rotation (RotationModifiable). It writes the camera rotation every frame; the orbit is applied on top of it.
+        private RotationModifiable _sway;
 
         public bool IsOffsetFromStart
         {
@@ -83,6 +86,9 @@ namespace Gavi
             ReleaseCamera();
         }
 
+        // Settings the camera menu changes at runtime.
+        public bool KeepSway { get { return _keepSway; } set { _keepSway = value; } }
+
         public void ResetCamera()
         {
             _yaw = 0f;
@@ -91,12 +97,20 @@ namespace Gavi
             _move = Vector3.zero;
         }
 
+        /// <summary>Back to the start pose with a slow glide. Any new input takes over again.</summary>
+        public void ResetSmoothly()
+        {
+            ResetCamera();
+            _resetting = true;
+        }
+
         /// <summary>Puts the controlled camera back to its start pose and lets go of it.</summary>
         private void ReleaseCamera()
         {
             if (_camera != null)
                 _camera.transform.SetPositionAndRotation(_startPosition, _startRotation);
             _camera = null;
+            _sway = null;
             ResetCamera();
             _curYaw = 0f;
             _curPitch = 0f;
@@ -105,7 +119,6 @@ namespace Gavi
             _orbiting = false;
             _moving = false;
             _resetting = false;
-            _hasApplied = false;
             UiPointer.SetLocked(false);
         }
 
@@ -120,6 +133,10 @@ namespace Gavi
                 return;
 
             _camera = active;
+            _sway = null;
+            foreach (RotationModifiable modifiable in FindObjectsByType<RotationModifiable>(FindObjectsSortMode.None))
+                if (modifiable.TargetTransform == active.transform)
+                    _sway = modifiable;
             _startPosition = active.transform.position;
             _startRotation = active.transform.rotation;
 
@@ -200,11 +217,10 @@ namespace Gavi
                         _lastMouse = mouse;
                     }
                     if (_middleClickResets && Input.GetMouseButtonDown(2))
-                    {
-                        ResetCamera();
-                        _resetting = true;
-                    }
+                        ResetSmoothly();
                 }
+                if (_resetKey != KeyCode.None && Input.GetKeyDown(_resetKey))
+                    ResetSmoothly();
                 if (Input.GetMouseButtonUp(0))
                     _orbiting = false;
                 if (Input.GetMouseButtonUp(1))
@@ -282,17 +298,14 @@ namespace Gavi
 
             // Turn around the up axis first, then tilt around the start pose's right axis, so the horizon stays level.
             Quaternion orbit = Quaternion.AngleAxis(_curYaw, Vector3.up) * Quaternion.AngleAxis(_curPitch, _startRotation * Vector3.right);
-            // The views sway their camera to the music (RotationModifiable writes the rotation every frame).
-            // That rotation is kept and the orbit is applied on top of it.
+            // The views sway their camera slowly (RotationModifiable). Its rotation of this frame is kept and the orbit is applied on top of it.
             Quaternion baseRotation = _startRotation;
-            if (_hasApplied && Quaternion.Angle(_camera.transform.rotation, _lastApplied) > 0.0001f)
-                baseRotation = _camera.transform.rotation;
+            if (_keepSway && _sway != null && _sway.LastWrittenFrame == Time.frameCount)
+                baseRotation = _sway.LastWrittenRotation;
             Quaternion rotation = orbit * baseRotation;
             // Moving shifts the pivot, so the orbit and the zoom keep working around the spot the viewer moved to.
             Vector3 position = _pivot + _curMove + orbit * (_startOffset * _curScale);
             _camera.transform.SetPositionAndRotation(position, rotation);
-            _lastApplied = _camera.transform.rotation;
-            _hasApplied = true;
         }
     }
 }

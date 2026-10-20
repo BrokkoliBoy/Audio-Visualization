@@ -17,6 +17,11 @@ namespace Gavi.Modifiables
 
         Vector3 _startRotation;
 
+        public Transform TargetTransform => _targetTransform;
+        /// <summary>The world rotation of the target right after this modifiable wrote it, and the frame that happened in.</summary>
+        public Quaternion LastWrittenRotation { get; private set; }
+        public int LastWrittenFrame { get; private set; } = -1;
+
         protected override void Awake()
         {
             base.Awake();
@@ -38,6 +43,9 @@ namespace Gavi.Modifiables
                 _targetTransform.rotation = Quaternion.Euler(value) * _targetTransform.rotation;
             else if (_rotationType == RotationTyppe.ChangeRotationLocal)
                 _targetTransform.rotation = _targetTransform.rotation * Quaternion.Euler(value);
+
+            LastWrittenRotation = _targetTransform.rotation;
+            LastWrittenFrame = Time.frameCount;
         }
 
         protected override bool IsValid()

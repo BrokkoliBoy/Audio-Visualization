@@ -95,9 +95,11 @@ namespace Gavi
 
         private void OnRevealChanged(bool open)
         {
-            // Only one of the two menus should be open at a time.
+            // Only one of the menus should be open at a time.
             if (open && TerrainViewMenuUI.Instance != null && TerrainViewMenuUI.Instance.isActiveAndEnabled && TerrainViewMenuUI.Instance.MenuIsActive)
                 TerrainViewMenuUI.Instance.CloseMenu();
+            if (open && CameraMenuUI.Instance != null)
+                CameraMenuUI.Instance.CloseMenu();
         }
         #endregion
 

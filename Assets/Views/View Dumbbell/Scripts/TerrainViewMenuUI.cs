@@ -102,6 +102,8 @@ namespace Gavi
 
             if (_menuIsActive && MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen)
                 MainMenuUI.Instance.CloseMenu();
+            if (_menuIsActive && CameraMenuUI.Instance != null && CameraMenuUI.Instance.IsOpen)
+                CameraMenuUI.Instance.CloseMenu();
 
             if (_coroutineMoveCamera != null)
                 StopCoroutine(_coroutineMoveCamera);
