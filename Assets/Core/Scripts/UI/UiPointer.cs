@@ -11,7 +11,25 @@ namespace Gavi
     {
         private static readonly Vector3[] _corners = new Vector3[4];
 
-        public static Vector2 Position => Input.mousePosition;
+        private static bool _locked;
+        private static Vector2 _lockedPosition;
+
+        /// <summary>
+        /// The pointer position the menus and cues react to. While the pointer is locked it stays where it was when the
+        /// lock started, so moving the mouse (e.g. to steer the camera) does not open or wake anything.
+        /// </summary>
+        public static Vector2 Position => _locked ? _lockedPosition : (Vector2)Input.mousePosition;
+
+        /// <summary>True while the pointer is locked, i.e. the mouse is steering the camera.</summary>
+        public static bool IsLocked => _locked;
+
+        /// <summary>Freezes or releases the position the menus react to. Safe to call every frame.</summary>
+        public static void SetLocked(bool locked)
+        {
+            if (locked && !_locked)
+                _lockedPosition = Input.mousePosition;
+            _locked = locked;
+        }
 
         /// <summary>True while a text input field has the keyboard focus. Hotkeys must not react then.</summary>
         public static bool IsTyping
@@ -38,7 +56,8 @@ namespace Gavi
                 if (_activityFrame != Time.frameCount)
                 {
                     _activityFrame = Time.frameCount;
-                    if (Input.mousePosition != _lastMouse)
+                    // Movement while the pointer is locked does not count as activity.
+                    if (!_locked && Input.mousePosition != _lastMouse)
                         _lastActivityTime = Time.unscaledTime;
                     _lastMouse = Input.mousePosition;
                 }
@@ -79,7 +98,7 @@ namespace Gavi
                 return float.MaxValue;
 
             Rect rect = GetScreenRect(rectTransform, Vector4.zero);
-            Vector2 point = Input.mousePosition;
+            Vector2 point = Position;
             float dx = Mathf.Max(rect.xMin - point.x, 0f, point.x - rect.xMax);
             float dy = Mathf.Max(rect.yMin - point.y, 0f, point.y - rect.yMax);
             return Mathf.Sqrt(dx * dx + dy * dy);
@@ -89,7 +108,7 @@ namespace Gavi
         {
             if (rectTransform == null || !rectTransform.gameObject.activeInHierarchy || !IsInsideWindow)
                 return false;
-            return GetScreenRect(rectTransform, padding, extension).Contains(Input.mousePosition);
+            return GetScreenRect(rectTransform, padding, extension).Contains(Position);
         }
 
         /// <summary>True while any dropdown list is open. Its list may reach outside of the menu it belongs to.</summary>

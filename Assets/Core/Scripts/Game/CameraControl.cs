@@ -21,8 +21,8 @@ namespace Gavi
         [SerializeField] private float _orbitSpeed = 0.25f;
         [Tooltip("How far the camera may tilt up or down from its start pose.")]
         [SerializeField] private float _maxPitch = 80f;
-        [Tooltip("The camera does not go lower than this angle above the pivot (or its start angle if that is lower). Keeps it from looking at the terrain from below.")]
-        [SerializeField] private float _minElevation = 5f;
+        [Tooltip("The camera does not go lower than this angle above the pivot (or its start angle if that is lower). Negative values let it look at the view from below.")]
+        [SerializeField] private float _minElevation = -85f;
         [SerializeField] private float _maxElevation = 85f;
 
         [Header("--- Move (right mouse, WASD, Q/E) ---")]
@@ -45,6 +45,8 @@ namespace Gavi
         [Header("--- Feel ---")]
         [Tooltip("Higher = the camera follows the input faster.")]
         [SerializeField] private float _smoothing = 12f;
+        [Tooltip("Smoothing while the camera glides back to its start pose after a middle click. Lower = slower.")]
+        [SerializeField] private float _resetSmoothing = 3f;
         [SerializeField] private bool _middleClickResets = true;
         [SerializeField] private bool _useKeys = true;
 
@@ -62,7 +64,14 @@ namespace Gavi
         private Vector3 _curMove;
 
         private bool _orbiting, _moving;
+        // True while the camera glides back after a middle click. Any new input takes over again.
+        private bool _resetting;
         private Vector2 _lastMouse;
+
+        // The rotation this component applied last frame. If the camera has a different one now, another script
+        // (the beat-driven sway of RotationModifiable) has written it and that rotation is the one to orbit with.
+        private Quaternion _lastApplied;
+        private bool _hasApplied;
 
         public bool IsOffsetFromStart
         {
@@ -95,6 +104,9 @@ namespace Gavi
             _curMove = Vector3.zero;
             _orbiting = false;
             _moving = false;
+            _resetting = false;
+            _hasApplied = false;
+            UiPointer.SetLocked(false);
         }
 
         /// <summary>Follows the active camera. A new camera starts at its own pose with no offset.</summary>
@@ -178,15 +190,20 @@ namespace Gavi
                     if (_allowOrbit && Input.GetMouseButtonDown(0))
                     {
                         _orbiting = true;
+                        _resetting = false;
                         _lastMouse = mouse;
                     }
                     if (_allowMove && Input.GetMouseButtonDown(1))
                     {
                         _moving = true;
+                        _resetting = false;
                         _lastMouse = mouse;
                     }
                     if (_middleClickResets && Input.GetMouseButtonDown(2))
+                    {
                         ResetCamera();
+                        _resetting = true;
+                    }
                 }
                 if (Input.GetMouseButtonUp(0))
                     _orbiting = false;
@@ -216,7 +233,10 @@ namespace Gavi
             {
                 float wheel = Input.mouseScrollDelta.y;
                 if (Mathf.Abs(wheel) > 0.001f)
+                {
                     _scale *= 1f - wheel * _zoomStep;
+                    _resetting = false;
+                }
             }
 
             if (canInteract && _useKeys && _allowMove)
@@ -230,6 +250,8 @@ namespace Gavi
                 Vector3 right = Vector3.ProjectOnPlane(cam.right, Vector3.up).normalized;
 
                 Vector3 key = forward * Axis(KeyCode.W, KeyCode.S) + right * Axis(KeyCode.D, KeyCode.A) + Vector3.up * Axis(KeyCode.E, KeyCode.Q);
+                if (key.sqrMagnitude > 0f)
+                    _resetting = false;
                 _move += key * (distance * _keyMoveSpeed * Time.unscaledDeltaTime);
             }
 
@@ -237,6 +259,9 @@ namespace Gavi
             float maxMove = _maxMoveDistance * startDistance;
             if (_move.magnitude > maxMove)
                 _move = _move.normalized * maxMove;
+
+            // While the mouse steers the camera, the menus and cues act as if the pointer had not moved.
+            UiPointer.SetLocked(_orbiting || _moving);
         }
 
         private static float Axis(KeyCode positive, KeyCode negative)
@@ -249,7 +274,7 @@ namespace Gavi
             if (_camera == null)
                 return;
 
-            float t = 1f - Mathf.Exp(-_smoothing * Time.unscaledDeltaTime);
+            float t = 1f - Mathf.Exp(-(_resetting ? _resetSmoothing : _smoothing) * Time.unscaledDeltaTime);
             _curYaw = Mathf.Lerp(_curYaw, _yaw, t);
             _curPitch = Mathf.Lerp(_curPitch, _pitch, t);
             _curScale = Mathf.Lerp(_curScale, _scale, t);
@@ -257,10 +282,17 @@ namespace Gavi
 
             // Turn around the up axis first, then tilt around the start pose's right axis, so the horizon stays level.
             Quaternion orbit = Quaternion.AngleAxis(_curYaw, Vector3.up) * Quaternion.AngleAxis(_curPitch, _startRotation * Vector3.right);
-            Quaternion rotation = orbit * _startRotation;
+            // The views sway their camera to the music (RotationModifiable writes the rotation every frame).
+            // That rotation is kept and the orbit is applied on top of it.
+            Quaternion baseRotation = _startRotation;
+            if (_hasApplied && Quaternion.Angle(_camera.transform.rotation, _lastApplied) > 0.0001f)
+                baseRotation = _camera.transform.rotation;
+            Quaternion rotation = orbit * baseRotation;
             // Moving shifts the pivot, so the orbit and the zoom keep working around the spot the viewer moved to.
             Vector3 position = _pivot + _curMove + orbit * (_startOffset * _curScale);
             _camera.transform.SetPositionAndRotation(position, rotation);
+            _lastApplied = _camera.transform.rotation;
+            _hasApplied = true;
         }
     }
 }

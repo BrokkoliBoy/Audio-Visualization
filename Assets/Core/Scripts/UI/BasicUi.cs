@@ -82,7 +82,8 @@ namespace Gavi.Player
                 currentCursorPosition != _lastCursorPosition ||
                 _lastCursorMovement + _toggleCursorTime > Time.time);
             
-            Cursor.visible = showCursor;
+            // The cursor is hidden while the mouse steers the camera.
+            Cursor.visible = showCursor && !UiPointer.IsLocked;
             _lastCursorPosition = currentCursorPosition;
         }
         #endregion
