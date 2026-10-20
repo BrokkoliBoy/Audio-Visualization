@@ -21,6 +21,9 @@ namespace Gavi.Player
         [SerializeField] private GameObject _menuPanel;
         [SerializeField] private GameObject _hudPanel;
 
+        /// <summary>Seconds without mouse movement after which the cursor is hidden.</summary>
+        public float CursorHideSeconds => _toggleCursorTime;
+
         public bool IsInMenuPanel => (_menuPanel != null && _menuPanel.activeSelf) || (MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen);
         public bool IsInGamePanel => !IsInMenuPanel;
         private enum PanelType { Game, Menu }

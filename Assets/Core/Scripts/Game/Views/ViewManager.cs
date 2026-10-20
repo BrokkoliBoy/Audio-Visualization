@@ -42,6 +42,9 @@ namespace Gavi
 
         private void Update()
         {
+            if (UiPointer.IsTyping)
+                return;
+
             if (_keyCodesNextView != null && _keyCodesNextView.Count == 2 &&
                 (Input.GetKeyDown(_keyCodesNextView[0]) && Input.GetKey(_keyCodesNextView[1]) || 
                  Input.GetKey(_keyCodesNextView[0]) && Input.GetKeyDown(_keyCodesNextView[1])))

@@ -10,6 +10,9 @@ namespace Gavi
         public static TerrainViewMenuUI Instance;
         
         [Header("--- Menu Toggle ---")]
+        [Tooltip("Opens the menu when the pointer comes near the handle and closes it when the pointer leaves.")]
+        [SerializeField] private UiHoverReveal _hoverReveal;
+        [Tooltip("Pins the menu open or closes it.")]
         [SerializeField] private KeyCode _keyCodeToggleMenu = KeyCode.Tab;
         [SerializeField] private float _lerpSpeed = 0.1f;
         
@@ -19,6 +22,8 @@ namespace Gavi
         [SerializeField] private RectTransform _menuInactiveMenuTransform;
         
         [Header("- Camera Transforms -")]
+        [Tooltip("If true, the camera moves aside while the menu is open. Off by default so the terrain stays where it is.")]
+        [SerializeField] private bool _moveCameraWithMenu = false;
         [SerializeField] private Transform _cameraTransform;
         [SerializeField] private Transform _menuActiveCameraTransform;
         [SerializeField] private Transform _menuInactiveCameraTransform;
@@ -41,28 +46,67 @@ namespace Gavi
             Instance = this;
         }
 
+        private void OnEnable()
+        {
+            if (_hoverReveal != null)
+                _hoverReveal.Changed += SetMenuActive;
+        }
+
+        private void OnDisable()
+        {
+            if (_hoverReveal != null)
+                _hoverReveal.Changed -= SetMenuActive;
+        }
+
         private void Update()
         {
-            if (Input.GetKeyDown(_keyCodeToggleMenu))
+            if (!UiPointer.IsTyping && Input.GetKeyDown(_keyCodeToggleMenu))
                 ToggleMenu();
         }
         #endregion
-        
-        
+
+
         #region Menu
+        /// <summary>Hotkey: closes the menu when it is open, otherwise opens it and keeps it open.</summary>
         public void ToggleMenu()
         {
-            if (_cameraTransform == null || _menuActiveCameraTransform == null)
+            if (_hoverReveal == null)
+                SetMenuActive(!_menuIsActive);
+            else if (_hoverReveal.isActiveAndEnabled)
+                _hoverReveal.ToggleByKey();
+        }
+
+        /// <summary>Handle click: keeps the menu open even when the pointer leaves, or lets go of it again.</summary>
+        public void TogglePinned()
+        {
+            if (_hoverReveal == null)
+                SetMenuActive(!_menuIsActive);
+            else if (_hoverReveal.isActiveAndEnabled)
+                _hoverReveal.TogglePinned();
+        }
+
+        public void CloseMenu()
+        {
+            if (_hoverReveal == null)
+                SetMenuActive(false);
+            else if (_hoverReveal.IsRevealed)
+                _hoverReveal.Dismiss();
+        }
+
+        private void SetMenuActive(bool active)
+        {
+            if (_menuIsActive == active)
                 return;
-            
-            _menuIsActive = !_menuIsActive;
+
+            _menuIsActive = active;
 
             if (_menuIsActive && MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen)
-                MainMenuUI.Instance.ToggleMenu();
+                MainMenuUI.Instance.CloseMenu();
 
             if (_coroutineMoveCamera != null)
                 StopCoroutine(_coroutineMoveCamera);
-            _coroutineMoveCamera = StartCoroutine(MoveCamera(_menuIsActive));
+            if (_moveCameraWithMenu && _cameraTransform != null && _menuActiveCameraTransform != null && _menuInactiveCameraTransform != null)
+                _coroutineMoveCamera = StartCoroutine(MoveCamera(_menuIsActive));
             
             if (_coroutineMoveMenu != null)
                 StopCoroutine(_coroutineMoveMenu);

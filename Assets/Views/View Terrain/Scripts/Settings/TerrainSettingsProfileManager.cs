@@ -12,7 +12,7 @@ namespace Gavi
     {
         public static TerrainSettingsProfileManager Instance;
         
-        private string Path => Application.dataPath + "/Profiles/TerrainProfiles/";
+        private const string SubFolder = "TerrainProfiles";
 
         private void Awake()
         {
@@ -28,26 +28,39 @@ namespace Gavi
 
         public void ExportProfilesFromJson(TerrainSettingsProfile profile)
         {
-            Directory.CreateDirectory(Path);
+            string folder = TerrainUserFiles.WriteFolder(SubFolder);
+            Directory.CreateDirectory(folder);
+            profile.FormatVersion = TerrainSettingsProfile.CurrentFormatVersion;
             string json = JsonUtility.ToJson(profile);
-            StreamWriter writer = new StreamWriter(Path + profile.Name + ".txt");
-            writer.WriteLine(json);
-            writer.Close();
+            File.WriteAllText(folder + profile.Name + ".txt", json + "\n");
         }
         
         private void ImportProfilesFromJson()
         {
             try
             {
-                IEnumerable<string> textFiles = Directory.EnumerateFiles(Path, "*.txt");
-                foreach (string currentFile in textFiles)
+                // Files of the player come after the shipped presets and replace presets with the same name.
+                var profiles = new List<TerrainSettingsProfile>();
+                foreach (string currentFile in TerrainUserFiles.ListFiles(SubFolder))
                 {
-                    StreamReader reader = new StreamReader(currentFile);
-                    string json = reader.ReadToEnd();
-                    reader.Close();
-                    TerrainSettingsProfile profile = JsonUtility.FromJson<TerrainSettingsProfile>(json);
-                    TerrainGroupUIProfiles.Instance.AddProfile(profile);
+                    // A broken file must not stop the other profiles from loading.
+                    try
+                    {
+                        TerrainSettingsProfile profile = JsonUtility.FromJson<TerrainSettingsProfile>(File.ReadAllText(currentFile));
+                        if (profile == null || string.IsNullOrEmpty(profile.Name))
+                            continue;
+                        // Files from older versions: FormatVersion < CurrentFormatVersion. Convert here when a change needs it.
+                        profiles.RemoveAll(p => p.Name == profile.Name);
+                        profiles.Add(profile);
+                    }
+                    catch (Exception fileError)
+                    {
+                        Debugger.LogError("Skipped profile file " + currentFile + ": " + fileError.Message);
+                    }
                 }
+
+                foreach (TerrainSettingsProfile profile in profiles)
+                    TerrainGroupUIProfiles.Instance.AddProfile(profile, false);
             }
             catch (Exception e)
             {
@@ -59,16 +72,16 @@ namespace Gavi
         {
             try
             {
-                IEnumerable<string> textFiles = Directory.EnumerateFiles(Path, "*.txt");
-                foreach (string currentFile in textFiles)
+                string folder = TerrainUserFiles.WriteFolder(SubFolder);
+                if (!Directory.Exists(folder))
+                    return;
+
+                foreach (string currentFile in Directory.EnumerateFiles(folder, "*.txt"))
                 {
-                    StreamReader reader = new StreamReader(currentFile);
-                    string json = reader.ReadToEnd();
-                    reader.Close();
-                    TerrainSettingsProfile fileProfile = JsonUtility.FromJson<TerrainSettingsProfile>(json);
-                    if (fileProfile.Name == profile.Name)
+                    TerrainSettingsProfile fileProfile = JsonUtility.FromJson<TerrainSettingsProfile>(File.ReadAllText(currentFile));
+                    if (fileProfile != null && fileProfile.Name == profile.Name)
                     {
-                        File.Delete(currentFile);
+                        TerrainUserFiles.DeleteFile(currentFile);
                         return;
                     }
                 }

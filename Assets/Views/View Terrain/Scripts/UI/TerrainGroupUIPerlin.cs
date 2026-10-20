@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,7 +12,8 @@ namespace Gavi
         [SerializeField] private SliderG _sliderPerlinDepth;
         [SerializeField] private SliderG _sliderPerlinZoom;
         [SerializeField] private SliderG _sliderPerlinSpeedX;
-        [SerializeField] private SliderG _sliderPerlinSpeedY;
+        [Tooltip("The speed on the second axis is not editable in the menu and always uses this value.")]
+        [SerializeField] private float _fixedPerlinSpeedY = -1f;
 
         private void Awake()
         {
@@ -19,7 +21,6 @@ namespace Gavi
             _sliderPerlinDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderPerlinZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderPerlinSpeedX.OnValueChangedFloat.AddListener(OnUIValueChanged);
-            _sliderPerlinSpeedY.OnValueChangedFloat.AddListener(OnUIValueChanged);
         }
 
         public override void ExtractProfile(TerrainSettingsProfile profile)
@@ -29,7 +30,7 @@ namespace Gavi
             profile.PerlinDepth = _sliderPerlinDepth.Value;
             profile.PerlinZoom = _sliderPerlinZoom.Value;
             profile.PerlinSpeedX = _sliderPerlinSpeedX.Value;
-            profile.PerlinSpeedY = _sliderPerlinSpeedY.Value;
+            profile.PerlinSpeedY = _fixedPerlinSpeedY;
         }
 
         public override void ShowProfile(TerrainSettingsProfile profile)
@@ -39,7 +40,6 @@ namespace Gavi
             _sliderPerlinDepth.Value = profile.PerlinDepth;
             _sliderPerlinZoom.Value = profile.PerlinZoom;
             _sliderPerlinSpeedX.Value = profile.PerlinSpeedX;
-            _sliderPerlinSpeedY.Value = profile.PerlinSpeedY;
         }
     }
 }

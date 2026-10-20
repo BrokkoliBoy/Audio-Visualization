@@ -7,6 +7,9 @@ namespace Gavi
     [System.Serializable]
     public class TerrainSettingsProfile
     {
+        /// <summary>Version of the file format. 0 = files from before versions existed. Raise CurrentFormatVersion when a change needs old files to be converted.</summary>
+        public const int CurrentFormatVersion = 1;
+        public int FormatVersion;
         public string Name = "Terrain Profile";
         
         #region Settings Variables
@@ -44,6 +47,14 @@ namespace Gavi
 
         [Header("- Shape -")]
         public List<TerrainShapeData> Shapes = new List<TerrainShapeData>() { new TerrainShapeData() };
+
+        [Header("- Color -")]
+        [Tooltip("Name of the selected color palette: Default, Custom or the name of a saved palette. Profiles without color data use Default.")]
+        public string ColorPaletteName = TerrainColorPalette.DefaultName;
+        [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity. Empty means Default.")]
+        public List<Vector3> ColorValues = new List<Vector3>();
+        public float ColorOverallIntensity = 1f;
+        public float ColorMaxIntensity = 5f;
         #endregion
         
         
@@ -94,6 +105,12 @@ namespace Gavi
             ApplyTerrace = profile.ApplyTerrace;
             TerraceCount = profile.TerraceCount;
             TerraceExecutionPoint = profile.TerraceExecutionPoint;
+
+            // Color
+            ColorPaletteName = profile.ColorPaletteName;
+            ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
+            ColorOverallIntensity = profile.ColorOverallIntensity;
+            ColorMaxIntensity = profile.ColorMaxIntensity;
 
             // Shape
             Shapes.Clear();

@@ -48,12 +48,13 @@ namespace Gavi
 
 
         #region Profiles
-        public void AddProfile(TerrainSettingsProfile profile)
+        public void AddProfile(TerrainSettingsProfile profile, bool exportToDisk = true)
         {
             _profiles.Add(profile);
             _dropdownProfile.options.Add(new TMP_Dropdown.OptionData(profile.Name));
             
-            TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(profile);
+            if (exportToDisk)
+                TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(profile);
         }
 
         private void RemoveProfileAtIndex(int profileIndex)
@@ -96,6 +97,8 @@ namespace Gavi
         private void OnPressedSave()
         {
             ActiveProfile?.CopyFromProfile(CurrentProfile);
+            if (ActiveProfile != null)
+                TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(ActiveProfile);
         }
         
         private void OnPressedLoad()
