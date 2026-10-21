@@ -14,7 +14,7 @@ Last updated: 2026-10-21
 | Terrain | Terrain (face count, height, FPS hint), Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
 | Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
 | Shapes | Audio shapes (circle, rectangles ...) that map the spectrum onto the terrain |
-| Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, freeze noise, edit bands) |
+| Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
 
 ## Features
 
@@ -25,17 +25,17 @@ Last updated: 2026-10-21
 | Noise patterns | done | 27 patterns (Perlin, Simplex, Value, Fractal, Ridged, Billow, Domain warp, Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons, Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles, Triangles, Checker, Steps, Cubes, Honeycomb). Start pattern: Domain warp. Speed slider 0 to 10 (half way = 3) |
 | Invert per pattern | done | Cell patterns (Voronoi, Cracks, Hexagons, Bricks, Dots, Pyramids, Tiles, Triangles, Cubes) stand up from the ground by default, the Invert toggle flips them. The choice is remembered per pattern |
 | Flip on the beat | done | "Flip beats" turns the pattern upside down every N beats, with a smooth morph instead of a hard switch |
-| Beat wave | done | Ring waves on the beat. Origin: Middle, Edge, Alternate, Bass edge. Mode: Add, Floor, Absorb. Speed is tied to the song's BPM (1 = half the terrain width per beat) |
+| Beat wave | done | Ring waves on the beat. Origin: Middle, Edge, Alternate, Bass edge (starts a little inside of the bass). Mode: Add, Floor, Absorb. Speed is tied to the song's BPM (1 = half the terrain width per beat) |
 | Wave trigger | done | Bass has priority, quiet passages stay quiet. A wave starts flat on every beat and grows if the bass gets strong within 0.1 s. Full height at 90 % of the recent loudest bass |
 | Color palettes | done | JSON palettes, HDR colors, start palette Lava |
 | Saturation / glow mapping | done | Curved saturation slider, weakly saturated colors are dimmed so white does not overpower |
 | FPS display + hint | done | Hint to lower the face count when FPS stays under 60 / 30 |
-| Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react). "Beat strength" lifts all bands on every beat on top of the level, the bass the most. "Edit bands" lets the mouse set single bands (left button raises, right button lowers the band under the cursor). The camera beat zoom pauses while it is on. Starts off, not part of a profile |
+| Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react). "Beat strength" lifts all bands on every beat on top of the level, the bass the most; "Strength from song" takes the strength of every beat from the bass of the playing song instead of the slider. "Edit bands" lets the mouse set single bands (left button raises, right button lowers the band under the cursor). The camera beat zoom pauses while it is on. Starts off, not part of a profile |
 | Color by band | done | Three sliders (gradient position, brightness, glow) say how much each comes from the activity of the vertex's frequency band instead of its height. 0 = as before |
-| Mesh morph | done | Bends the whole mesh after the heights: Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag (a wave runs through the mesh), Twist. Amount slider and "On beat" (the mesh is only bent on the beat and relaxes in between) |
+| Mesh morph | done | Bends the whole mesh after the heights (shape dropdown with previous / next buttons): Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag (a wave runs through the mesh), Twist. Amount slider and "On beat" (the mesh is only bent on the beat and relaxes in between) |
 | Background tint | done | The sky takes the hue of the base color, brightness stays. Toggle "Tint background" in the Color tab |
 | Profiles | done | All terrain settings except the test signal |
-| Camera control | done | Mouse (middle drag orbits, right drag moves, wheel zooms) and keyboard (WASD, Q / E, C resets), beat zoom, camera menu |
+| Camera control | done | Mouse (left drag on the background or middle drag orbits, left drag on the terrain turns it around its middle, right drag moves, wheel zooms; both left and right belong to the band editor while it is on) and keyboard (WASD, Q / E, C resets camera and terrain turn, the reset glides), beat zoom, camera menu |
 
 ## Planned / ideas
 

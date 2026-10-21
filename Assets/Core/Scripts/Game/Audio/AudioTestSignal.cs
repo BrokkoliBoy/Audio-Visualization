@@ -31,6 +31,8 @@ namespace Gavi.Audio
         [Tooltip("How far the bands jump up on every beat (added on top of the level). The bass jumps the most, the outer bands much less. 0 = the bands stay calm.")]
         [Range(0f, 1f)]
         [SerializeField] private float _beatStrength;
+        [Tooltip("Takes the strength of every beat from the bass of the song that is playing instead of the slider. Without a playing song the slider counts.")]
+        [SerializeField] private bool _beatStrengthFromSong;
         [Tooltip("The noise pattern stands still while the test signal is on.")]
         [SerializeField] private bool _freezeNoise = true;
         [Tooltip("The left mouse button raises the band under the cursor, the right one lowers it. Starts from the signal as it is.")]
@@ -47,14 +49,20 @@ namespace Gavi.Audio
         /// <summary>How fast the mouse raises or lowers a band (level per second).</summary>
         private const float EditRate = 1.2f;
 
+        /// <summary>The bass of the song is measured this long after a beat (seconds).</summary>
+        private const float SongPeakWindow = 0.12f;
+
         // levels of the band editor, null while it is off
         private float[] _edited;
+        // beat strength taken from the song, see SongBeatStrength
+        private float _songPeak, _lastSinceBeat;
 
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public int SignalIndex { get => (int)_signal; set => _signal = (Signal)Mathf.Clamp(value, 0, SignalNames.Length - 1); }
         public float Level { get => _level; set => _level = Mathf.Clamp01(value); }
         public bool Beat { get => _beat; set => _beat = value; }
         public float BeatStrength { get => _beatStrength; set => _beatStrength = Mathf.Clamp01(value); }
+        public bool BeatStrengthFromSong { get => _beatStrengthFromSong; set => _beatStrengthFromSong = value; }
         public bool FreezeNoise { get => _freezeNoise; set => _freezeNoise = value; }
         public bool EditBands
         {
@@ -117,7 +125,12 @@ namespace Gavi.Audio
                     _edited[i] = _level * Share(i, count);
             }
 
-            float kick = _beatStrength * Envelope();
+            // the values still hold the real spectrum here, the beat strength of the song is read from it
+            float strength = _beatStrength;
+            if (_beatStrengthFromSong && SongIsPlaying())
+                strength = SongBeatStrength(values);
+
+            float kick = strength * Envelope();
             for (int i = 0; i < count; i++)
             {
                 float own = _editBands ? _edited[i] : _level * Share(i, count);
@@ -152,8 +165,34 @@ namespace Gavi.Audio
             return 1f - (1f - OuterKickShare) * Mathf.Log(1f + band) / Mathf.Log(count);
         }
 
-        /// <summary>Falls from 1 at a beat of the song towards 0 until the next beat.</summary>
-        private float Envelope()
+        private static bool SongIsPlaying()
+        {
+            AudioPlayer player = AudioPlayer.Instance;
+            return player != null && player.IsPlaying && player.CurrentlyPlayingClip != null;
+        }
+
+        /// <summary>
+        /// The strength of the current beat: the highest bass level of the real spectrum right after the beat. It is
+        /// held until the next beat, so the lift follows the loudness of the song beat by beat.
+        /// </summary>
+        private float SongBeatStrength(float[] realSpectrum)
+        {
+            float sinceBeat = SinceBeat();
+            if (sinceBeat < _lastSinceBeat)
+                _songPeak = 0f;
+            _lastSinceBeat = sinceBeat;
+
+            if (sinceBeat < SongPeakWindow)
+            {
+                int bass = Mathf.Min(BassBands, realSpectrum.Length);
+                for (int i = 0; i < bass; i++)
+                    _songPeak = Mathf.Max(_songPeak, realSpectrum[i]);
+            }
+            return Mathf.Clamp01(_songPeak);
+        }
+
+        /// <summary>Seconds since the last beat of the song.</summary>
+        private float SinceBeat()
         {
             float interval = BeatInterval;
             float time = Time.time;
@@ -161,8 +200,13 @@ namespace Gavi.Audio
             if (player != null && player.IsPlaying && player.CurrentlyPlayingClip != null && player.CurrentlyPlayingClip.BPM > 0f)
                 time = player.CurrentPlaybackTime - player.CurrentlyPlayingClip.BeatOffset;
 
-            float sinceBeat = time - Mathf.Floor(time / interval) * interval;
-            return Mathf.Exp(-KickDecay * sinceBeat);
+            return time - Mathf.Floor(time / interval) * interval;
+        }
+
+        /// <summary>Falls from 1 at a beat of the song towards 0 until the next beat.</summary>
+        private float Envelope()
+        {
+            return Mathf.Exp(-KickDecay * SinceBeat());
         }
     }
 }

@@ -8,7 +8,8 @@ namespace Gavi
     /// <summary>
     /// Lets the viewer move the active camera with the mouse and keyboard. The camera orbits around the CameraPivot
     /// of the current view, so every view is controlled the same way:
-    /// middle drag = orbit around the view, right drag = move the view sideways and up/down (the right mouse button belongs to the test signal band editor while that is on),
+    /// left drag on the background (or middle drag anywhere) = orbit around the view, left drag on the terrain = turn the terrain around its middle (see TerrainRotator),
+    /// right drag = move the view sideways and up/down (the left and right mouse button belong to the test signal band editor while that is on),
     /// mouse wheel = zoom towards or away from the view, W/S = move forward and back and A/D = move sideways on the
     /// horizontal plane, Q/E = move down and up,
     /// C = back to the start pose.
@@ -17,10 +18,12 @@ namespace Gavi
     /// </summary>
     public class CameraControl : MonoBehaviour
     {
-        [Header("--- Orbit (middle mouse) ---")]
+        [Header("--- Orbit (left mouse, middle mouse) ---")]
         [SerializeField] private bool _allowOrbit = true;
-        [Tooltip("Mouse button that orbits: 0 = left, 1 = right, 2 = middle.")]
-        [SerializeField] private int _orbitButton = 2;
+        [Tooltip("Mouse button that orbits when it is pressed on the background (on the terrain it turns the terrain instead): 0 = left, 1 = right, 2 = middle.")]
+        [SerializeField] private int _orbitButton = 0;
+        [Tooltip("The middle mouse button also orbits, everywhere on the screen and also while the test signal band editor is on.")]
+        [SerializeField] private bool _orbitWithMiddle = true;
         [Tooltip("Degrees per pixel of mouse movement.")]
         [SerializeField] private float _orbitSpeed = 0.25f;
         [Tooltip("How far the camera may tilt up or down from its start pose.")]
@@ -51,7 +54,6 @@ namespace Gavi
         [SerializeField] private float _smoothing = 12f;
         [Tooltip("Smoothing while the camera glides back to its start pose after a reset. Lower = slower.")]
         [SerializeField] private float _resetSmoothing = 3f;
-        [SerializeField] private bool _resetOnMiddleClick;
         [SerializeField] private bool _useKeys = true;
         [Tooltip("Reset key.")]
         [SerializeField] private KeyCode _resetKey = KeyCode.C;
@@ -72,7 +74,9 @@ namespace Gavi
         private Vector3 _curMove;
 
         private bool _orbiting, _moving;
-        // True while the camera glides back after a middle click. Any new input takes over again.
+        // The mouse button that started the orbit.
+        private int _orbitHeld;
+        // True while the camera glides back after a reset. Any new input takes over again.
         private bool _resetting;
         private Vector2 _lastMouse;
 
@@ -103,6 +107,8 @@ namespace Gavi
         /// <summary>Back to the start pose with a slow glide. Any new input takes over again.</summary>
         public void ResetSmoothly()
         {
+            if (TerrainRotator.Instance != null)
+                TerrainRotator.Instance.ResetRotation();
             ResetCamera();
             _resetting = true;
         }
@@ -207,24 +213,26 @@ namespace Gavi
             {
                 if (!overUi)
                 {
-                    if (_allowOrbit && Input.GetMouseButtonDown(_orbitButton))
+                    // The band editor of the test signal uses the left and right mouse button.
+                    bool editing = AudioTestSignal.IsEditingBands;
+                    if (_allowOrbit && !editing && Input.GetMouseButtonDown(_orbitButton))
                     {
-                        _orbiting = true;
-                        _resetting = false;
-                        _lastMouse = mouse;
+                        // On the terrain the mouse turns the terrain, on the background it orbits the camera.
+                        if (!BeginTerrainTurn(_orbitButton))
+                            BeginOrbit(_orbitButton, mouse);
                     }
-                    if (_allowMove && !AudioTestSignal.IsEditingBands && Input.GetMouseButtonDown(1))
+                    else if (_allowOrbit && _orbitWithMiddle && _orbitButton != 2 && Input.GetMouseButtonDown(2))
+                        BeginOrbit(2, mouse);
+                    if (_allowMove && !editing && Input.GetMouseButtonDown(1))
                     {
                         _moving = true;
                         _resetting = false;
                         _lastMouse = mouse;
                     }
-                    if (_resetOnMiddleClick && _orbitButton != 2 && Input.GetMouseButtonDown(2))
-                        ResetSmoothly();
                 }
                 if (_resetKey != KeyCode.None && Input.GetKeyDown(_resetKey))
                     ResetSmoothly();
-                if (Input.GetMouseButtonUp(_orbitButton))
+                if (_orbiting && Input.GetMouseButtonUp(_orbitHeld))
                     _orbiting = false;
                 if (Input.GetMouseButtonUp(1))
                     _moving = false;
@@ -233,7 +241,7 @@ namespace Gavi
             Vector2 delta = mouse - _lastMouse;
             _lastMouse = mouse;
 
-            if (_orbiting && Input.GetMouseButton(_orbitButton))
+            if (_orbiting && Input.GetMouseButton(_orbitHeld))
             {
                 // The scene turns with the cursor: drag right = camera goes left, drag up = camera goes down.
                 _yaw += delta.x * _orbitSpeed;
@@ -280,7 +288,23 @@ namespace Gavi
                 _move = _move.normalized * maxMove;
 
             // While the mouse steers the camera, the menus and cues act as if the pointer had not moved.
-            UiPointer.SetLocked(_orbiting || _moving);
+            UiPointer.SetLocked(_orbiting || _moving || TerrainRotator.IsTurning);
+        }
+
+        private void BeginOrbit(int button, Vector2 mouse)
+        {
+            _orbiting = true;
+            _orbitHeld = button;
+            _resetting = false;
+            _lastMouse = mouse;
+        }
+
+        /// <summary>Starts turning the terrain when the cursor is on it. False when it is not, then the camera orbits instead.</summary>
+        private bool BeginTerrainTurn(int button)
+        {
+            if (TerrainRotator.Instance == null || _camera == null)
+                return false;
+            return TerrainRotator.Instance.TryBeginTurn(_camera.ScreenPointToRay(Input.mousePosition), button);
         }
 
         private static float Axis(KeyCode positive, KeyCode negative)

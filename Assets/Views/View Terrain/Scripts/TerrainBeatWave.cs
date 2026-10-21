@@ -90,6 +90,8 @@ namespace Gavi
         private const int MaxWaves = 6;
         /// <summary>Distance from the middle to the corners of the terrain (in half terrain widths), a bit more.</summary>
         private const float EdgeDistance = 1.45f;
+        /// <summary>The Bass edge origin starts this many wave widths inside of the bass edge.</summary>
+        private const float BassEdgeLead = 0.75f;
         /// <summary>Speed 1 means: this distance (half the terrain width) in one beat.</summary>
         private const float SpeedDistance = 1f;
         /// <summary>A beat needs a pulse of at least this much that rises at least this fast (per second). Soft beats count too, slow drifts of the pulse do not.</summary>
@@ -334,9 +336,11 @@ namespace Gavi
             float width = Mathf.Max(0.01f, _width);
             if (_origin == Origin.BassEdge)
             {
-                _startFront[oldest] = _bassEdge;
+                // the wave is born a little inside of the bass, so it already shows on the bass bands
+                float start = Mathf.Max(-width, _bassEdge - BassEdgeLead * width);
+                _startFront[oldest] = start;
                 _direction[oldest] = 1f;
-                _totalWay[oldest] = EdgeDistance - _bassEdge + 2f * width;
+                _totalWay[oldest] = EdgeDistance - start + 2f * width;
             }
             else
             {

@@ -621,6 +621,12 @@ namespace Gavi
         /// <summary>Steps of the search along a camera ray in <see cref="TryPickBand"/>.</summary>
         private const int PickSteps = 320;
 
+        /// <summary>The transform of the drawn terrain. The mesh starts in its corner, <see cref="LocalCenter"/> is its middle.</summary>
+        public Transform TerrainTransform => _meshFilters != null && _meshFilters.Count > 0 ? _meshFilters[0].transform : null;
+
+        /// <summary>Middle of the terrain box in the local space of <see cref="TerrainTransform"/>.</summary>
+        public Vector3 LocalCenter => new Vector3(0.5f * _terrainSizeX, 0.5f * _terrainSizeY, 0.5f * _terrainSizeZ);
+
         /// <summary>
         /// Finds the audio band under a ray (for example from the camera through the mouse) on the terrain as it is drawn right now.
         /// False when the ray misses the terrain or hits a spot that lies outside of all shapes.
@@ -628,7 +634,32 @@ namespace Gavi
         public bool TryPickBand(Ray ray, out int band)
         {
             band = -1;
-            if (_vertices == null || _meshFilters == null || _meshFilters.Count == 0 || _samplesContainer == null || _samplesContainer.BandSize < 1)
+            if (_samplesContainer == null || _samplesContainer.BandSize < 1)
+                return false;
+            if (!TryRaycast(ray, true, out Vector3 hit))
+                return false;
+            return BandAt(hit.x / _terrainSizeX, hit.z / _terrainSizeZ, out band);
+        }
+
+        /// <summary>True when the ray hits the terrain. With a mesh morph on, the box around the terrain counts, because the drawn surface is bent.</summary>
+        public bool TryHitTerrain(Ray ray)
+        {
+            bool bent = _applyMorph && _morphAmount > 0.0005f;
+            if (!TryRaycast(ray, !bent, out Vector3 hit))
+                return false;
+            if (bent || !_hideOutOfBounds)
+                return true;
+            // the parts outside of all shapes are not drawn, so they are not the terrain
+            int x = Mathf.Clamp(Mathf.RoundToInt(hit.x / _terrainSizeX * _faceCountX), 0, _faceCountX);
+            int z = Mathf.Clamp(Mathf.RoundToInt(hit.z / _terrainSizeZ * _faceCountZ), 0, _faceCountZ);
+            return !IsOutOfAllShapes(x, z);
+        }
+
+        /// <summary>Ray against the terrain in its local space: the surface as it is drawn, or only the box around it.</summary>
+        private bool TryRaycast(Ray ray, bool surface, out Vector3 hit)
+        {
+            hit = default;
+            if (_vertices == null || _meshFilters == null || _meshFilters.Count == 0)
                 return false;
 
             Transform terrain = _meshFilters[0].transform;
@@ -655,6 +686,12 @@ namespace Gavi
             if (enter >= exit)
                 return false;
 
+            if (!surface)
+            {
+                hit = origin + direction * enter;
+                return true;
+            }
+
             for (int i = 0; i <= PickSteps; i++)
             {
                 Vector3 point = origin + direction * Mathf.Lerp(enter, exit, (float)i / PickSteps);
@@ -662,7 +699,8 @@ namespace Gavi
                     continue;
                 if (point.y > HeightAt(point.x, point.z))
                     continue;
-                return BandAt(point.x / _terrainSizeX, point.z / _terrainSizeZ, out band);
+                hit = point;
+                return true;
             }
             return false;
         }

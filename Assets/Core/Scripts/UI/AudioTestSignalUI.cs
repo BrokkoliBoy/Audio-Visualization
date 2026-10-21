@@ -18,6 +18,7 @@ namespace Gavi
         [SerializeField] private SliderG _sliderLevel;
         [SerializeField] private Toggle _toggleBeat;
         [SerializeField] private SliderG _sliderBeatStrength;
+        [SerializeField] private Toggle _toggleBeatFromSong;
         [SerializeField] private Toggle _toggleFreezeNoise;
         [SerializeField] private Toggle _toggleEditBands;
 
@@ -31,6 +32,7 @@ namespace Gavi
             _sliderLevel.OnValueChangedFloat.AddListener(value => _signal.Level = value);
             _toggleBeat.onValueChanged.AddListener(isOn => _signal.Beat = isOn);
             _sliderBeatStrength.OnValueChangedFloat.AddListener(value => _signal.BeatStrength = value);
+            _toggleBeatFromSong.onValueChanged.AddListener(isOn => _signal.BeatStrengthFromSong = isOn);
             _toggleFreezeNoise.onValueChanged.AddListener(isOn => _signal.FreezeNoise = isOn);
             _toggleEditBands.onValueChanged.AddListener(isOn => _signal.EditBands = isOn);
         }
@@ -44,6 +46,7 @@ namespace Gavi
             _sliderLevel.Value = _signal.Level;
             _toggleBeat.SetIsOnWithoutNotify(_signal.Beat);
             _sliderBeatStrength.Value = _signal.BeatStrength;
+            _toggleBeatFromSong.SetIsOnWithoutNotify(_signal.BeatStrengthFromSong);
             _toggleFreezeNoise.SetIsOnWithoutNotify(_signal.FreezeNoise);
             _toggleEditBands.SetIsOnWithoutNotify(_signal.EditBands);
         }
