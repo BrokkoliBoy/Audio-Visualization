@@ -48,7 +48,10 @@ namespace Gavi
         public int NoiseStep;
         public int NoiseWidth;
         public int NoiseHeight;
-        public float NoiseBlend;
+        /// <summary>The noise is calculated again every NoiseInterval updates, per grid point in the update of its slot. NoiseTick is the current update.</summary>
+        public int NoiseInterval;
+        public int NoiseTick;
+        [ReadOnly] public NativeArray<byte> NoiseSlots;
         [ReadOnly] public NativeArray<float> NoisePrevious;
         [ReadOnly] public NativeArray<float> NoiseNext;
 
@@ -157,7 +160,14 @@ namespace Gavi
 
         private float ReadNoise(int index)
         {
-            return NoiseBlend >= 1f ? NoiseNext[index] : Mathf.Lerp(NoisePrevious[index], NoiseNext[index], NoiseBlend);
+            if (NoiseInterval <= 1)
+                return NoiseNext[index];
+
+            int age = NoiseTick - NoiseSlots[index];
+            if (age < 0)
+                age += NoiseInterval;
+            float blend = Mathf.Min(1f, (age + 1f) / NoiseInterval);
+            return Mathf.Lerp(NoisePrevious[index], NoiseNext[index], blend);
         }
         #endregion
 

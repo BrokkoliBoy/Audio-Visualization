@@ -82,6 +82,14 @@ namespace Gavi
             ShowText(_slider.value);
         }
 
+        /// <summary>For ranges that are only known at run time. Set the value afterwards, the slider position is not kept.</summary>
+        public void SetRange(float min, float max)
+        {
+            _minValue = min;
+            _maxValue = max;
+            ShowText(_slider.value);
+        }
+
         private void ShowText(float sliderValue)
         {
             float value = PositionToValue(sliderValue);

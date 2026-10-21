@@ -7,6 +7,7 @@ namespace Gavi.Game
     public class GameStart : MonoBehaviour
     {
 
+        [Tooltip("Not used any more, the frame rate limit comes from FrameRateSettings (monitor refresh rate or the saved value).")]
         [SerializeField] private int m_targetFrameRate = 144;
         [SerializeField] private float m_targetFixedDeltaTime = 0.02f;
 
@@ -14,8 +15,7 @@ namespace Gavi.Game
 
         void Awake()
         {
-            QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = m_targetFrameRate > 0 ? m_targetFrameRate : 999;
+            FrameRateSettings.Apply();
             if (m_targetFixedDeltaTime > 0)
                 Time.fixedDeltaTime = m_targetFixedDeltaTime;
         }

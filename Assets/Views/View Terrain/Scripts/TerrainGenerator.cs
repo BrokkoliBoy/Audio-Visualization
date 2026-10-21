@@ -198,11 +198,14 @@ namespace Gavi
         [SerializeField] private int _noiseInterval = DefaultNoiseInterval;
         [Tooltip("The noise pattern is calculated only for every this-many-th vertex (in both directions) and interpolated in between. 1 = for every vertex.")]
         [SerializeField] private int _noiseStep = DefaultNoiseStep;
+        [Tooltip("Only meaningful with a noise interval above 1. Off: the whole pattern is calculated in one update every n-th update. On: every update calculates a different n-th of the points, so the work is the same in every frame and no part of the pattern flows in step with the others.")]
+        [SerializeField] private bool _noiseSpread = DefaultNoiseSpread;
         [Tooltip("The mesh is updated this often per second at most. The camera and the rest keep running at full speed. At or above the frame rate = every frame.")]
         [SerializeField] private int _meshUpdatesPerSecond = DefaultMeshUpdatesPerSecond;
 
         public const int DefaultNoiseInterval = 1;
         public const int DefaultNoiseStep = 1;
+        public const bool DefaultNoiseSpread = false;
         public const int DefaultMeshUpdatesPerSecond = 144;
         public const int MaxNoiseInterval = 8;
         public const int MaxNoiseStep = 6;
@@ -210,6 +213,7 @@ namespace Gavi
 
         public int NoiseInterval { get => _noiseInterval; set => _noiseInterval = Mathf.Clamp(value, 1, MaxNoiseInterval); }
         public int NoiseStep { get => _noiseStep; set => _noiseStep = Mathf.Clamp(value, 1, MaxNoiseStep); }
+        public bool NoiseSpread { get => _noiseSpread; set => _noiseSpread = value; }
         public int MeshUpdatesPerSecond { get => _meshUpdatesPerSecond; set => _meshUpdatesPerSecond = Mathf.Max(MinMeshUpdatesPerSecond, value); }
 
         /// <summary>Time the last mesh updates took on average (milliseconds on the main thread, the worker threads included).</summary>
@@ -277,7 +281,12 @@ namespace Gavi
         private float[] _noiseScratch;
         private bool _noiseValid;
         private int _noiseAge;
-        private float _noiseBlend = 1f;
+        /// <summary>Per grid point the update (0 to interval - 1) in which it is calculated again.</summary>
+        private NativeArray<byte> _noiseSlots;
+        private float[] _noisePreviousScratch;
+        private bool _noiseDueOnly;
+        private int _noiseIntervalUsed = 1;
+        private int _noiseSlotSignature;
         private int _noiseGridStep = 1;
         private int _noiseGridWidth;
         private int _noiseGridHeight;
@@ -525,7 +534,9 @@ namespace Gavi
                 NoiseStep = _noiseGridStep,
                 NoiseWidth = _noiseGridWidth,
                 NoiseHeight = _noiseGridHeight,
-                NoiseBlend = _noiseBlend,
+                NoiseInterval = _noiseIntervalUsed,
+                NoiseTick = _noiseAge,
+                NoiseSlots = _noiseSlots,
                 NoisePrevious = _noisePrevious,
                 NoiseNext = _noiseNext,
 
@@ -610,6 +621,7 @@ namespace Gavi
             DisposeArray(ref _waveLevels);
             DisposeArray(ref _noisePrevious);
             DisposeArray(ref _noiseNext);
+            DisposeArray(ref _noiseSlots);
         }
         #endregion
 
@@ -627,6 +639,8 @@ namespace Gavi
                 _noiseValid = false;
                 EnsureArray(ref _noisePrevious, 1);
                 EnsureArray(ref _noiseNext, 1);
+                EnsureArray(ref _noiseSlots, 1);
+                _noiseIntervalUsed = 1;
                 _noiseGridStep = 1;
                 _noiseGridWidth = 1;
                 _noiseGridHeight = 1;
@@ -649,22 +663,57 @@ namespace Gavi
             _noiseGridHeight = height;
 
             int interval = Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval);
+            bool spread = _noiseSpread && interval > 1;
+            _noiseIntervalUsed = interval;
+
+            // The slot of every grid point depends on the grid, the interval and the spread, a change starts over.
+            int signature = (width * 31 + height) * 31 + interval * 2 + (spread ? 1 : 0);
+            if (!_noiseSlots.IsCreated || _noiseSlots.Length != width * height || signature != _noiseSlotSignature)
+            {
+                BuildNoiseSlots(width, height, interval, spread);
+                _noiseSlotSignature = signature;
+                _noiseValid = false;
+            }
+
             if (!_noiseValid)
             {
-                CalculateNoise();
+                CalculateNoise(false);
                 _noisePrevious.CopyFrom(_noiseNext);
                 _noiseAge = 0;
                 _noiseValid = true;
             }
-            else if (++_noiseAge >= interval)
+            else
             {
-                NativeArray<float> older = _noisePrevious;
-                _noisePrevious = _noiseNext;
-                _noiseNext = older;
-                CalculateNoise();
-                _noiseAge = 0;
+                _noiseAge = (_noiseAge + 1) % interval;
+                if (spread)
+                {
+                    CalculateNoise(true);
+                }
+                else if (_noiseAge == 0)
+                {
+                    NativeArray<float> older = _noisePrevious;
+                    _noisePrevious = _noiseNext;
+                    _noiseNext = older;
+                    CalculateNoise(false);
+                }
             }
-            _noiseBlend = interval <= 1 ? 1f : Mathf.Min(1f, (_noiseAge + 1f) / interval);
+        }
+
+        /// <summary>Spread over the updates in a scattered way, so neighbours are not recalculated in the same update.</summary>
+        private void BuildNoiseSlots(int width, int height, int interval, bool spread)
+        {
+            EnsureArray(ref _noiseSlots, width * height);
+            for (int z = 0; z < height; z++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    uint hash = (uint)(x * 73856093) ^ (uint)(z * 19349663);
+                    hash ^= hash >> 13;
+                    hash *= 0x5bd1e995u;
+                    hash ^= hash >> 15;
+                    _noiseSlots[z * width + x] = spread ? (byte)(hash % (uint)interval) : (byte)0;
+                }
+            }
         }
 
         /// <summary>Number of grid points along an axis with every step-th vertex, the last one always lies on the edge.</summary>
@@ -673,11 +722,20 @@ namespace Gavi
             return (faceCount + step - 1) / step + 1;
         }
 
-        private void CalculateNoise()
+        /// <param name="onlyDue">Only the grid points whose slot is this update are calculated, the others keep their results.</param>
+        private void CalculateNoise(bool onlyDue)
         {
             int count = _noiseGridWidth * _noiseGridHeight;
             if (_noiseScratch == null || _noiseScratch.Length != count)
                 _noiseScratch = new float[count];
+            _noiseDueOnly = onlyDue;
+            if (onlyDue)
+            {
+                if (_noisePreviousScratch == null || _noisePreviousScratch.Length != count)
+                    _noisePreviousScratch = new float[count];
+                _noiseNext.CopyTo(_noiseScratch);
+                _noisePrevious.CopyTo(_noisePreviousScratch);
+            }
 
             if (count < ParallelNoiseMinPoints)
             {
@@ -692,6 +750,8 @@ namespace Gavi
                 System.Threading.Tasks.Parallel.For(0, _noiseGridHeight, _noiseRowAction);
             }
             _noiseNext.CopyFrom(_noiseScratch);
+            if (onlyDue)
+                _noisePrevious.CopyFrom(_noisePreviousScratch);
         }
 
         private void CalculateNoiseRow(int row)
@@ -702,8 +762,14 @@ namespace Gavi
             int index = row * _noiseGridWidth;
             for (int column = 0; column < _noiseGridWidth; column++, index++)
             {
+                if (_noiseDueOnly)
+                {
+                    if (_noiseSlots[index] != _noiseAge)
+                        continue;
+                    _noisePreviousScratch[index] = _noiseScratch[index];
+                }
                 float x = Mathf.Min(column * _noiseGridStep, _faceCountX) * scaleX;
-                _noiseScratch[index] = TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
+                _noiseScratch[index] =TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
             }
         }
 
