@@ -200,7 +200,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -561,6 +561,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -854,6 +858,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 904640418841823782, guid: d641952ac6b93634f92e5a99dc1542f3, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 904640418841823782, guid: d641952ac6b93634f92e5a99dc1542f3, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -913,6 +921,10 @@ PrefabInstance:
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_fontColor.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_sharedMaterial
@@ -1160,6 +1172,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7217721047775568019, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7217721047775568019, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -1192,6 +1208,10 @@ PrefabInstance:
     - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_fontColor.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_sharedMaterial
@@ -1435,6 +1455,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7217721047775568019, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7217721047775568019, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -1465,6 +1489,10 @@ PrefabInstance:
     - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_fontColor.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7217721048253125528, guid: 5173306eeb2359343a2854cd60f87685, type: 3}
       propertyPath: m_sharedMaterial
@@ -1672,6 +1700,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -1875,6 +1907,10 @@ PrefabInstance:
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_fontColor.r
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_sharedMaterial
@@ -2190,6 +2226,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 904640418841823782, guid: d641952ac6b93634f92e5a99dc1542f3, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 904640418841823782, guid: d641952ac6b93634f92e5a99dc1542f3, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -2254,6 +2294,10 @@ PrefabInstance:
       propertyPath: m_fontAsset
       value: 
       objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 1060613190210759374, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1060613190210759374, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
       propertyPath: m_sharedMaterial
       value: 
@@ -2487,6 +2531,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
     - target: {fileID: 3046351375492903159, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3046351375492903159, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
@@ -2587,6 +2635,10 @@ PrefabInstance:
       propertyPath: m_fontAsset
       value: 
       objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 1060613190210759374, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1060613190210759374, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
       propertyPath: m_sharedMaterial
       value: 
@@ -2827,6 +2879,10 @@ PrefabInstance:
       propertyPath: m_fontAsset
       value: 
       objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 3046351375492903159, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3046351375492903159, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
       propertyPath: m_sharedMaterial
       value: 

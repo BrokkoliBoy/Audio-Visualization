@@ -17,7 +17,7 @@ namespace Gavi
         [SerializeField] private TMP_Dropdown _dropdownSignal;
         [SerializeField] private SliderG _sliderLevel;
         [SerializeField] private Toggle _toggleBeat;
-        [SerializeField] private SliderG _sliderBpm;
+        [SerializeField] private Toggle _toggleKick;
         [SerializeField] private Toggle _toggleFreezeNoise;
 
         private void Awake()
@@ -29,7 +29,7 @@ namespace Gavi
             _dropdownSignal.onValueChanged.AddListener(index => _signal.SignalIndex = index);
             _sliderLevel.OnValueChangedFloat.AddListener(value => _signal.Level = value);
             _toggleBeat.onValueChanged.AddListener(isOn => _signal.Beat = isOn);
-            _sliderBpm.OnValueChangedFloat.AddListener(value => _signal.Bpm = value);
+            _toggleKick.onValueChanged.AddListener(isOn => _signal.Kick = isOn);
             _toggleFreezeNoise.onValueChanged.AddListener(isOn => _signal.FreezeNoise = isOn);
         }
 
@@ -41,7 +41,7 @@ namespace Gavi
             _dropdownSignal.RefreshShownValue();
             _sliderLevel.Value = _signal.Level;
             _toggleBeat.SetIsOnWithoutNotify(_signal.Beat);
-            _sliderBpm.Value = _signal.Bpm;
+            _toggleKick.SetIsOnWithoutNotify(_signal.Kick);
             _toggleFreezeNoise.SetIsOnWithoutNotify(_signal.FreezeNoise);
         }
     }

@@ -22,15 +22,16 @@ Last updated: 2026-10-21
 |---|---|---|
 | Spectrum terrain | done | Bands are cast onto one or more shapes, out-of-bounds handling, smoothing between bands |
 | Dampening | done | Separate up / down factors (default 0.05 each), frame-rate independent |
-| Noise patterns | done | 22 patterns (Perlin, Simplex, Value, Fractal, Ridged, Billow, Domain warp, Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons, Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles). Start pattern: Domain warp |
-| Invert per pattern | done | Cell patterns (Voronoi, Hexagons, Bricks, Dots, Pyramids, Tiles) stand up from the ground by default, the Invert toggle flips them. The choice is remembered per pattern |
+| Noise patterns | done | 27 patterns (Perlin, Simplex, Value, Fractal, Ridged, Billow, Domain warp, Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons, Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles, Triangles, Checker, Steps, Cubes, Honeycomb). Start pattern: Domain warp. Speed slider 0 to 10 (half way = 3) |
+| Invert per pattern | done | Cell patterns (Voronoi, Cracks, Hexagons, Bricks, Dots, Pyramids, Tiles, Triangles, Cubes) stand up from the ground by default, the Invert toggle flips them. The choice is remembered per pattern |
 | Flip on the beat | done | "Flip beats" turns the pattern upside down every N beats, with a smooth morph instead of a hard switch |
 | Beat wave | done | Ring waves on the beat. Origin: Middle, Edge, Alternate, Bass edge. Mode: Add, Floor, Absorb. Speed is tied to the song's BPM (1 = half the terrain width per beat) |
 | Wave trigger | done | Bass has priority, quiet passages stay quiet. A wave starts flat on every beat and grows if the bass gets strong within 0.1 s. Full height at 90 % of the recent loudest bass |
 | Color palettes | done | JSON palettes, HDR colors, start palette Lava |
 | Saturation / glow mapping | done | Curved saturation slider, weakly saturated colors are dimmed so white does not overpower |
 | FPS display + hint | done | Hint to lower the face count when FPS stays under 60 / 30 |
-| Test signal | done | Replaces the audio with a calm, fixed spectrum (and an optional kick at a set BPM) to judge effects without a moving song. Starts off, not part of a profile |
+| Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react), "Kick on beat" lets all bands pulse with it, the bass the most. Starts off, not part of a profile |
+| Background tint | done | The sky takes the hue of the base color, brightness stays. Toggle "Tint background" in the Color tab |
 | Profiles | done | All terrain settings except the test signal |
 | Camera control | done | Mouse and keyboard, beat zoom, camera menu |
 
@@ -39,11 +40,13 @@ Last updated: 2026-10-21
 | Idea | Status | Notes |
 |---|---|---|
 | Per-song audio settings | todo (Chris) | Bass boost, lower outer bands. BPM and offset are set for the new songs, the rest is missing |
-| Background color from the base color | idea | Tint the upper (reddish) part of the sky with the base hue, not the brightness. Maybe a menu option instead |
 | Noise speed variation | idea | One slider, e.g. a slow drift of the noise direction in a circle |
 | Zoom per pattern | idea | Each pattern remembers its own zoom |
 | More beat-driven invert effects | idea | Breathing, crossfade A to B, zoom / offset kick, bass-driven morph, reverse spiral, half-time ping-pong. Only the plain flip is built |
+| Color by band activity | idea | Color not only from the height but also from how strongly the vertex's frequency band moves |
+| Mesh morphs | idea | Bend the terrain as a whole, e.g. onto a sphere, tilt, saddle, tube, ripples of the mesh itself |
+| More patterns | idea | Stars, scales, weave, more geometric ones |
+| Watch the beat flip in the test setup | todo (Chris) | Beat on, Flip beats 1 or 2 |
 | Test signal: band editor | idea | Click bands to set their level (left / right mouse button) |
 | Interaction mode | idea | Touch the terrain with the mouse, optionally on top of a song |
-| Test the beat flip with the test signal | todo | Not tried yet in the calm setup |
 | Import own music, record video | idea | See the portfolio notes |

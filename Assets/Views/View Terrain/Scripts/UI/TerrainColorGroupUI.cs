@@ -40,6 +40,12 @@ namespace Gavi
         [SerializeField] private SliderG _sliderBloomIntensity;
         [SerializeField] private SliderG _sliderBloomScatter;
 
+        [Header("--- Background ---")]
+        [Tooltip("The sky of the bloom volume takes the hue of the base color (the first one). Its brightness and saturation stay.")]
+        [SerializeField] private Toggle _toggleTintBackground;
+        [Tooltip("Hue of the base color for which the sky stays as it is in the scene.")]
+        [SerializeField] private float _skyReferenceHue = 0f;
+
         [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
         [SerializeField] private SliderG _sliderDirtStrength;
@@ -68,6 +74,9 @@ namespace Gavi
         private bool _modified;
         private bool _rebuildPending;
         private Bloom _bloom;
+        private GradientSky _sky;
+        private Color _skyMiddle;
+        private Color _skyBottom;
         private bool _ready;
         private bool _suppress;
         private float _deleteConfirmUntil;
@@ -109,6 +118,8 @@ namespace Gavi
             foreach (TerrainColorEntryUI entry in _entries)
                 entry.Changed += OnEntryChanged;
 
+            if (_toggleTintBackground != null)
+                _toggleTintBackground.onValueChanged.AddListener(_ => ApplyBackground());
             if (_paletteDropdown != null)
                 _paletteDropdown.onValueChanged.AddListener(OnDropdownChanged);
             if (_buttonSave != null)
@@ -519,6 +530,36 @@ namespace Gavi
             }
 
             _gradient.SetKeys(keys, _originalAlphaKeys);
+            ApplyBackground();
+        }
+
+        /// <summary>Turns the sky colors by the same angle the base color is turned away from the reference hue.</summary>
+        private void ApplyBackground()
+        {
+            if (_bloomVolume == null)
+                return;
+            if (_sky == null)
+            {
+                if (!_bloomVolume.profile.TryGet(out _sky))
+                    return;
+                _skyMiddle = _sky.middle.value;
+                _skyBottom = _sky.bottom.value;
+            }
+
+            bool tint = (_toggleTintBackground == null || _toggleTintBackground.isOn) && _entries.Count > 0;
+            float turn = tint ? _entries[0].Hue - _skyReferenceHue : 0f;
+            _sky.middle.Override(TurnHue(_skyMiddle, turn));
+            _sky.bottom.Override(TurnHue(_skyBottom, turn));
+        }
+
+        private static Color TurnHue(Color color, float degrees)
+        {
+            if (Mathf.Abs(degrees) < 0.01f)
+                return color;
+            Color.RGBToHSV(color, out float h, out float s, out float v);
+            Color turned = Color.HSVToRGB(Mathf.Repeat(h + degrees / 360f, 1f), s, v, true);
+            turned.a = color.a;
+            return turned;
         }
 
         private void ApplyBloom()

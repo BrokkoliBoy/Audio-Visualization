@@ -97,8 +97,11 @@ namespace Gavi
         /// <summary>... and so does the highest level this long after the beat. A wave whose bass is too weak at first can still
         /// become visible within this time, and it keeps growing while the bass gets higher.</summary>
         private const float BassWindowAfter = 0.1f;
-        /// <summary>A wave that becomes visible after its beat (or grows later) needs this long to go from flat to full height.</summary>
-        private const float GrowSeconds = 0.15f;
+        /// <summary>A wave that becomes visible after its beat (or grows later) goes from flat to full height while it runs
+        /// this far (in half terrain widths), but never slower than <see cref="MaxGrowSeconds"/> and never faster than <see cref="MinGrowSeconds"/>.</summary>
+        private const float GrowDistance = 0.3f;
+        private const float MaxGrowSeconds = 0.15f;
+        private const float MinGrowSeconds = 0.04f;
         /// <summary>Waves never get smaller than this.</summary>
         private const float MinAmplitude = 0.03f;
         /// <summary>A bass level of this share of the recent loudest bass gives the full wave height.</summary>
@@ -293,8 +296,13 @@ namespace Gavi
         private void GrowWaves(float deltaTime)
         {
             for (int i = 0; i < MaxWaves; i++)
-                if (_amplitude[i] < _targetAmplitude[i])
-                    _amplitude[i] = Mathf.MoveTowards(_amplitude[i], _targetAmplitude[i], deltaTime / GrowSeconds);
+            {
+                if (_amplitude[i] >= _targetAmplitude[i])
+                    continue;
+                // a fast wave grows over a short time, so it reaches its height after about the same distance
+                float seconds = Mathf.Clamp(GrowDistance / Mathf.Max(0.01f, _waveSpeed[i]), MinGrowSeconds, MaxGrowSeconds);
+                _amplitude[i] = Mathf.MoveTowards(_amplitude[i], _targetAmplitude[i], deltaTime / seconds);
+            }
         }
 
         /// <summary>Speed of a wave in half terrain widths per second: Speed 1 crosses half the terrain in one beat.</summary>

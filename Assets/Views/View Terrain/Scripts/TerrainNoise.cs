@@ -14,14 +14,16 @@ namespace Gavi
         {
             Perlin, Simplex, Value, Fractal, Ridged, Billow, DomainWarp,
             Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons,
-            Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles
+            Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles,
+            Triangles, Checker, Steps, Cubes, Honeycomb
         }
 
         public static readonly string[] Names =
         {
             "Perlin", "Simplex", "Value", "Fractal", "Ridged", "Billow", "Domain warp",
             "Voronoi", "Mosaic", "Cracks", "Rings", "Interference", "Spiral", "Waffle", "Hexagons",
-            "Bricks", "Dots", "Pyramids", "Flower", "Zigzag", "Plasma", "Tiles"
+            "Bricks", "Dots", "Pyramids", "Flower", "Zigzag", "Plasma", "Tiles",
+            "Triangles", "Checker", "Steps", "Cubes", "Honeycomb"
         };
 
         /// <summary>
@@ -38,6 +40,9 @@ namespace Gavi
                 case Pattern.Dots:
                 case Pattern.Pyramids:
                 case Pattern.Tiles:
+                case Pattern.Cracks:
+                case Pattern.Triangles:
+                case Pattern.Cubes:
                     return true;
                 default:
                     return false;
@@ -119,6 +124,21 @@ namespace Gavi
                     return 0.5f + 0.125f * (Mathf.Sin(u * 1f) + Mathf.Sin(v * 1.2f) + Mathf.Sin((u + v) * 0.8f) + Mathf.Sin(Mathf.Sqrt(u * u + v * v) * 1f));
                 case Pattern.Tiles:
                     return Tiles(u * 0.5f, v * 0.5f);
+                case Pattern.Triangles:
+                    return Triangles(u * 0.3f, v * 0.3f);
+                case Pattern.Checker:
+                    return Mathf.Clamp01(0.5f + 2f * Mathf.Sin(Mathf.PI * u * 0.35f) * Mathf.Sin(Mathf.PI * v * 0.35f));
+                case Pattern.Steps:
+                {
+                    // concentric square steps, up and down again, they run outward when the offset gets smaller
+                    float ring = Mathf.Max(Mathf.Abs(x - Center), Mathf.Abs(z - Center)) + offsetZ;
+                    float wave = Mathf.PingPong(ring * zoom * 0.18f, 1f);
+                    return Mathf.Floor(wave * 5f) / 4f;
+                }
+                case Pattern.Cubes:
+                    return Cubes(u * 0.5f, v * 0.5f);
+                case Pattern.Honeycomb:
+                    return Honeycomb(u * 0.6f, v * 0.6f);
                 default:
                     return Mathf.PerlinNoise(u, v);
             }
@@ -280,22 +300,46 @@ namespace Gavi
         /// </summary>
         private static float Hexagons(float x, float y)
         {
+            HexCell(x, y, out int rq, out int rr, out _, out _, out float edge);
+            return (0.25f + 0.75f * Hash(rq, rr, 7)) * Smooth((1f - edge) / 0.2f);
+        }
+
+        /// <summary>The hexagon (pointy top, radius 1) a point is in: its axial coordinates, the position relative to its middle and how close the point is to the rim (0 in the middle, 1 at the rim).</summary>
+        private static void HexCell(float x, float y, out int rq, out int rr, out float ox, out float oy, out float edge)
+        {
             // cube coordinates of the hexagon the point is in
             float q = 0.57735027f * x - 0.33333334f * y;
             float r = 0.6666667f * y;
             float s = -q - r;
-            int rq = Mathf.RoundToInt(q), rr = Mathf.RoundToInt(r), rs = Mathf.RoundToInt(s);
+            rq = Mathf.RoundToInt(q);
+            rr = Mathf.RoundToInt(r);
+            int rs = Mathf.RoundToInt(s);
             float dq = Mathf.Abs(rq - q), dr = Mathf.Abs(rr - r), ds = Mathf.Abs(rs - s);
             if (dq > dr && dq > ds)
                 rq = -rr - rs;
             else if (dr > ds)
                 rr = -rq - rs;
 
-            // position relative to the middle of the hexagon: 0 in the middle, 1 at the rim
-            float ox = x - 1.7320508f * (rq + rr * 0.5f);
-            float oy = y - 1.5f * rr;
-            float edge = Mathf.Max(Mathf.Abs(ox), Mathf.Max(Mathf.Abs(0.5f * ox + 0.8660254f * oy), Mathf.Abs(0.5f * ox - 0.8660254f * oy))) / 0.8660254f;
-            return (0.25f + 0.75f * Hash(rq, rr, 7)) * Smooth((1f - edge) / 0.2f);
+            ox = x - 1.7320508f * (rq + rr * 0.5f);
+            oy = y - 1.5f * rr;
+            edge = Mathf.Max(Mathf.Abs(ox), Mathf.Max(Mathf.Abs(0.5f * ox + 0.8660254f * oy), Mathf.Abs(0.5f * ox - 0.8660254f * oy))) / 0.8660254f;
+        }
+
+        /// <summary>Isometric cubes: every hexagon is split into three rhombi (top, left, right) of different heights, each cube with its own height.</summary>
+        private static float Cubes(float x, float y)
+        {
+            HexCell(x, y, out int rq, out int rr, out float ox, out float oy, out _);
+            float angle = Mathf.Atan2(oy, ox) * Mathf.Rad2Deg;
+            int face = Mathf.FloorToInt(Mathf.Repeat(angle + 30f, 360f) / 120f);
+            float faceHeight = face == 0 ? 1f : face == 1 ? 0.62f : 0.3f;
+            return (0.55f + 0.45f * Hash(rq, rr, 29)) * faceHeight;
+        }
+
+        /// <summary>Hexagonal pits: the cells are low, the rims between them stay high.</summary>
+        private static float Honeycomb(float x, float y)
+        {
+            HexCell(x, y, out _, out _, out _, out _, out float edge);
+            return Smooth((1f - edge) / 0.45f);
         }
         #endregion
 
@@ -330,6 +374,19 @@ namespace Gavi
             int ia = Mathf.FloorToInt(a), ib = Mathf.FloorToInt(b);
             float tent = 1f - 2f * Mathf.Max(Mathf.Abs(a - ia - 0.5f), Mathf.Abs(b - ib - 0.5f));
             return (0.3f + 0.7f * Hash(ia, ib, 17)) * tent;
+        }
+
+        /// <summary>Triangular pyramids on a triangle grid (edge length 1), each with its own height.</summary>
+        private static float Triangles(float x, float y)
+        {
+            float j = y * 1.1547005f;
+            float i = x - 0.5f * j;
+            int ci = Mathf.FloorToInt(i), cj = Mathf.FloorToInt(j);
+            float fi = i - ci, fj = j - cj;
+            bool up = fi + fj < 1f;
+            // distance to the nearest of the three edges, at most 1/3 in the middle of the triangle
+            float nearest = up ? Mathf.Min(fi, Mathf.Min(fj, 1f - fi - fj)) : Mathf.Min(1f - fi, Mathf.Min(1f - fj, fi + fj - 1f));
+            return (0.5f + 0.5f * Hash(ci, cj * 2 + (up ? 0 : 1), 23)) * Mathf.Clamp01(nearest * 3f);
         }
 
         /// <summary>Square tiles with a random height each. The rim falls off softly, like with the hexagons.</summary>

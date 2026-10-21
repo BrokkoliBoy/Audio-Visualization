@@ -335,7 +335,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -508,7 +508,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -792,6 +792,18 @@ MonoBehaviour:
   _maxValue: 1
   _isInteger: 0
   _textDecimals: 1
+  _moreDecimalsBelow: -1
+  _textDecimalsBelow: 2
+  _useSnap: 0
+  _snapValue: 1
+  _snapPlateau: 0.012
+  _snapSlowWidth: 0.07
+  _snapSlowDelta: 0.1
+  _useCurve: 0
+  _curveMidValue: 0.1
+  _useDisplayRange: 0
+  _displayMin: 1
+  _displayMax: 10
   _slider: {fileID: 7217721047635580197}
   _textValue: {fileID: 7217721048253125528}
   OnValueChangedFloat:
