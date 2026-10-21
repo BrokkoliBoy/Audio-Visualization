@@ -41,16 +41,11 @@ namespace Gavi
         public float ScaleY;
         public float ScaleZ;
 
-        // --- noise: the raw pattern on a grid with every NoiseStep-th vertex, blended between the last two calculations ---
+        // --- noise: the raw pattern per vertex, blended between the last two calculations ---
         public bool ApplyNoise;
         public float PerlinStrength;
         public float InvertEased;
-        public int NoiseStep;
-        public int NoiseWidth;
-        public int NoiseHeight;
-        /// <summary>Between the grid points a smooth curve (Catmull-Rom) instead of straight lines. Only used with a NoiseStep above 1.</summary>
-        public bool NoiseSmooth;
-        /// <summary>The noise is calculated again every NoiseInterval updates, per grid point in the update of its slot. NoiseTick is the current update.</summary>
+        /// <summary>The noise is calculated again every NoiseInterval updates, per vertex in the update of its slot. NoiseTick is the current update.</summary>
         public int NoiseInterval;
         public int NoiseTick;
         [ReadOnly] public NativeArray<byte> NoiseSlots;
@@ -112,24 +107,13 @@ namespace Gavi
         public void Execute(int z)
         {
             int index = z * (FaceCountX + 1);
-            GetNoiseAxis(z, FaceCountZ, NoiseHeight, out int z0, out int z1, out float zWeight);
 
             for (int x = 0; x <= FaceCountX; x++, index++)
             {
                 float noise = 0f;
                 if (ApplyNoise)
                 {
-                    GetNoiseAxis(x, FaceCountX, NoiseWidth, out int x0, out int x1, out float xWeight);
-                    if (NoiseSmooth && NoiseStep > 1)
-                    {
-                        noise = SampleNoiseSmooth(z0, z1, zWeight, x0, x1, xWeight);
-                    }
-                    else
-                    {
-                        float a = Mathf.Lerp(ReadNoise(z0 * NoiseWidth + x0), ReadNoise(z0 * NoiseWidth + x1), xWeight);
-                        float b = zWeight > 0f ? Mathf.Lerp(ReadNoise(z1 * NoiseWidth + x0), ReadNoise(z1 * NoiseWidth + x1), xWeight) : a;
-                        noise = Mathf.Lerp(a, b, zWeight);
-                    }
+                    noise = ReadNoise(index);
                     noise = Mathf.Lerp(noise, 1f - noise, InvertEased);
                 }
 
@@ -142,61 +126,6 @@ namespace Gavi
         }
 
         #region Noise
-        /// <summary>The two neighbours on the coarse noise grid and the weight of the second one.</summary>
-        private void GetNoiseAxis(int position, int faceCount, int coarseCount, out int first, out int second, out float weight)
-        {
-            if (NoiseStep <= 1)
-            {
-                first = position;
-                second = position;
-                weight = 0f;
-                return;
-            }
-
-            first = position / NoiseStep;
-            int left = first * NoiseStep;
-            if (left == position)
-            {
-                second = first;
-                weight = 0f;
-                return;
-            }
-
-            second = Mathf.Min(first + 1, coarseCount - 1);
-            int right = Mathf.Min(left + NoiseStep, faceCount);
-            weight = (float)(position - left) / (right - left);
-        }
-
-        /// <summary>Catmull-Rom through the four grid points around the vertex in both directions. The curve can overshoot a little, so the result is clamped to the noise range.</summary>
-        private float SampleNoiseSmooth(int z0, int z1, float zWeight, int x0, int x1, float xWeight)
-        {
-            int xBefore = Mathf.Max(x0 - 1, 0);
-            int xAfter = Mathf.Min(x1 + 1, NoiseWidth - 1);
-            if (zWeight <= 0f)
-                return SmoothRow(z0 * NoiseWidth, xBefore, x0, x1, xAfter, xWeight);
-
-            int zBefore = Mathf.Max(z0 - 1, 0);
-            int zAfter = Mathf.Min(z1 + 1, NoiseHeight - 1);
-            float r0 = SmoothRow(zBefore * NoiseWidth, xBefore, x0, x1, xAfter, xWeight);
-            float r1 = SmoothRow(z0 * NoiseWidth, xBefore, x0, x1, xAfter, xWeight);
-            float r2 = SmoothRow(z1 * NoiseWidth, xBefore, x0, x1, xAfter, xWeight);
-            float r3 = SmoothRow(zAfter * NoiseWidth, xBefore, x0, x1, xAfter, xWeight);
-            return Mathf.Clamp01(CatmullRom(r0, r1, r2, r3, zWeight));
-        }
-
-        private float SmoothRow(int row, int xBefore, int x0, int x1, int xAfter, float xWeight)
-        {
-            if (xWeight <= 0f)
-                return ReadNoise(row + x0);
-            return CatmullRom(ReadNoise(row + xBefore), ReadNoise(row + x0), ReadNoise(row + x1), ReadNoise(row + xAfter), xWeight);
-        }
-
-        private static float CatmullRom(float p0, float p1, float p2, float p3, float t)
-        {
-            float t2 = t * t;
-            return 0.5f * (2f * p1 + (p2 - p0) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (3f * p1 - p0 - 3f * p2 + p3) * t2 * t);
-        }
-
         private float ReadNoise(int index)
         {
             if (NoiseInterval <= 1)

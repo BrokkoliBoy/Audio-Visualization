@@ -6,19 +6,13 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>
-    /// Speed settings of the terrain: how often the noise and the mesh are calculated and in what detail. The text shows what the
-    /// mesh update costs right now, so a setting can be judged by its saving and by eye.
+    /// Speed settings of the terrain: how often the noise is calculated and the frame rate limit. The text shows what the mesh
+    /// update costs right now, so a setting can be judged by its saving and by eye.
     /// </summary>
     public class TerrainGroupUIPerformance : TerrainGroupUI
     {
         [Tooltip("The noise is calculated again every this many mesh updates.")]
         [SerializeField] private SliderG _sliderNoiseInterval;
-        [Tooltip("The noise is calculated for every this-many-th vertex.")]
-        [SerializeField] private SliderG _sliderNoiseStep;
-        [Tooltip("The mesh is updated this often per second at most.")]
-        [SerializeField] private SliderG _sliderMeshRate;
-        [Tooltip("The vertices between the noise points follow a smooth curve instead of straight lines (only with Noise step above 1).")]
-        [SerializeField] private Toggle _toggleNoiseSmooth;
         [Tooltip("The noise work is spread over the updates instead of done all at once every n-th update.")]
         [SerializeField] private Toggle _toggleNoiseSpread;
         [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
@@ -33,9 +27,6 @@ namespace Gavi
         private void Awake()
         {
             _sliderNoiseInterval.OnValueChangedInt.AddListener(OnUIValueChanged);
-            _sliderNoiseStep.OnValueChangedInt.AddListener(OnUIValueChanged);
-            _sliderMeshRate.OnValueChangedInt.AddListener(OnUIValueChanged);
-            _toggleNoiseSmooth.onValueChanged.AddListener(OnUIValueChanged);
             _toggleNoiseSpread.onValueChanged.AddListener(OnUIValueChanged);
 
             // The limit belongs to the computer, so it does not go through the profile.
@@ -71,9 +62,6 @@ namespace Gavi
         {
             base.ExtractProfile(profile);
             profile.NoiseInterval = _sliderNoiseInterval.ValueInt;
-            profile.NoiseStep = _sliderNoiseStep.ValueInt;
-            profile.MeshUpdateRate = _sliderMeshRate.ValueInt;
-            profile.NoiseSmooth = _toggleNoiseSmooth.isOn;
             profile.NoiseSpread = _toggleNoiseSpread.isOn;
         }
 
@@ -81,9 +69,6 @@ namespace Gavi
         {
             base.ShowProfile(profile);
             _sliderNoiseInterval.ValueInt = profile.NoiseInterval;
-            _sliderNoiseStep.ValueInt = profile.NoiseStep;
-            _sliderMeshRate.ValueInt = profile.MeshUpdateRate;
-            _toggleNoiseSmooth.isOn = profile.NoiseSmooth;
             _toggleNoiseSpread.isOn = profile.NoiseSpread;
         }
     }

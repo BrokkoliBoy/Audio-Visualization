@@ -196,29 +196,15 @@ namespace Gavi
         [Header("--- Performance (part of the terrain profile) ---")]
         [Tooltip("The noise pattern is calculated again only every this many mesh updates. In between it flows smoothly from the last result to the next one. 1 = every update.")]
         [SerializeField] private int _noiseInterval = DefaultNoiseInterval;
-        [Tooltip("The noise pattern is calculated only for every this-many-th vertex (in both directions) and interpolated in between. 1 = for every vertex.")]
-        [SerializeField] private int _noiseStep = DefaultNoiseStep;
-        [Tooltip("Only meaningful with a noise step above 1. On: the vertices between the calculated points follow a smooth curve through them (Catmull-Rom). Off: they lie on straight lines.")]
-        [SerializeField] private bool _noiseSmooth = DefaultNoiseSmooth;
         [Tooltip("Only meaningful with a noise interval above 1. Off: the whole pattern is calculated in one update every n-th update. On: every update calculates a different n-th of the points, so the work is the same in every frame and no part of the pattern flows in step with the others.")]
         [SerializeField] private bool _noiseSpread = DefaultNoiseSpread;
-        [Tooltip("The mesh is updated this often per second at most. The camera and the rest keep running at full speed. At or above the frame rate = every frame.")]
-        [SerializeField] private int _meshUpdatesPerSecond = DefaultMeshUpdatesPerSecond;
 
         public const int DefaultNoiseInterval = 1;
-        public const int DefaultNoiseStep = 1;
-        public const bool DefaultNoiseSmooth = true;
         public const bool DefaultNoiseSpread = false;
-        public const int DefaultMeshUpdatesPerSecond = 144;
         public const int MaxNoiseInterval = 8;
-        public const int MaxNoiseStep = 6;
-        public const int MinMeshUpdatesPerSecond = 10;
 
         public int NoiseInterval { get => _noiseInterval; set => _noiseInterval = Mathf.Clamp(value, 1, MaxNoiseInterval); }
-        public int NoiseStep { get => _noiseStep; set => _noiseStep = Mathf.Clamp(value, 1, MaxNoiseStep); }
-        public bool NoiseSmooth { get => _noiseSmooth; set => _noiseSmooth = value; }
         public bool NoiseSpread { get => _noiseSpread; set => _noiseSpread = value; }
-        public int MeshUpdatesPerSecond { get => _meshUpdatesPerSecond; set => _meshUpdatesPerSecond = Mathf.Max(MinMeshUpdatesPerSecond, value); }
 
         /// <summary>Time the last mesh updates took on average (milliseconds on the main thread, the worker threads included).</summary>
         public float UpdateMilliseconds => _updateMilliseconds;
@@ -276,7 +262,7 @@ namespace Gavi
         private NativeArray<float> _waveLevels;
         private float _outOfBoundsFactorValue; // only set when _outOfBoundsSettings != OutOfBounds.OutestBand
 
-        // The noise pattern on a grid with every NoiseStep-th vertex: the last two results, blended over NoiseInterval updates
+        // The noise pattern per vertex: the last two results, blended over NoiseInterval updates
         private NativeArray<float> _noisePrevious;
         private NativeArray<float> _noiseNext;
         private float[] _noiseScratch;
@@ -288,7 +274,6 @@ namespace Gavi
         private bool _noiseDueOnly;
         private int _noiseIntervalUsed = 1;
         private int _noiseSlotSignature;
-        private int _noiseGridStep = 1;
         private int _noiseGridWidth;
         private int _noiseGridHeight;
         /// <summary>Below this many grid points the noise is calculated on the main thread, the threads would cost more than they save.</summary>
@@ -306,9 +291,6 @@ namespace Gavi
                 return;
 
             _timeSinceMesh += Time.deltaTime;
-            // The update comes in the frame that is closest to the wanted time.
-            if (_timeSinceMesh < 1f / Mathf.Max(MinMeshUpdatesPerSecond, _meshUpdatesPerSecond) - 0.5f * Time.deltaTime)
-                return;
             GenerateMesh();
         }
 
@@ -531,10 +513,6 @@ namespace Gavi
                 ApplyNoise = _applyPerlinNoise,
                 PerlinStrength = _perlinStrength,
                 InvertEased = _invertEased,
-                NoiseStep = _noiseGridStep,
-                NoiseWidth = _noiseGridWidth,
-                NoiseHeight = _noiseGridHeight,
-                NoiseSmooth = _noiseSmooth,
                 NoiseInterval = _noiseIntervalUsed,
                 NoiseTick = _noiseAge,
                 NoiseSlots = _noiseSlots,
@@ -629,8 +607,8 @@ namespace Gavi
 
         #region Noise
         /// <summary>
-        /// Keeps the pattern up to date once per mesh update. The pattern is calculated for a grid with every step-th vertex, row by
-        /// row on all processor cores, and only every NoiseInterval-th update. In between the vertex job blends from the last result
+        /// Keeps the pattern up to date once per mesh update. The pattern is calculated row by row on all processor cores, and
+        /// only every NoiseInterval-th update. In between the vertex job blends from the last result
         /// to the new one, so the pattern keeps flowing.
         /// </summary>
         private void UpdateNoise()
@@ -642,15 +620,13 @@ namespace Gavi
                 EnsureArray(ref _noiseNext, 1);
                 EnsureArray(ref _noiseSlots, 1);
                 _noiseIntervalUsed = 1;
-                _noiseGridStep = 1;
                 _noiseGridWidth = 1;
                 _noiseGridHeight = 1;
                 return;
             }
 
-            int step = Mathf.Clamp(_noiseStep, 1, MaxNoiseStep);
-            int width = GridCount(_faceCountX, step);
-            int height = GridCount(_faceCountZ, step);
+            int width = _faceCountX + 1;
+            int height = _faceCountZ + 1;
             if (!_noiseNext.IsCreated || _noiseNext.Length != width * height)
             {
                 DisposeArray(ref _noisePrevious);
@@ -659,7 +635,6 @@ namespace Gavi
                 _noiseNext = new NativeArray<float>(width * height, Allocator.Persistent);
                 _noiseValid = false;
             }
-            _noiseGridStep = step;
             _noiseGridWidth = width;
             _noiseGridHeight = height;
 
@@ -717,12 +692,6 @@ namespace Gavi
             }
         }
 
-        /// <summary>Number of grid points along an axis with every step-th vertex, the last one always lies on the edge.</summary>
-        private static int GridCount(int faceCount, int step)
-        {
-            return (faceCount + step - 1) / step + 1;
-        }
-
         /// <param name="onlyDue">Only the grid points whose slot is this update are calculated, the others keep their results.</param>
         private void CalculateNoise(bool onlyDue)
         {
@@ -759,7 +728,7 @@ namespace Gavi
         {
             // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
             float scaleX = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX);
-            float zScaled = Mathf.Min(row * _noiseGridStep, _faceCountZ) * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
+            float zScaled = row * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
             int index = row * _noiseGridWidth;
             for (int column = 0; column < _noiseGridWidth; column++, index++)
             {
@@ -769,8 +738,8 @@ namespace Gavi
                         continue;
                     _noisePreviousScratch[index] = _noiseScratch[index];
                 }
-                float x = Mathf.Min(column * _noiseGridStep, _faceCountX) * scaleX;
-                _noiseScratch[index] =TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
+                float x = column * scaleX;
+                _noiseScratch[index] = TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
             }
         }
 

@@ -14,8 +14,8 @@ namespace Gavi
         
         #region Settings Variables
         [Header("- Terrain -")]
-        public int FaceCountX = 115;
-        public int FaceCountY = 115;
+        public int FaceCountX = 500;
+        public int FaceCountY = 500;
         public float TerrainHeight = 3;
         
         [Header("- Perlin -")]
@@ -92,12 +92,8 @@ namespace Gavi
         [Header("- Performance -")]
         [Tooltip("The noise is calculated again every this many mesh updates, 1 = every update.")]
         public int NoiseInterval = TerrainGenerator.DefaultNoiseInterval;
-        [Tooltip("The noise is calculated for every this-many-th vertex and interpolated in between, 1 = every vertex.")]
-        public int NoiseStep = TerrainGenerator.DefaultNoiseStep;
-        public bool NoiseSmooth = TerrainGenerator.DefaultNoiseSmooth;
+        [Tooltip("The noise work is spread over the updates instead of done all at once every n-th update.")]
         public bool NoiseSpread = TerrainGenerator.DefaultNoiseSpread;
-        [Tooltip("The mesh is updated this often per second at most.")]
-        public int MeshUpdateRate = TerrainGenerator.DefaultMeshUpdatesPerSecond;
         #endregion
         
         
@@ -181,10 +177,7 @@ namespace Gavi
 
             // Performance
             NoiseInterval = profile.NoiseInterval;
-            NoiseStep = profile.NoiseStep;
-            NoiseSmooth = profile.NoiseSmooth;
             NoiseSpread = profile.NoiseSpread;
-            MeshUpdateRate = profile.MeshUpdateRate;
 
             // Shape
             Shapes.Clear();
@@ -255,10 +248,7 @@ namespace Gavi
 
             // Performance
             NoiseInterval = terrain.NoiseInterval;
-            NoiseStep = terrain.NoiseStep;
-            NoiseSmooth = terrain.NoiseSmooth;
             NoiseSpread = terrain.NoiseSpread;
-            MeshUpdateRate = terrain.MeshUpdatesPerSecond;
 
             // Shape
             Shapes = new List<TerrainShapeData>();
@@ -337,10 +327,7 @@ namespace Gavi
 
             // Performance
             terrain.NoiseInterval = NoiseInterval;
-            terrain.NoiseStep = NoiseStep;
-            terrain.NoiseSmooth = NoiseSmooth;
             terrain.NoiseSpread = NoiseSpread;
-            terrain.MeshUpdatesPerSecond = MeshUpdateRate;
 
             // Shape
             // terrain.Shapes ??= new List<TerrainShape>();
