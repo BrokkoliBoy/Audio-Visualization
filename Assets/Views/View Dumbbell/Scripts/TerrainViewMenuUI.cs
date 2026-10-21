@@ -124,7 +124,7 @@ namespace Gavi
             Vector3 targetPosition = menuIsActive ? _menuActiveCameraTransform.position : _menuInactiveCameraTransform.position;
             while ((targetPosition - _cameraTransform.position).magnitude > 0.1f)
             {
-                _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, targetPosition, _lerpSpeed * Utility.Utility.GetFpsEqualizer());
+                _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, targetPosition, Utility.Utility.Smooth(_lerpSpeed, Utility.Utility.GetFpsEqualizer()));
                 yield return null;
             }
 
@@ -137,7 +137,7 @@ namespace Gavi
 
             while ((targetPosition - _menuTransform.position).magnitude > 0.1f)
             {
-                _menuTransform.position = Vector3.Lerp(_menuTransform.position, targetPosition, _lerpSpeed * Utility.Utility.GetFpsEqualizer());
+                _menuTransform.position = Vector3.Lerp(_menuTransform.position, targetPosition, Utility.Utility.Smooth(_lerpSpeed, Utility.Utility.GetFpsEqualizer()));
                 yield return null;
             }
 
@@ -157,7 +157,7 @@ namespace Gavi
             while (Quaternion.Angle(targetRotation, _textsButtonToggleMenu[0].rotation) > 1)
             {
                 for (int i = 0; i < _textsButtonToggleMenu.Count; i++)
-                    _textsButtonToggleMenu[i].rotation = Quaternion.LerpUnclamped(_textsButtonToggleMenu[i].rotation, targetRotation, _lerpSpeed * Utility.Utility.GetFpsEqualizer());
+                    _textsButtonToggleMenu[i].rotation = Quaternion.LerpUnclamped(_textsButtonToggleMenu[i].rotation, targetRotation, Utility.Utility.Smooth(_lerpSpeed, Utility.Utility.GetFpsEqualizer()));
                 yield return null;
             }
 

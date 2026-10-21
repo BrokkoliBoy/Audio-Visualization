@@ -79,7 +79,7 @@ namespace Gavi.Audio
             {
                 // apply average
                 //if (highestBandValue < _lastHighestBandValue)
-                    _lastHighestBandValue = Mathf.Lerp(_lastHighestBandValue, highestBandValue, settings.AverageLerpFactor * Utility.Utility.GetFpsEqualizer());
+                    _lastHighestBandValue = Mathf.Lerp(_lastHighestBandValue, highestBandValue, Utility.Utility.Smooth(settings.AverageLerpFactor, Utility.Utility.GetFpsEqualizer()));
                 //else
                     //_lastHighestBandValue = highestBandValue;
                 float averageFactor = 1 / _lastHighestBandValue;

@@ -163,13 +163,19 @@ namespace Gavi
             if (Dampen)
             {
                 float last = LastYs[index];
-                y = Mathf.Lerp(last, y, (y < last ? DampenDown : DampenUp) * FpsEqualizer);
+                y = Mathf.Lerp(last, y, Smooth(y < last ? DampenDown : DampenUp));
                 float lastBand = LastBands[index];
-                band = Mathf.Lerp(lastBand, bandFactor, (bandFactor < lastBand ? DampenDown : DampenUp) * FpsEqualizer);
+                band = Mathf.Lerp(lastBand, bandFactor, Smooth(bandFactor < lastBand ? DampenDown : DampenUp));
             }
             if (TerracePoint == 2)
                 y = Terrace(y);
             return y;
+        }
+
+        // FpsEqualizer is the number of reference steps since the last update, so the dampening takes the same real time at any frame rate
+        private float Smooth(float factor)
+        {
+            return 1f - Mathf.Pow(1f - Mathf.Clamp01(factor), FpsEqualizer);
         }
 
         private float Terrace(float y)

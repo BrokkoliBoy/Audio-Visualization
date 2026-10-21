@@ -134,6 +134,10 @@ namespace Gavi.Utility
             return newMin + (newMax - newMin) * ((value - oldMin) / (oldMax - oldMin));
         }
 
+        /// <summary>The smoothing factors were tuned for this many steps per second.</summary>
+        public const float ReferenceFps = 240f;
+
+        /// <summary>How many reference steps fit into this frame. Pass it to <see cref="Smooth"/>.</summary>
         public static float GetFpsEqualizer()
         {
             return GetFpsEqualizer(Time.deltaTime);
@@ -142,7 +146,16 @@ namespace Gavi.Utility
         /// <summary>Like <see cref="GetFpsEqualizer()"/> for something that is updated less often than every frame: pass the time since its last update.</summary>
         public static float GetFpsEqualizer(float deltaTime)
         {
-            return Application.targetFrameRate * deltaTime;
+            return ReferenceFps * deltaTime;
+        }
+
+        /// <summary>
+        /// Lerp factor for a smoothing that moves by <paramref name="factor"/> per reference step, so it takes the same
+        /// real time at any frame rate and never overshoots.
+        /// </summary>
+        public static float Smooth(float factor, float steps)
+        {
+            return 1f - Mathf.Pow(1f - Mathf.Clamp01(factor), steps);
         }
     }
 }

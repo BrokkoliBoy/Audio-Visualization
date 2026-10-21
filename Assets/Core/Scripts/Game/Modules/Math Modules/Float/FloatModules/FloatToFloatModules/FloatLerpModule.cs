@@ -31,7 +31,7 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
             if (_lastValue == float.MaxValue)
                 _lastValue = value;
 
-            value = Mathf.Lerp(_lastValue, value, (value > _lastValue ? _lerpFactorPos : _lerpFactorNeg) * Utility.Utility.GetFpsEqualizer());
+            value = Mathf.Lerp(_lastValue, value, Utility.Utility.Smooth(value > _lastValue ? _lerpFactorPos : _lerpFactorNeg, Utility.Utility.GetFpsEqualizer()));
             _lastValue = value;
 
             //Debug.Log("FloatLerpModule: " + value);
