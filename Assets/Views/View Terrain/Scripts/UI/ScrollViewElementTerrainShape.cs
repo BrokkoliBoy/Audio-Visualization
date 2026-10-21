@@ -24,6 +24,12 @@ namespace Gavi
         [SerializeField] private Button _buttonAdd;
         [SerializeField] private Button _buttonRemove;
 
+        private void Awake()
+        {
+            _dropdownShape.ClearOptions();
+            _dropdownShape.AddOptions(new List<string>(TerrainShape.ShapeNames));
+        }
+
         public void ExtractProfile(TerrainShapeData shapeData)
         {
             shapeData ??= new TerrainShapeData();

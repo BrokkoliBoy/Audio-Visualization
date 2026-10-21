@@ -16,7 +16,13 @@ public class TerrainShape
     public AudioShape Shape { get => _shape; set => _shape = value; }
     [Tooltip("Specifies the shape that the bands should be cast onto.")]
     [SerializeField] private AudioShape _shape;
-    public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ }
+    /// <summary>New shapes are appended, profiles store the index.</summary>
+    public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ, MirrorX, MirrorZ, Rays, Spiral, Cross, Star, Rings }
+    public static readonly string[] ShapeNames =
+    {
+        "Circle", "Square", "Diamond", "Stripes Vertical", "Stripes Horizontal",
+        "Mirrored Vertical", "Mirrored Horizontal", "Rays", "Spiral", "Cross", "Star", "Rings"
+    };
 
     public float Strength { get => _strength; set => _strength = value; }
     [Tooltip("TODO")]
@@ -116,7 +122,50 @@ public class TerrainShape
         }
         else if (_shape == AudioShape.Square)
             indexNormalized = _shapeZoom * Mathf.Max(Mathf.Abs(0.5f - x), Mathf.Abs(0.5f - z)) * 2;
+        else if (_shape == AudioShape.MirrorX)
+            indexNormalized = _shapeZoom * Mathf.Abs(0.5f - x) * 2;
+        else if (_shape == AudioShape.MirrorZ)
+            indexNormalized = _shapeZoom * Mathf.Abs(0.5f - z) * 2;
+        else if (_shape == AudioShape.Cross)
+            indexNormalized = _shapeZoom * Mathf.Min(Mathf.Abs(0.5f - x), Mathf.Abs(0.5f - z)) * 2;
+        else
+            indexNormalized = GetPolarIndex(x, z);
 
         return indexNormalized;
+    }
+
+    /// <summary>Shapes that depend on the distance from the middle and the angle around it.</summary>
+    private float GetPolarIndex(float x, float z)
+    {
+        float dx = x - 0.5f;
+        float dz = z - 0.5f;
+        float distanceNormalized = Mathf.Sqrt(dx * dx + dz * dz) / 0.7071067f;
+        float angle = Mathf.Atan2(dz, dx);
+
+        if (_shape == AudioShape.Rays)
+        {
+            // Folded twice around the middle: bass left and right, highs up and down.
+            float folded = Mathf.Abs(angle);
+            folded = Mathf.Min(folded, Mathf.PI - folded);
+            return _shapeZoom * folded / (Mathf.PI * 0.5f);
+        }
+        if (_shape == AudioShape.Spiral)
+        {
+            float arm = angle / (2f * Mathf.PI) + distanceNormalized * 1.5f * _shapeZoom;
+            return Mathf.Abs(2f * (arm - Mathf.Floor(arm)) - 1f);
+        }
+        if (_shape == AudioShape.Star)
+        {
+            // The contour of every band is a five pointed star, the tips reach out twice as far as the notches.
+            float point = angle * 5f / (2f * Mathf.PI);
+            float reach = Mathf.Lerp(0.45f, 1f, Mathf.Abs(2f * (point - Mathf.Floor(point)) - 1f));
+            return _shapeZoom * distanceNormalized / reach;
+        }
+        if (_shape == AudioShape.Rings)
+        {
+            float ring = distanceNormalized * 2f * _shapeZoom;
+            return 1f - Mathf.Abs(2f * (ring - Mathf.Floor(ring)) - 1f);
+        }
+        return 0f;
     }
 }

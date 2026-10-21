@@ -4,7 +4,7 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-21 (Burst jobs, performance settings)
+Last updated: 2026-10-21 (Burst jobs, performance settings, seven new audio shapes)
 
 ## Menu tabs
 
@@ -13,7 +13,7 @@ Last updated: 2026-10-21 (Burst jobs, performance settings)
 | Color | Overall glow, background tint, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow, color from band |
 | Terrain | Terrain (face count, height, FPS hint), Performance, Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
 | Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
-| Shapes | Audio shapes (circle, square, diamond, stripes along X or Z) that map the spectrum onto the terrain |
+| Shapes | Audio shapes (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that map the spectrum onto the terrain |
 | Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
 
 ## Features
@@ -21,6 +21,7 @@ Last updated: 2026-10-21 (Burst jobs, performance settings)
 | Feature | Status | Notes |
 |---|---|---|
 | Spectrum terrain | done | Bands are cast onto one or more shapes, out-of-bounds handling, smoothing between bands |
+| Audio shapes | done | 12 shapes decide which vertex gets which band (bass first): Circle, Square, Diamond, Stripes Vertical / Horizontal, Mirrored Vertical / Horizontal (bass in the middle line), Rays (bass left and right, highs up and down), Spiral (one and a half turns at zoom 1), Cross (bass along both middle lines), Star (five points, bands follow the star outline, zoom below 1 fills the notches), Rings (repeating, zoom 1 = two rings). Zoom stretches the shape or the repetition, Invert swaps bass and highs |
 | Dampening | done | Separate up / down factors (default 0.05 each), frame-rate independent |
 | Noise patterns | done | 27 patterns (Perlin, Simplex, Value, Fractal, Ridged, Billow, Domain warp, Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons, Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles, Triangles, Checker, Steps, Cubes, Honeycomb). Start pattern: Domain warp. Speed slider 0 to 10 (half way = 3) |
 | Invert per pattern | done | Cell patterns (Voronoi, Cracks, Hexagons, Bricks, Dots, Pyramids, Tiles, Triangles, Cubes) stand up from the ground by default, the Invert toggle flips them. The choice is remembered per pattern |
@@ -43,15 +44,18 @@ Last updated: 2026-10-21 (Burst jobs, performance settings)
 
 | Idea | Status | Notes |
 |---|---|---|
+| More beat-driven invert effects | idea (next) | Breathing, crossfade A to B, zoom / offset kick, bass-driven morph, reverse spiral, half-time ping-pong. Only the plain flip is built |
+| More patterns | idea (next) | Weave, stars, scales, more geometric ones |
+| More audio shapes | idea | Built: mirrored stripes, rays, spiral, cross, star, rings. Left: offset center (needs two more sliders), bands that follow the noise (the band map would change every frame, so the cache would not help). The four corner shapes were removed (2026-10-21) |
 | Per-song audio settings | todo (Chris) | Bass boost, lower outer bands. BPM and offset are set for the new songs, the rest is missing |
-| Noise speed variation | idea | One slider, e.g. a slow drift of the noise direction in a circle |
-| Zoom per pattern | idea | Each pattern remembers its own zoom |
-| More beat-driven invert effects | idea | Breathing, crossfade A to B, zoom / offset kick, bass-driven morph, reverse spiral, half-time ping-pong. Only the plain flip is built |
-| More patterns | idea | Stars, scales, weave, more geometric ones |
-| More audio shapes | idea | The shape decides which vertex gets which band. Candidates: mirrored stripes, rays, spiral, cross, star, rings that repeat, offset center, bands that follow the noise. The four corner shapes were removed (2026-10-21) |
-| Interaction mode | idea | Touch the terrain with the mouse and play on top of a song. The band editor of the test signal is the first step |
-| Flip as a wave | idea | "Flip beats" could run as a wave along the audio bands instead of everywhere at once: from the inside out on a circle, from side to side on vertical stripes |
 | Menu review | todo | Go over the whole menu once: right modules in the right tabs, right names |
+| Flip as a wave | idea | "Flip beats" could run as a wave along the audio bands instead of everywhere at once: from the inside out on a circle, from side to side on vertical stripes. Gets relevant once more shapes show where the flip starts |
 | Color by band: own gradient | idea | A second gradient only for the band activity, or one fixed color per band |
+| Pattern morph slider | idea | A pattern morph slider that blends the pattern upside down and back, flat in the middle. Not decided yet |
+| Different resolution per aspect | idea | Audio shape at low resolution, noise and waves at high resolution, or detail only where it is needed |
+| HDRP tessellation | to check | Whether HDRP tessellation in Unity 6.6 could give smooth surfaces on a low face count |
+| Noise speed variation | parked | One slider, e.g. a slow drift of the noise direction in a circle. The current look is good as it is |
 | Band editor: picking with a morph | idea | The editor finds the band on the flat terrain, it is not exact while a morph bends the mesh |
-| Import own music, record video | idea | See the portfolio notes |
+| Color noise separate from the height | far back | Much of the look comes from the color following the height, so this is far down |
+| Interaction mode | long term | Touch the terrain with the mouse and play on top of a song. The band editor of the test signal is the first step |
+| Import own music, record video | long term | See the portfolio notes |
