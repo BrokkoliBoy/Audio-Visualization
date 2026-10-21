@@ -34,6 +34,7 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
             {
                 _audioSettings.SetData(_sampleSettings.Settings);
                 _value = AudioSampler.Instance.GenerateSpectrumData(_audioSettings);
+                AudioTestSignal.Override(_value);
                 CalculatAverage();
                 return;
             }
@@ -60,7 +61,8 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
                 //sampleSettings.AmplitudeModifierWeightedList.Add(clipSettings.AmplitudeModifierWeightedList[i]);
  
             _value = AudioSampler.Instance.GenerateSpectrumData(_audioSettings);
-            // _value = AudioSampler.Instance.GenerateSpectrumData(sampleSettings);
+            AudioTestSignal.Override(_value);
+            // _value =AudioSampler.Instance.GenerateSpectrumData(sampleSettings);
             CalculatAverage();
         }
         

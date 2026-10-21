@@ -31,9 +31,20 @@ namespace Gavi
         /// <summary>
         /// Exponent of the saturation curve. HDR colors with a high intensity turn white quickly, because the weak
         /// channels get multiplied as well. The curve keeps the colors strong at the top of the slider and loses
-        /// them faster toward the bottom: slider 0.9 gives 0.99, 0.5 gives 0.75, 0 stays 0.
+        /// them faster toward the bottom: slider 0.5 gives 0.97, 0.25 gives 0.76, 0.1 gives 0.41, 0 stays 0.
         /// </summary>
-        public const float SaturationCurve = 2f;
+        public const float SaturationCurve = 5f;
+
+        /// <summary>
+        /// Weakly saturated colors are brightened less: a white (saturation 0) with the same exposure looks much brighter
+        /// than a saturated color, because all three channels are on. At saturation 0 the color gets this share of the brightness.
+        /// </summary>
+        private const float WhiteBrightness = 0.6f;
+
+        private static float BrightnessOf(float effectiveSaturation)
+        {
+            return Mathf.Lerp(WhiteBrightness, 1f, effectiveSaturation);
+        }
 
         /// <summary>Saturation of the color for a slider value.</summary>
         public static float EffectiveSaturation(float slider)
@@ -50,8 +61,9 @@ namespace Gavi
         /// <summary>HDR color: full value hue with the given saturation (slider value), multiplied by 2^intensity.</summary>
         public static Color ToHdrColor(float hueDegrees, float saturation, float intensity)
         {
-            Color color = Color.HSVToRGB(Mathf.Repeat(hueDegrees / 360f, 1f), EffectiveSaturation(saturation), 1f);
-            float factor = Mathf.Pow(2f, intensity);
+            float effective = EffectiveSaturation(saturation);
+            Color color = Color.HSVToRGB(Mathf.Repeat(hueDegrees / 360f, 1f), effective, 1f);
+            float factor = Mathf.Pow(2f, intensity) * BrightnessOf(effective);
             return new Color(color.r * factor, color.g * factor, color.b * factor, 1f);
         }
 
@@ -62,7 +74,7 @@ namespace Gavi
             Color.RGBToHSV(new Color(color.r / max, color.g / max, color.b / max), out float h, out float s, out float v);
             hueDegrees = h * 360f;
             saturation = SliderSaturation(s);
-            intensity = Mathf.Log(max, 2f);
+            intensity = Mathf.Log(max / BrightnessOf(s), 2f);
         }
 
         /// <summary>Low dynamic range preview for the menu: dimmer below menu intensity 1, shifting toward white above it.</summary>

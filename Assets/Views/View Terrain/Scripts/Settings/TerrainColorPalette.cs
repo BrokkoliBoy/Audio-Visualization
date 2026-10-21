@@ -13,7 +13,7 @@ namespace Gavi
     public class TerrainColorPalette
     {
         /// <summary>The palette that is selected when nothing else is chosen. It is a normal file like every other palette.</summary>
-        public const string DefaultName = "Pink Neon";
+        public const string DefaultName = "Lava";
         /// <summary>Name that profiles saved before the rename use for the default palette.</summary>
         public const string LegacyDefaultName = "Default";
         /// <summary>Shown when the colors do not come from a saved palette.</summary>

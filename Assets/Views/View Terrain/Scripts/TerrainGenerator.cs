@@ -4,7 +4,6 @@ using UnityEngine;
 using Gavi.Utility;
 using Gavi.Audio;
 using Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArrayModules;
-using Gavi.Modules.MathModules.FloatModules;
 
 namespace Gavi
 {
@@ -53,27 +52,26 @@ namespace Gavi
         [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
         [SerializeField] private TerrainNoise.Pattern _noisePattern = TerrainNoise.Pattern.Perlin;
         public int NoisePattern { get => (int)_noisePattern; set => _noisePattern = (TerrainNoise.Pattern)Mathf.Clamp(value, 0, TerrainNoise.Names.Length - 1); }
+        [Tooltip("Turns the pattern upside down: high becomes low and low becomes high. Some patterns (Voronoi, Hexagons ...) are upside down by themselves, this turns them back.")]
+        [SerializeField] private bool _noiseInvert;
+        public bool NoiseInvert { get => _noiseInvert; set => _noiseInvert = value; }
+        [Tooltip("Turns the pattern upside down on the beat, every this many beats. 0 = off. The pattern flows from one state to the other.")]
+        [SerializeField] private int _noiseFlipBeats;
+        public int NoiseFlipBeats { get => _noiseFlipBeats; set => _noiseFlipBeats = Mathf.Max(0, value); }
+        /// <summary>Seconds the pattern needs to flow to the other state at most (shorter when the beats are faster).</summary>
+        private const float InvertFlowSeconds = 0.4f;
+        // 0 = the pattern as it is, 1 = upside down. Moves smoothly towards the wanted state.
+        private float _invertAmount;
+        private float _invertEased;
+        private bool _invertStateKnown;
+        private TerrainNoise.Pattern _invertPattern;
+        private int _lastBeatCount;
+        private bool _beatFlipped;
 
         [Header("--- Beat wave ---")]
-        [Tooltip("Beat pulse between 0 and 1. A new wave starts when it jumps up.")]
-        [SerializeField] private FloatModule _beatWaveModule;
-        [Tooltip("Height of the wave that runs outward from the middle on each beat, in terrain heights. 0 = off.")]
-        [SerializeField] private float _waveStrength = 0.25f;
-        public float WaveStrength { get => _waveStrength; set => _waveStrength = value; }
-        [Tooltip("Speed of the wave in half terrain widths per second.")]
-        [SerializeField] private float _waveSpeed = 1f;
-        public float WaveSpeed { get => _waveSpeed; set => _waveSpeed = value; }
-        private const int MaxWaves = 4;
-        private const float WaveWidth = 0.12f;
-        /// <summary>Distance from the middle at which a wave has faded out completely.</summary>
-        private const float WaveReach = 1.6f;
-        private const float WaveMinPulse = 0.15f;
-        private const float WaveMinRise = 0.05f;
-        private const float WaveMinInterval = 0.2f;
-        private readonly float[] _waveStart = new float[MaxWaves];
-        private readonly float[] _waveAmplitude = new float[MaxWaves];
-        private float _lastPulse;
-        private float _lastWaveTime = -10f;
+        [Tooltip("Rings that run over the terrain on the beat and the bass. If null, there are no waves.")]
+        [SerializeField] private TerrainBeatWave _beatWave;
+        public TerrainBeatWave BeatWave => _beatWave;
 
         [Header("--- Terrace ---")]
         [Tooltip("Applies a terrace like structure to the mesh. The final terrace value will be clamped to a maximum value of 1 and a minimum value of 0.")]
@@ -158,10 +156,10 @@ namespace Gavi
         [SerializeField] private bool _applyDampening = true;
         public bool ApplyDampeningSetting { get => _applyDampening; set => _applyDampening = value; }
         [Tooltip("Lerp factor when the vertices target height is lower that the current height.")]
-        [SerializeField] private float _dampenLerpFactorDown = 0.03f;
+        [SerializeField] private float _dampenLerpFactorDown = 0.5f;
         public float DampenLerpFactorDown { get => _dampenLerpFactorDown; set => _dampenLerpFactorDown = value; }
         [Tooltip("Lerp factor when the vertices target height is higher that the current height.")]
-        [SerializeField] private float _dampenLerpFactorUp = 0.3f;
+        [SerializeField] private float _dampenLerpFactorUp = 0.5f;
         public float DampenLerpFactorUp { get => _dampenLerpFactorUp; set => _dampenLerpFactorUp = value; }
 
         [Header("--- References ---")]
@@ -197,6 +195,8 @@ namespace Gavi
         #region Mesh Update
         private void ApplyPerlinSpeed()
         {
+            if (AudioTestSignal.IsActive && AudioTestSignal.Instance.FreezeNoise)
+                return;
             _perlinOffsetX += _perlinOffsetSpeed.x * Time.deltaTime;
             _perlinOffsetY += _perlinOffsetSpeed.y * Time.deltaTime;
         }
@@ -221,7 +221,13 @@ namespace Gavi
         {
             // audio preparation
             PrepareAudio();
-            UpdateBeatWave();
+            if (_beatWave != null)
+            {
+                if (_beatWave.NeedsBassEdge)
+                    _beatWave.SetBassEdge(GetBassEdgeDistance());
+                _beatWave.Tick();
+            }
+            UpdateInvert();
 
             bool redoMesh = _vertices == null || (_faceCountX + 1) * (_faceCountZ + 1) != _vertices.Length;
             if (redoMesh)
@@ -330,14 +336,19 @@ namespace Gavi
             y = ApplyAudio(x, y, z);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterAudio)
                 y = ApplyTerrace(y);
-            y = ApplyWave(x, y, z);
+            if (_beatWave != null)
+                y = _beatWave.Apply(x, z, _faceCountX, _faceCountZ, y, _noiseFactor);
             y = ApplyDampening(x, y, z);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterDampening)
                 y = ApplyTerrace(y);
             return y;
         }
+        /// <summary>How high the noise pattern leaves the current vertex (1 = full height). Set by ApplyPerlin, used by the beat wave.</summary>
+        private float _noiseFactor = 1f;
+
         private float ApplyPerlin(int x, float originalY, int z)
         {
+            _noiseFactor = 1f;
             if (!_applyPerlinNoise)
                 return originalY;
 
@@ -346,57 +357,82 @@ namespace Gavi
             float xScaled = x * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX));
             float zScaled = z * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
             float perlinValue = TerrainNoise.Evaluate(_noisePattern, xScaled, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
-            y *= Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, perlinValue);
+            perlinValue = Mathf.Lerp(perlinValue, 1f - perlinValue, _invertEased);
+            _noiseFactor = Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, perlinValue);
+            y *= _noiseFactor;
             return y;
         }
 
-        /// <summary>Starts a wave in the middle of the terrain that runs outward. Called by the beat, public for tests.</summary>
-        public void SpawnWave(float amplitude)
+        /// <summary>
+        /// Moves the pattern towards its wanted state once per frame: upside down or not, from the pattern itself, the invert
+        /// option and the flips on the beat. A change of the pattern jumps, a change of the options or a flip flows.
+        /// </summary>
+        private void UpdateInvert()
         {
-            int oldest = 0;
-            for (int i = 1; i < MaxWaves; i++)
-                if (_waveStart[i] < _waveStart[oldest])
-                    oldest = i;
-            _waveStart[oldest] = Time.time;
-            _waveAmplitude[oldest] = amplitude;
-            _lastWaveTime = Time.time;
-        }
-
-        /// <summary>Starts a wave when the beat pulse jumps up, but not more often than the minimum interval.</summary>
-        private void UpdateBeatWave()
-        {
-            if (_beatWaveModule == null)
-                return;
-
-            float pulse = Mathf.Clamp01(_beatWaveModule.GetValue());
-            if (_waveStrength > 0f && pulse >= WaveMinPulse && pulse > _lastPulse + WaveMinRise && Time.time - _lastWaveTime >= WaveMinInterval)
-                SpawnWave(pulse);
-            _lastPulse = pulse;
-        }
-
-        /// <summary>Adds the height of all running waves. A wave is a ring around the middle that fades while it grows.</summary>
-        private float ApplyWave(int x, float originalY, int z)
-        {
-            if (_waveStrength <= 0f)
-                return originalY;
-
-            float u = (float)x / _faceCountX * 2f - 1f;
-            float v = (float)z / _faceCountZ * 2f - 1f;
-            float distance = Mathf.Sqrt(u * u + v * v);
-
-            float height = 0f;
-            for (int i = 0; i < MaxWaves; i++)
+            if (_noiseFlipBeats <= 0)
             {
-                if (_waveAmplitude[i] <= 0f)
-                    continue;
-                float radius = (Time.time - _waveStart[i]) * _waveSpeed;
-                if (radius > WaveReach)
-                    continue;
-                float offset = (distance - radius) / WaveWidth;
-                height += _waveAmplitude[i] * (1f - radius / WaveReach) * Mathf.Exp(-offset * offset);
+                _beatFlipped = false;
+                _lastBeatCount = _beatWave != null ? _beatWave.BeatCount : 0;
             }
-            return originalY + _waveStrength * height;
+            else if (_beatWave != null)
+            {
+                int beats = _beatWave.BeatCount;
+                if (beats / _noiseFlipBeats != _lastBeatCount / _noiseFlipBeats)
+                    _beatFlipped = !_beatFlipped;
+                _lastBeatCount = beats;
+            }
+
+            bool upsideDown = TerrainNoise.InvertedByDefault(_noisePattern) ^ _noiseInvert ^ _beatFlipped;
+            float target = upsideDown ? 1f : 0f;
+            if (!_invertStateKnown || _invertPattern != _noisePattern)
+            {
+                _invertAmount = target;
+                _invertEased = target;
+                _invertPattern = _noisePattern;
+                _invertStateKnown = true;
+                return;
+            }
+
+            float beatInterval = _beatWave != null ? _beatWave.BeatInterval : InvertFlowSeconds;
+            float seconds = Mathf.Clamp(0.8f * beatInterval, 0.1f, InvertFlowSeconds);
+            // an eased flow: the amount moves linearly, the pattern follows it smoothed
+            _invertAmount = Mathf.MoveTowards(_invertAmount, target, Time.deltaTime / seconds);
+            _invertEased = _invertAmount * _invertAmount * (3f - 2f * _invertAmount);
         }
+
+        /// <summary>Distance from the middle (in half terrain widths) where the bass bands end, found on the first active audio shape.</summary>
+        private float GetBassEdgeDistance()
+        {
+            if (_samplesContainer == null || _samplesContainer.BandSize < 1 || _beatWave == null)
+                return 0f;
+
+            TerrainShape shape = null;
+            foreach (TerrainShape candidate in _audioShapeSettings)
+            {
+                if (candidate.ApplyShape)
+                {
+                    shape = candidate;
+                    break;
+                }
+            }
+            if (shape == null)
+                return 0f;
+
+            // The band index grows with the distance, search where it reaches the end of the bass bands.
+            float target = Mathf.Min(1f, (float)_beatWave.BassBandCount / _samplesContainer.BandSize);
+            float low = 0f, high = 1.2f;
+            for (int i = 0; i < 12; i++)
+            {
+                float middle = 0.5f * (low + high);
+                float index = shape.GetNormalizedBandIndexByShape(0.5f + 0.5f * middle, 0.5f);
+                if (index < 0f || index >= target)
+                    high = middle;
+                else
+                    low = middle;
+            }
+            return 0.5f * (low + high);
+        }
+
         private float ApplyAudio(int x, float originalY, int z)
         {
             if (!_applyAudio || _samplesContainer == null || _audioShapeSettings.Count == 0)

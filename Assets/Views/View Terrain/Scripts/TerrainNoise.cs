@@ -13,14 +13,36 @@ namespace Gavi
         public enum Pattern
         {
             Perlin, Simplex, Value, Fractal, Ridged, Billow, DomainWarp,
-            Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle
+            Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons,
+            Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles
         }
 
         public static readonly string[] Names =
         {
             "Perlin", "Simplex", "Value", "Fractal", "Ridged", "Billow", "Domain warp",
-            "Voronoi", "Mosaic", "Cracks", "Rings", "Interference", "Spiral", "Waffle"
+            "Voronoi", "Mosaic", "Cracks", "Rings", "Interference", "Spiral", "Waffle", "Hexagons",
+            "Bricks", "Dots", "Pyramids", "Flower", "Zigzag", "Plasma", "Tiles"
         };
+
+        /// <summary>
+        /// Patterns whose shapes (cells, tiles, bricks ...) are meant to stand up from the ground. The terrain is
+        /// lowered where the pattern is high, so these are turned upside down before the invert option is applied.
+        /// </summary>
+        public static bool InvertedByDefault(Pattern pattern)
+        {
+            switch (pattern)
+            {
+                case Pattern.Voronoi:
+                case Pattern.Hexagons:
+                case Pattern.Bricks:
+                case Pattern.Dots:
+                case Pattern.Pyramids:
+                case Pattern.Tiles:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         /// <summary>Center of the reference terrain, the middle of the radial patterns.</summary>
         private const float Center = 48f;
@@ -75,6 +97,28 @@ namespace Gavi
                 }
                 case Pattern.Waffle:
                     return 0.5f + 0.5f * Mathf.Sin(Tau * u * 0.35f) * Mathf.Sin(Tau * v * 0.35f);
+                case Pattern.Hexagons:
+                    return Hexagons(u * 0.8f, v * 0.8f);
+                case Pattern.Bricks:
+                    return Bricks(u * 0.4f, v * 0.8f);
+                case Pattern.Dots:
+                    return Dots(u * 0.6f, v * 0.6f);
+                case Pattern.Pyramids:
+                    return Pyramids(u * 0.5f, v * 0.5f);
+                case Pattern.Flower:
+                {
+                    float angle = Mathf.Atan2(z - Center, x - Center);
+                    return 0.5f + 0.5f * Mathf.Sin(6f * angle) * Mathf.Cos(Tau * (Distance(x, z, Center, Center) + offsetZ) * zoom * 0.12f);
+                }
+                case Pattern.Zigzag:
+                {
+                    float fold = Mathf.Abs(Mathf.Repeat(u * 0.2f, 1f) - 0.5f) * 2f;
+                    return 0.5f + 0.5f * Mathf.Sin(Tau * (v * 0.35f + fold * 0.6f));
+                }
+                case Pattern.Plasma:
+                    return 0.5f + 0.125f * (Mathf.Sin(u * 1f) + Mathf.Sin(v * 1.2f) + Mathf.Sin((u + v) * 0.8f) + Mathf.Sin(Mathf.Sqrt(u * u + v * v) * 1f));
+                case Pattern.Tiles:
+                    return Tiles(u * 0.5f, v * 0.5f);
                 default:
                     return Mathf.PerlinNoise(u, v);
             }
@@ -225,6 +269,76 @@ namespace Gavi
                         f2 = d;
                 }
             }
+        }
+        #endregion
+
+
+        #region Hexagons
+        /// <summary>
+        /// Hexagon tiles (pointy top, radius 1) with a random height each. The rim of a tile falls off softly, because
+        /// the vertices of the terrain do not line up with the edges of the hexagons.
+        /// </summary>
+        private static float Hexagons(float x, float y)
+        {
+            // cube coordinates of the hexagon the point is in
+            float q = 0.57735027f * x - 0.33333334f * y;
+            float r = 0.6666667f * y;
+            float s = -q - r;
+            int rq = Mathf.RoundToInt(q), rr = Mathf.RoundToInt(r), rs = Mathf.RoundToInt(s);
+            float dq = Mathf.Abs(rq - q), dr = Mathf.Abs(rr - r), ds = Mathf.Abs(rs - s);
+            if (dq > dr && dq > ds)
+                rq = -rr - rs;
+            else if (dr > ds)
+                rr = -rq - rs;
+
+            // position relative to the middle of the hexagon: 0 in the middle, 1 at the rim
+            float ox = x - 1.7320508f * (rq + rr * 0.5f);
+            float oy = y - 1.5f * rr;
+            float edge = Mathf.Max(Mathf.Abs(ox), Mathf.Max(Mathf.Abs(0.5f * ox + 0.8660254f * oy), Mathf.Abs(0.5f * ox - 0.8660254f * oy))) / 0.8660254f;
+            return (0.25f + 0.75f * Hash(rq, rr, 7)) * Smooth((1f - edge) / 0.2f);
+        }
+        #endregion
+
+
+        #region Grids
+        /// <summary>Rows of bricks, every second row shifted by half a brick. A brick is twice as wide as high, each has its own height.</summary>
+        private static float Bricks(float x, float y)
+        {
+            int row = Mathf.FloorToInt(y);
+            float shifted = x + (row & 1) * 0.5f;
+            int column = Mathf.FloorToInt(shifted);
+            float fx = shifted - column, fy = y - row;
+            float edge = Mathf.Min(Mathf.Min(fx, 1f - fx) * 2f, Mathf.Min(fy, 1f - fy));
+            return (0.35f + 0.65f * Hash(column, row, 11)) * Smooth(edge / 0.3f);
+        }
+
+        /// <summary>Round bumps on a grid, every second row shifted, each with its own height.</summary>
+        private static float Dots(float x, float y)
+        {
+            int row = Mathf.FloorToInt(y);
+            float shifted = x + (row & 1) * 0.5f;
+            int column = Mathf.FloorToInt(shifted);
+            float dx = shifted - column - 0.5f, dy = y - row - 0.5f;
+            float distance = Mathf.Sqrt(dx * dx + dy * dy);
+            return (0.4f + 0.6f * Hash(column, row, 13)) * Smooth((0.5f - distance) / 0.25f);
+        }
+
+        /// <summary>Square pyramids on a grid turned by 45 degrees, each with its own height.</summary>
+        private static float Pyramids(float x, float y)
+        {
+            float a = (x + y) * 0.70710678f, b = (x - y) * 0.70710678f;
+            int ia = Mathf.FloorToInt(a), ib = Mathf.FloorToInt(b);
+            float tent = 1f - 2f * Mathf.Max(Mathf.Abs(a - ia - 0.5f), Mathf.Abs(b - ib - 0.5f));
+            return (0.3f + 0.7f * Hash(ia, ib, 17)) * tent;
+        }
+
+        /// <summary>Square tiles with a random height each. The rim falls off softly, like with the hexagons.</summary>
+        private static float Tiles(float x, float y)
+        {
+            int ix = Mathf.FloorToInt(x), iy = Mathf.FloorToInt(y);
+            float fx = x - ix, fy = y - iy;
+            float edge = 2f * Mathf.Min(Mathf.Min(fx, 1f - fx), Mathf.Min(fy, 1f - fy));
+            return (0.3f + 0.7f * Hash(ix, iy, 19)) * Smooth(edge / 0.3f);
         }
         #endregion
 

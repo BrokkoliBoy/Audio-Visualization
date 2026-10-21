@@ -35,6 +35,12 @@ namespace Gavi
         [SerializeField] private bool _useCurve;
         [SerializeField] private float _curveMidValue = 0.1f;
 
+        [Header("--- Display range (optional) ---")]
+        [Tooltip("The text shows a simple number from the display minimum (slider far left) to the display maximum (far right) instead of the value. The value itself is unchanged.")]
+        [SerializeField] private bool _useDisplayRange;
+        [SerializeField] private float _displayMin = 1f;
+        [SerializeField] private float _displayMax = 10f;
+
         [Header("--- References ---")]
         [SerializeField] private Slider _slider;
         [SerializeField] private TextMeshProUGUI _textValue;
@@ -72,14 +78,24 @@ namespace Gavi
         private void Awake()
         {
             _slider.onValueChanged.AddListener(OnValueChangedM);
+            // The text saved in the scene is stale as long as the value never changes.
+            ShowText(_slider.value);
         }
 
-        private void OnValueChangedM(float sliderValue)
+        private void ShowText(float sliderValue)
         {
             float value = PositionToValue(sliderValue);
             if (_isInteger)
                 value = Mathf.RoundToInt(value);
-            SetText(value);
+            SetText(_useDisplayRange ? Mathf.Lerp(_displayMin, _displayMax, Mathf.Clamp01(sliderValue)) : value);
+        }
+
+        private void OnValueChangedM(float sliderValue)
+        {
+            ShowText(sliderValue);
+            float value = PositionToValue(sliderValue);
+            if (_isInteger)
+                value = Mathf.RoundToInt(value);
             OnValueChangedFloat.Invoke(value);
             if (Mathf.RoundToInt(value) != _lastInt)
             {

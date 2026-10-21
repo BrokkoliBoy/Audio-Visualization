@@ -14,8 +14,8 @@ namespace Gavi
         
         #region Settings Variables
         [Header("- Terrain -")]
-        public int FaceCountX = 97;
-        public int FaceCountY = 97;
+        public int FaceCountX = 115;
+        public int FaceCountY = 115;
         public float TerrainHeight = 3;
         
         [Header("- Perlin -")]
@@ -25,11 +25,22 @@ namespace Gavi
         public float PerlinSpeedX = 0;
         public float PerlinSpeedY = 1;
         [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old profiles.")]
-        public int NoisePattern = 0;
+        public int NoisePattern = (int)TerrainNoise.Pattern.DomainWarp;
+        public bool NoiseInvert = false;
+        [Tooltip("Turns the pattern upside down on the beat every this many beats, 0 = off.")]
+        public int NoiseFlipBeats = 0;
 
         [Header("- Beat wave -")]
-        public float WaveStrength = 0.25f;
-        public float WaveSpeed = 1f;
+        public bool ApplyWave = TerrainBeatWave.DefaultEnabled;
+        public float WaveStrength = TerrainBeatWave.DefaultStrength;
+        public float WaveSpeed = TerrainBeatWave.DefaultSpeed;
+        public float WaveWidth = TerrainBeatWave.DefaultWidth;
+        public float WaveFade = TerrainBeatWave.DefaultFade;
+        [Tooltip("TerrainBeatWave.Mode: 0 = Add, 1 = Floor, 2 = Absorb.")]
+        public int WaveMode = TerrainBeatWave.DefaultMode;
+        [Tooltip("TerrainBeatWave.Origin: 0 = Middle, 1 = Edge, 2 = Alternate, 3 = Bass edge.")]
+        public int WaveOrigin = TerrainBeatWave.DefaultOrigin;
+        public bool WaveUseNoise = TerrainBeatWave.DefaultUseNoise;
 
         [Header("- Smoothing -")]
         public bool ApplySmoothing = true;
@@ -38,8 +49,8 @@ namespace Gavi
 
         [Header("- Dampening -")]
         public bool ApplyDampening = true;
-        public float DampenUp = 0.1f;
-        public float DampenDown = 0.03f;
+        public float DampenUp = 0.05f;
+        public float DampenDown = 0.05f;
 
         [Header("- Out of Bounds -")]
         public int OutOfBoundsOperation = 2;
@@ -97,8 +108,16 @@ namespace Gavi
             PerlinSpeedX = profile.PerlinSpeedX;
             PerlinSpeedY = profile.PerlinSpeedY;
             NoisePattern = profile.NoisePattern;
+            NoiseInvert = profile.NoiseInvert;
+            NoiseFlipBeats = profile.NoiseFlipBeats;
+            ApplyWave = profile.ApplyWave;
             WaveStrength = profile.WaveStrength;
             WaveSpeed = profile.WaveSpeed;
+            WaveWidth = profile.WaveWidth;
+            WaveFade = profile.WaveFade;
+            WaveMode = profile.WaveMode;
+            WaveOrigin = profile.WaveOrigin;
+            WaveUseNoise = profile.WaveUseNoise;
 
             // Smoothing
             ApplySmoothing = profile.ApplySmoothing;
@@ -152,8 +171,19 @@ namespace Gavi
             PerlinSpeedX = terrain.PerlinOffsetSpeed.x;
             PerlinSpeedY = terrain.PerlinOffsetSpeed.y;
             NoisePattern = terrain.NoisePattern;
-            WaveStrength = terrain.WaveStrength;
-            WaveSpeed = terrain.WaveSpeed;
+            NoiseInvert = terrain.NoiseInvert;
+            NoiseFlipBeats = terrain.NoiseFlipBeats;
+            if (terrain.BeatWave != null)
+            {
+                ApplyWave = terrain.BeatWave.Enabled;
+                WaveStrength = terrain.BeatWave.Strength;
+                WaveSpeed = terrain.BeatWave.Speed;
+                WaveWidth = terrain.BeatWave.Width;
+                WaveFade = terrain.BeatWave.Fade;
+                WaveMode = terrain.BeatWave.WaveMode;
+                WaveOrigin = terrain.BeatWave.WaveOrigin;
+                WaveUseNoise = terrain.BeatWave.UseNoise;
+            }
 
             // Smoothing
             ApplySmoothing = terrain.ApplyAudioSmoothing;
@@ -205,8 +235,19 @@ namespace Gavi
             terrain.PerlinNoiseZoom = PerlinZoom;
             terrain.PerlinOffsetSpeed = new Vector2(PerlinSpeedX, PerlinSpeedY);
             terrain.NoisePattern = NoisePattern;
-            terrain.WaveStrength = WaveStrength;
-            terrain.WaveSpeed = WaveSpeed;
+            terrain.NoiseInvert = NoiseInvert;
+            terrain.NoiseFlipBeats = NoiseFlipBeats;
+            if (terrain.BeatWave != null)
+            {
+                terrain.BeatWave.Enabled = ApplyWave;
+                terrain.BeatWave.Strength = WaveStrength;
+                terrain.BeatWave.Speed = WaveSpeed;
+                terrain.BeatWave.Width = WaveWidth;
+                terrain.BeatWave.Fade = WaveFade;
+                terrain.BeatWave.WaveMode = WaveMode;
+                terrain.BeatWave.WaveOrigin = WaveOrigin;
+                terrain.BeatWave.UseNoise = WaveUseNoise;
+            }
 
             // Smoothing
             terrain.ApplyAudioSmoothing = ApplySmoothing;
