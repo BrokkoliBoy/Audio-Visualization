@@ -9,9 +9,9 @@ namespace Gavi
 {
     /// <summary>
     /// Color tab of the terrain menu. Four colors (hue, saturation, intensity) are written into the keys of the
-    /// terrain height gradient. Each color owns a few keys of the gradient. The keys keep their hue, saturation
-    /// and intensity relative to the first (reference) key of their color, so the palette made from the reference
-    /// keys reproduces the gradient from the scene exactly.
+    /// terrain height gradient. Each color owns a few keys of the gradient. The keys of a color share its hue and keep their saturation
+    /// and intensity relative to the first (reference) key of their color, so hue 0 makes all its keys the same pure red,
+    /// and the palette made from the reference keys matches the gradient from the scene in hue.
     /// The bloom (glow) of the terrain volume is part of the look and saved with the palette.
     /// Palettes can be saved to disk and are part of the terrain profiles.
     /// </summary>
@@ -58,7 +58,6 @@ namespace Gavi
         private Gradient _gradient;
         private GradientColorKey[] _originalColorKeys;
         private GradientAlphaKey[] _originalAlphaKeys;
-        private float[] _hueOffset;
         private float[] _saturationOffset;
         private float[] _intensityOffset;
         private float[] _referenceHue;
@@ -245,14 +244,12 @@ namespace Gavi
                 TerrainColorMapping.Decompose(_originalColorKeys[_referenceKey[c]].color, out _referenceHue[c], out _referenceSaturation[c], out _referenceIntensity[c]);
 
             int keyCount = _originalColorKeys.Length;
-            _hueOffset = new float[keyCount];
             _saturationOffset = new float[keyCount];
             _intensityOffset = new float[keyCount];
             for (int i = 0; i < keyCount; i++)
             {
                 int c = _keyColorIndex[i];
-                TerrainColorMapping.Decompose(_originalColorKeys[i].color, out float hue, out float saturation, out float intensity);
-                _hueOffset[i] = Mathf.DeltaAngle(_referenceHue[c], hue);
+                TerrainColorMapping.Decompose(_originalColorKeys[i].color, out _, out float saturation, out float intensity);
                 _saturationOffset[i] = saturation - _referenceSaturation[c];
                 _intensityOffset[i] = intensity - _referenceIntensity[c];
             }
@@ -517,7 +514,7 @@ namespace Gavi
                 int c = _keyColorIndex[i];
                 TerrainColorEntryUI entry = _entries[c];
 
-                float hue = entry.Hue + _hueOffset[i];
+                float hue = entry.Hue;
                 float saturation = Mathf.Clamp01(entry.Saturation + _saturationOffset[i]);
                 // The intensity is an exposure value, so a factor becomes log2 of it.
                 float intensity = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + _intensityOffset[i]

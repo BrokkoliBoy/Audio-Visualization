@@ -4,9 +4,11 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-21 (Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black)
+Last updated: 2026-10-21 (Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black, tabs open on hover, color keys share one hue)
 
 ## Menu tabs
+
+Tabs open on hover (after a short 0.1 s delay, so sweeping across them does not flip through every tab); a click still works.
 
 | Tab | Groups |
 |---|---|
