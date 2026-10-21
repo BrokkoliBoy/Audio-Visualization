@@ -77,12 +77,13 @@ needed, and hand it to a Modifiable that actually changes something visible.
   view samples audio independently rather than sharing one global sampler instance).
 - **`ViewManager`** (`Assets/Core/Scripts/Game/Views/ViewManager.cs`) - singleton, holds the
   ordered `List<View>`, cycles through them on V / Shift+V, restarts the current one (replays
-  the audio from 0) on R. Currently configured with 2 entries (View Terrain, View Intro) - View
-  Dumbbell exists in the scene but isn't in this list, so it's excluded from the rotation without
-  being deleted. See content-inventory.md and gotchas.md.
+  the audio from 0) on R. Currently configured with one entry (View Terrain), so V does nothing
+  and the player bar has no view buttons. View Dumbbell, View Intro and View Unity exist in the
+  scene but aren't in this list, so they are excluded without being deleted. See
+  content-inventory.md and gotchas.md.
 - **Naming note**: "View Intro" and "View Unity" are two separate GameObjects that both happen to
-  use `ViewType.Unity` - despite the similar naming, they are not the same object. Only "View Intro"
-  is wired into `ViewManager`; "View Unity" is an unused, inactive duplicate left in the scene.
+  use `ViewType.Unity` - despite the similar naming, they are not the same object. Neither is wired
+  into `ViewManager` any more.
 - Song selection is independent of the view: `SimpleControl`
   (`Assets/Core/Scripts/UI/SimpleControl.cs`) owns its own separate `List<AudioClipContainer>` and
   cycles it on Left / Right arrow (or the menu buttons), so any song can play under any view.

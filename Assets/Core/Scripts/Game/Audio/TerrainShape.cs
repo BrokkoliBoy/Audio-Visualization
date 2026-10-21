@@ -16,7 +16,7 @@ public class TerrainShape
     public AudioShape Shape { get => _shape; set => _shape = value; }
     [Tooltip("Specifies the shape that the bands should be cast onto.")]
     [SerializeField] private AudioShape _shape;
-    public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ, AlignmentMinXZ, AlignmentMaxXZ, AlignmentMinXZInversed, AlignmentMaxXZInversed }
+    public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ }
 
     public float Strength { get => _strength; set => _strength = value; }
     [Tooltip("TODO")]
@@ -116,14 +116,6 @@ public class TerrainShape
         }
         else if (_shape == AudioShape.Square)
             indexNormalized = _shapeZoom * Mathf.Max(Mathf.Abs(0.5f - x), Mathf.Abs(0.5f - z)) * 2;
-        else if (_shape == AudioShape.AlignmentMinXZ)
-            indexNormalized = Mathf.Min(x, z);
-        else if (_shape == AudioShape.AlignmentMaxXZ)
-            indexNormalized = Mathf.Max(x, z);
-        else if (_shape == AudioShape.AlignmentMinXZInversed)
-            indexNormalized = Mathf.Min(1 - x, z);
-        else if (_shape == AudioShape.AlignmentMaxXZInversed)
-            indexNormalized = Mathf.Max(1 - x, z);
 
         return indexNormalized;
     }

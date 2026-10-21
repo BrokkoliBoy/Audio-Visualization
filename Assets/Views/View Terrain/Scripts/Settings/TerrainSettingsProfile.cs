@@ -327,7 +327,10 @@ namespace Gavi
                 TerrainShapeData profileShape = Shapes[i];
 
                 terrainShape.ApplyShape = profileShape.ApplyShape;
-                terrainShape.Shape = (TerrainShape.AudioShape)profileShape.Shape;
+                // old profiles can still hold one of the removed corner shapes
+                terrainShape.Shape = System.Enum.IsDefined(typeof(TerrainShape.AudioShape), (int)profileShape.Shape)
+                    ? (TerrainShape.AudioShape)profileShape.Shape
+                    : TerrainShape.AudioShape.Circle;
                 terrainShape.Strength = profileShape.Strength;
                 terrainShape.Zoom = profileShape.Zoom;
                 terrainShape.Invert = profileShape.Invert;

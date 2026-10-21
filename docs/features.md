@@ -13,7 +13,7 @@ Last updated: 2026-10-21 (performance pass)
 | Color | Overall glow, background tint, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow, color from band |
 | Terrain | Terrain (face count, height, FPS hint), Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
 | Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
-| Shapes | Audio shapes (circle, rectangles ...) that map the spectrum onto the terrain |
+| Shapes | Audio shapes (circle, square, diamond, stripes along X or Z) that map the spectrum onto the terrain |
 | Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
 
 ## Features
@@ -47,6 +47,7 @@ Last updated: 2026-10-21 (performance pass)
 | Zoom per pattern | idea | Each pattern remembers its own zoom |
 | More beat-driven invert effects | idea | Breathing, crossfade A to B, zoom / offset kick, bass-driven morph, reverse spiral, half-time ping-pong. Only the plain flip is built |
 | More patterns | idea | Stars, scales, weave, more geometric ones |
+| More audio shapes | idea | The shape decides which vertex gets which band. Candidates: mirrored stripes, rays, spiral, cross, star, rings that repeat, offset center, bands that follow the noise. The four corner shapes were removed (2026-10-21) |
 | Interaction mode | idea | Touch the terrain with the mouse and play on top of a song. The band editor of the test signal is the first step |
 | Flip as a wave | idea | "Flip beats" could run as a wave along the audio bands instead of everywhere at once: from the inside out on a circle, from side to side on vertical stripes |
 | Menu review | todo | Go over the whole menu once: right modules in the right tabs, right names |
