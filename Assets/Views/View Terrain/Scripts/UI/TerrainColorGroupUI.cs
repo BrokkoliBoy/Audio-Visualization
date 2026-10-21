@@ -51,9 +51,11 @@ namespace Gavi
 
         [Header("--- Gradient keys ---")]
         [Tooltip("For every key of the terrain gradient: which color (index of the entries) it belongs to.")]
-        [SerializeField] private int[] _keyColorIndex = { 0, 0, 1, 2, 2, 3, 3, 3 };
+        [SerializeField] private int[] _keyColorIndex = { 0, 0, 1, 2, 3 };
         [Tooltip("For every color: the key that carries the color exactly. The other keys of the color are offsets of it.")]
-        [SerializeField] private int[] _referenceKey = { 1, 2, 3, 6 };
+        [SerializeField] private int[] _referenceKey = { 1, 2, 3, 4 };
+        [Tooltip("The first key of the gradient (the lowest vertices) never gets brighter than this exposure value, whatever the base color is set to. The gradient then rises to the chosen brightness.")]
+        [SerializeField] private float _startKeyMaxIntensity = -4.5f;
 
         private Gradient _gradient;
         private GradientColorKey[] _originalColorKeys;
@@ -519,6 +521,8 @@ namespace Gavi
                 // The intensity is an exposure value, so a factor becomes log2 of it.
                 float intensity = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + _intensityOffset[i]
                     + Mathf.Log(ColorCompensation(entry), 2f);
+                if (i == 0)
+                    intensity = Mathf.Min(intensity, _startKeyMaxIntensity);
 
                 Color color = TerrainColorMapping.ToHdrColor(hue, saturation, intensity);
                 keys[i] = new GradientColorKey(new Color(color.r * overall, color.g * overall, color.b * overall, 1f), _originalColorKeys[i].time);
