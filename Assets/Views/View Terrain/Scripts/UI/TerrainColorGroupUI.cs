@@ -41,10 +41,8 @@ namespace Gavi
         [SerializeField] private SliderG _sliderBloomScatter;
 
         [Header("--- Background ---")]
-        [Tooltip("The sky of the bloom volume takes the hue of the base color (the first one). Its brightness and saturation stay.")]
+        [Tooltip("The sky of the bloom volume takes the hue of the base color (the first one). Brightness and saturation come from the sky colors in the volume.")]
         [SerializeField] private Toggle _toggleTintBackground;
-        [Tooltip("Hue of the base color for which the sky stays as it is in the scene.")]
-        [SerializeField] private float _skyReferenceHue = 0f;
 
         [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
@@ -547,19 +545,17 @@ namespace Gavi
             }
 
             bool tint = (_toggleTintBackground == null || _toggleTintBackground.isOn) && _entries.Count > 0;
-            float turn = tint ? _entries[0].Hue - _skyReferenceHue : 0f;
-            _sky.middle.Override(TurnHue(_skyMiddle, turn));
-            _sky.bottom.Override(TurnHue(_skyBottom, turn));
+            float hue = _entries.Count > 0 ? _entries[0].Hue : 0f;
+            _sky.middle.Override(tint ? WithHue(_skyMiddle, hue) : _skyMiddle);
+            _sky.bottom.Override(tint ? WithHue(_skyBottom, hue) : _skyBottom);
         }
 
-        private static Color TurnHue(Color color, float degrees)
+        private static Color WithHue(Color color, float degrees)
         {
-            if (Mathf.Abs(degrees) < 0.01f)
-                return color;
-            Color.RGBToHSV(color, out float h, out float s, out float v);
-            Color turned = Color.HSVToRGB(Mathf.Repeat(h + degrees / 360f, 1f), s, v, true);
-            turned.a = color.a;
-            return turned;
+            Color.RGBToHSV(color, out _, out float s, out float v);
+            Color tinted = Color.HSVToRGB(Mathf.Repeat(degrees / 360f, 1f), s, v, true);
+            tinted.a = color.a;
+            return tinted;
         }
 
         private void ApplyBloom()
