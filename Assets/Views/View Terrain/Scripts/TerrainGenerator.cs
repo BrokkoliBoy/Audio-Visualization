@@ -203,9 +203,25 @@ namespace Gavi
         private bool[] _outOfBoundsVertices;
 
 
-        private float[,] _lastYs;
-        private float[,] _lastBands;
+        // last height and band activity per vertex (index = z * (faceCountX + 1) + x), for the dampening
+        private float[] _lastYs;
+        private float[] _lastBands;
         private Vector3[] _drawnVertices;
+        // GetFpsEqualizer() of this frame, the same for every vertex
+        private float _fpsEqualizer;
+
+        // Band index per vertex and shape, and whether a vertex lies outside of all shapes. They only depend on the shapes and
+        // the face count, so they are calculated again only when one of those changes (see EnsureShapeCache).
+        private readonly List<float[]> _shapeIndexCache = new List<float[]>();
+        private bool[] _outOfAllShapesCache;
+        private int _shapeCacheSignature;
+        private bool _shapeCacheBuilt;
+
+        // The band values of this frame, read once instead of per vertex
+        private float[] _bandValues = new float[0];
+        private int _bandCount;
+        private int _uvFaceCountX = -1;
+        private int _uvFaceCountZ = -1;
         /// <summary>How strongly the band of the current vertex moves (0-1), set by ApplyAudio. 1 without audio. The smoothed one follows the dampening.</summary>
         private float _bandFactor = 1f;
         private float _bandSmoothed = 1f;
@@ -267,9 +283,12 @@ namespace Gavi
             if (redoMesh)
                 _vertices = new Vector3[(_faceCountX + 1) * (_faceCountZ + 1)];
             if (_applyDampening && (_lastYs == null || redoMesh))
-                _lastYs = new float[_faceCountX + 1, _faceCountZ + 1];
+                _lastYs = new float[_vertices.Length];
             if (_applyDampening && (_lastBands == null || redoMesh))
-                _lastBands = new float[_faceCountX + 1, _faceCountZ + 1];
+                _lastBands = new float[_vertices.Length];
+            _fpsEqualizer = Utility.Utility.GetFpsEqualizer();
+            EnsureShapeCache();
+            CalculateNoise();
             if (_colors == null || redoMesh)
                 _colors = new Color[_vertices.Length];
             if (_outOfBoundsVertices == null || redoMesh)
@@ -284,16 +303,17 @@ namespace Gavi
             {
                 for (int x = 0; x < _faceCountX + 1; x++)
                 {
-                    float y = GetY(x, z);
+                    float y = GetY(x, z, i);
+                    bool outside = (_hideOutOfBounds || _colorOutOfBounds) && _outOfAllShapesCache[i];
                     _vertices[i] = new Vector3(x * scaleModifierX, y * scaleModifierY, z * scaleModifierZ);
-                    _colors[i] = GetColor(x, y, z, _bandSmoothed);
-                    _outOfBoundsVertices[i] = _hideOutOfBounds && IsOutOfAllShapes(x, z);
-                    i++;
+                    _colors[i] = GetColor(y, _bandSmoothed, outside);
+                    _outOfBoundsVertices[i] = _hideOutOfBounds && outside;
                     if (_applyDampening)
                     {
-                        _lastYs[x, z] = y;
-                        _lastBands[x, z] = _bandSmoothed;
+                        _lastYs[i] = y;
+                        _lastBands[i] = _bandSmoothed;
                     }
+                    i++;
                 }
             }
 
@@ -334,15 +354,20 @@ namespace Gavi
             }
             _triangleCount = triangleIndex;
 
-            if (_uvs == null || redoMesh)
-                _uvs = new Vector2[_vertices.Length];
-            for (int i = 0, x = 0; x < _faceCountX + 1; x++)
+            // the uvs only depend on the face count
+            if (_uvs == null || redoMesh || _uvFaceCountX != _faceCountX || _uvFaceCountZ != _faceCountZ)
             {
-                for (int z = 0; z < _faceCountZ + 1; z++)
+                _uvs = new Vector2[_vertices.Length];
+                for (int i = 0, x = 0; x < _faceCountX + 1; x++)
                 {
-                    _uvs[i] = new Vector2((float)x / _faceCountX, (float)z / _faceCountZ);
-                    i++;
+                    for (int z = 0; z < _faceCountZ + 1; z++)
+                    {
+                        _uvs[i] = new Vector2((float)x / _faceCountX, (float)z / _faceCountZ);
+                        i++;
+                    }
                 }
+                _uvFaceCountX = _faceCountX;
+                _uvFaceCountZ = _faceCountZ;
             }
 
             //ApplyMesh();
@@ -366,19 +391,20 @@ namespace Gavi
 
 
         #region Calculating Y
-        private float GetY(int x, int z)
+        /// <param name="index">Index of the vertex: z * (faceCountX + 1) + x.</param>
+        private float GetY(int x, int z, int index)
         {
             float y = 1;
-            y = ApplyPerlin(x, y, z);
+            y = ApplyPerlin(index, y);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterPerlin)
                 y = ApplyTerrace(y);
-            y = ApplyAudio(x, y, z);
+            y = ApplyAudio(index, y);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterAudio)
                 y = ApplyTerrace(y);
             if (_beatWave != null)
                 y = _beatWave.Apply(x, z, _faceCountX, _faceCountZ, y, _noiseFactor);
-            y = ApplyDampening(x, y, z);
-            _bandSmoothed = ApplyBandDampening(x, _bandFactor, z);
+            y = ApplyDampening(index, y);
+            _bandSmoothed = ApplyBandDampening(index, _bandFactor);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterDampening)
                 y = ApplyTerrace(y);
             return y;
@@ -386,21 +412,59 @@ namespace Gavi
         /// <summary>How high the noise pattern leaves the current vertex (1 = full height). Set by ApplyPerlin, used by the beat wave.</summary>
         private float _noiseFactor = 1f;
 
-        private float ApplyPerlin(int x, float originalY, int z)
+        private float ApplyPerlin(int index, float originalY)
         {
             _noiseFactor = 1f;
             if (!_applyPerlinNoise)
                 return originalY;
 
             float y = originalY;
-            // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
-            float xScaled = x * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX));
-            float zScaled = z * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
-            float perlinValue = TerrainNoise.Evaluate(_noisePattern, xScaled, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
-            perlinValue = Mathf.Lerp(perlinValue, 1f - perlinValue, _invertEased);
-            _noiseFactor = Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, perlinValue);
+            _noiseFactor = Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, _noiseValues[index]);
             y *= _noiseFactor;
             return y;
+        }
+
+        /// <summary>Below this many vertices the noise is calculated on the main thread, the threads would cost more than they save.</summary>
+        private const int ParallelNoiseMinVertices = 2500;
+        private float[] _noiseValues = new float[0];
+        private System.Action<int> _noiseRowAction;
+
+        /// <summary>
+        /// Calculates the pattern (with the invert already applied) for every vertex, row by row on all processor cores.
+        /// The pattern functions only read their arguments, so the rows do not disturb each other.
+        /// </summary>
+        private void CalculateNoise()
+        {
+            if (!_applyPerlinNoise)
+                return;
+
+            int vertexCount = (_faceCountX + 1) * (_faceCountZ + 1);
+            if (_noiseValues.Length != vertexCount)
+                _noiseValues = new float[vertexCount];
+
+            if (vertexCount < ParallelNoiseMinVertices)
+            {
+                for (int z = 0; z <= _faceCountZ; z++)
+                    CalculateNoiseRow(z);
+                return;
+            }
+
+            if (_noiseRowAction == null)
+                _noiseRowAction = CalculateNoiseRow;
+            System.Threading.Tasks.Parallel.For(0, _faceCountZ + 1, _noiseRowAction);
+        }
+
+        private void CalculateNoiseRow(int z)
+        {
+            // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
+            float scaleX = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX);
+            float zScaled = z * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
+            int index = z * (_faceCountX + 1);
+            for (int x = 0; x <= _faceCountX; x++, index++)
+            {
+                float perlinValue = TerrainNoise.Evaluate(_noisePattern, x * scaleX, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
+                _noiseValues[index] = Mathf.Lerp(perlinValue, 1f - perlinValue, _invertEased);
+            }
         }
 
         /// <summary>
@@ -473,7 +537,7 @@ namespace Gavi
             return 0.5f * (low + high);
         }
 
-        private float ApplyAudio(int x, float originalY, int z)
+        private float ApplyAudio(int index, float originalY)
         {
             if (!_applyAudio || _samplesContainer == null || _audioShapeSettings.Count == 0)
             {
@@ -483,13 +547,14 @@ namespace Gavi
 
             // apply y height
             float yFactor = -1;
-            foreach (TerrainShape shapeSettings in _audioShapeSettings)
+            for (int shapeIndex = 0; shapeIndex < _audioShapeSettings.Count; shapeIndex++)
             {
+                TerrainShape shapeSettings = _audioShapeSettings[shapeIndex];
                 if (!shapeSettings.ApplyShape)
                     continue;
-                    
+
                 // get band index
-                float bandIndexNormalized = shapeSettings.GetNormalizedBandIndexByShape((float)x / _faceCountX, (float)z / _faceCountZ);
+                float bandIndexNormalized = _shapeIndexCache[shapeIndex][index];
                 bandIndexNormalized = Mathf.Min(1, bandIndexNormalized);
                 float yFactorThisBand = GetHeightFactorByAudioBand(/*originalY, */bandIndexNormalized);
                 
@@ -521,28 +586,28 @@ namespace Gavi
             _bandFactor = Mathf.Clamp01(yFactor < 0f ? 1f : yFactor);
             return originalY * yFactor;
         }
-        private float ApplyDampening(int x, float originalY, int z)
+        private float ApplyDampening(int index, float originalY)
         {
             if (!_applyDampening)
                 return originalY;
 
             float y = originalY;
 
-            if (y < _lastYs[x, z])
-                y = Mathf.Lerp(_lastYs[x, z], y, _dampenLerpFactorDown * Utility.Utility.GetFpsEqualizer());
+            if (y < _lastYs[index])
+                y = Mathf.Lerp(_lastYs[index], y, _dampenLerpFactorDown * _fpsEqualizer);
             else
-                y = Mathf.Lerp(_lastYs[x, z], y, _dampenLerpFactorUp * Utility.Utility.GetFpsEqualizer());
+                y = Mathf.Lerp(_lastYs[index], y, _dampenLerpFactorUp * _fpsEqualizer);
 
             return y;
         }
         /// <summary>The band activity follows the same dampening as the height, so the color does not flicker.</summary>
-        private float ApplyBandDampening(int x, float band, int z)
+        private float ApplyBandDampening(int index, float band)
         {
             if (!_applyDampening)
                 return band;
-            float last = _lastBands[x, z];
+            float last = _lastBands[index];
             float factor = band < last ? _dampenLerpFactorDown : _dampenLerpFactorUp;
-            return Mathf.Lerp(last, band, factor * Utility.Utility.GetFpsEqualizer());
+            return Mathf.Lerp(last, band, factor * _fpsEqualizer);
         }
 
         private float ApplyTerrace(float originalY)
@@ -559,7 +624,8 @@ namespace Gavi
 
 
         #region Color
-        private Color GetColor(float x, float y, float z, float band)
+        /// <param name="outsideAllShapes">The vertex lies in none of the active audio shapes.</param>
+        private Color GetColor(float y, float band, bool outsideAllShapes)
         {
             if (!_applyColorByHeight)
                 return Color.magenta;
@@ -570,7 +636,7 @@ namespace Gavi
             if (_colorBandGlow > 0f)
                 color = Scale(color, 1f + _colorBandGlow * MaxBandGlow * Mathf.Clamp01(band));
 
-            if (_colorOutOfBounds && IsOutOfAllShapes((int)x, (int)z))
+            if (_colorOutOfBounds && outsideAllShapes)
             {
                 color.r *= _outOfBoundsBrightness;
                 color.g *= _outOfBoundsBrightness;
@@ -593,6 +659,76 @@ namespace Gavi
         private Color GetColorByHeight(float y)
         {
             return _colorHeightGradient.Evaluate(y);
+        }
+
+        /// <summary>
+        /// Calculates the band index of every vertex for every shape again when the shapes, the face count or the audio switch
+        /// changed since the last frame. The index only depends on those, not on the audio itself.
+        /// </summary>
+        private void EnsureShapeCache()
+        {
+            int vertexCount = (_faceCountX + 1) * (_faceCountZ + 1);
+            int signature = _faceCountX;
+            unchecked
+            {
+                signature = signature * 31 + _faceCountZ;
+                signature = signature * 31 + (_applyAudio ? 1 : 0);
+                signature = signature * 31 + _audioShapeSettings.Count;
+                foreach (TerrainShape shape in _audioShapeSettings)
+                    signature = signature * 31 + shape.GetIndexSettingsHash();
+            }
+
+            if (_shapeCacheBuilt && signature == _shapeCacheSignature && _outOfAllShapesCache != null && _outOfAllShapesCache.Length == vertexCount)
+                return;
+
+            _shapeCacheBuilt = true;
+            _shapeCacheSignature = signature;
+            _shapeIndexCache.Clear();
+            if (_outOfAllShapesCache == null || _outOfAllShapesCache.Length != vertexCount)
+                _outOfAllShapesCache = new bool[vertexCount];
+
+            bool audioShapes = _applyAudio && _audioShapeSettings.Count > 0;
+            foreach (TerrainShape shape in _audioShapeSettings)
+            {
+                float[] indices = new float[vertexCount];
+                if (audioShapes && shape.ApplyShape)
+                {
+                    for (int i = 0, z = 0; z <= _faceCountZ; z++)
+                        for (int x = 0; x <= _faceCountX; x++, i++)
+                            indices[i] = shape.GetNormalizedBandIndexByShape((float)x / _faceCountX, (float)z / _faceCountZ);
+                }
+                _shapeIndexCache.Add(indices);
+            }
+
+            for (int i = 0; i < vertexCount; i++)
+            {
+                // same as IsOutOfAllShapes
+                bool anyActive = false, inside = false;
+                if (audioShapes)
+                {
+                    for (int s = 0; s < _audioShapeSettings.Count; s++)
+                    {
+                        if (!_audioShapeSettings[s].ApplyShape)
+                            continue;
+                        anyActive = true;
+                        if (_shapeIndexCache[s][i] >= 0)
+                        {
+                            inside = true;
+                            break;
+                        }
+                    }
+                }
+                _outOfAllShapesCache[i] = anyActive && !inside;
+            }
+        }
+
+        /// <summary>Like <see cref="IsOutOfAllShapes"/>, but takes the result of the last frame when there is one.</summary>
+        private bool IsOutOfAllShapesCached(int x, int z)
+        {
+            int index = z * (_faceCountX + 1) + x;
+            if (_shapeCacheBuilt && _outOfAllShapesCache != null && index >= 0 && index < _outOfAllShapesCache.Length)
+                return _outOfAllShapesCache[index];
+            return IsOutOfAllShapes(x, z);
         }
 
         /// <summary>True if audio is applied and the vertex lies in none of the active shapes.</summary>
@@ -652,7 +788,7 @@ namespace Gavi
             // the parts outside of all shapes are not drawn, so they are not the terrain
             int x = Mathf.Clamp(Mathf.RoundToInt(hit.x / _terrainSizeX * _faceCountX), 0, _faceCountX);
             int z = Mathf.Clamp(Mathf.RoundToInt(hit.z / _terrainSizeZ * _faceCountZ), 0, _faceCountZ);
-            return !IsOutOfAllShapes(x, z);
+            return !IsOutOfAllShapesCached(x, z);
         }
 
         /// <summary>Ray against the terrain in its local space: the surface as it is drawn, or only the box around it.</summary>
@@ -838,12 +974,20 @@ namespace Gavi
                 return;
 
             _samplesContainer.TryRecalculate();
+
+            // read the band values once, they stay the same for the whole frame
+            _bandCount = _samplesContainer.BandSize;
+            if (_bandValues.Length != _bandCount)
+                _bandValues = new float[_bandCount];
+            for (int i = 0; i < _bandCount; i++)
+                _bandValues[i] = _samplesContainer.GetValue(i);
+
             if (_outOfBoundsOperation == OutOfBounds.Constant)
                 _outOfBoundsFactorValue = 1;
             else if (_outOfBoundsOperation == OutOfBounds.Average)
                 _outOfBoundsFactorValue = _samplesContainer.Average;
             else if (_outOfBoundsOperation == OutOfBounds.OuterBand)
-                _outOfBoundsFactorValue = _samplesContainer.GetValue(_samplesContainer.BandSize - 1);
+                _outOfBoundsFactorValue = _samplesContainer.GetValue(_bandCount - 1);
             else if (_outOfBoundsOperation == OutOfBounds.InnerBand)
                 _outOfBoundsFactorValue = _samplesContainer.GetValue(0);
             else if (_outOfBoundsOperation == OutOfBounds.Flat)
@@ -852,23 +996,23 @@ namespace Gavi
             _outOfBoundsFactorValue *= _outOfBoundsFactor;
 
             if (_outOfBoundsMaximumIsOutestBand)
-                _outOfBoundsFactorValue = Mathf.Min(_outOfBoundsFactorValue, _samplesContainer.GetValue(_samplesContainer.BandSize - 1));
+                _outOfBoundsFactorValue = Mathf.Min(_outOfBoundsFactorValue, _samplesContainer.GetValue(_bandCount - 1));
         }
         private float GetHeightFactorByAudioBand(/*float originalY, */float bandIndexNormalized)
         {
-            int bandIndex = (int)(bandIndexNormalized * _samplesContainer.BandSize);
-            bandIndex = Mathf.Min(bandIndex, _samplesContainer.BandSize - 1);
+            int bandIndex = (int)(bandIndexNormalized * _bandCount);
+            bandIndex = Mathf.Min(bandIndex, _bandCount - 1);
 
             if (bandIndexNormalized < 0) // handle out of bounds band
             {
                 if (_outOfBoundsOperation == OutOfBounds.OuterBand)
                 {
                     bandIndexNormalized = 0.999999f;
-                    bandIndex = _samplesContainer.BandSize - 1;
+                    bandIndex = _bandCount - 1;
                     if (_applyAudioSmoothing)
                         return ApplyAudioBandSmooth(/*originalY, */bandIndex, bandIndexNormalized);
                     else if (_applyAudioDebugMode)
-                        return (1 - ((float)bandIndex / _samplesContainer.BandSize));
+                        return (1 - ((float)bandIndex / _bandCount));
                     else
                         return _outOfBoundsFactorValue;
                 }
@@ -880,9 +1024,9 @@ namespace Gavi
             if (_applyAudioSmoothing)
                 return ApplyAudioBandSmooth(/*originalY, */bandIndex, bandIndexNormalized);
             else if (_applyAudioDebugMode)
-                return 1 - ((float)bandIndex / _samplesContainer.BandSize);
+                return 1 - ((float)bandIndex / _bandCount);
             else
-                return _samplesContainer.GetValue()[bandIndex];
+                return _bandValues[bandIndex];
         }
 
         private float ApplyAudioBandSmooth(/*float originalY,*/ int bandIndex, float indexNormalized)
@@ -890,11 +1034,11 @@ namespace Gavi
             if (!_applyAudioSmoothing)
                 return 1;
 
-            if (_samplesContainer.BandSize < 2)
+            if (_bandCount < 2)
                 return 1;
 
-            float ownSampleValue = _applyAudioDebugMode ? /*originalY **/ (1 - ((float)bandIndex / _samplesContainer.BandSize)) : _samplesContainer.GetValue(bandIndex);
-            float indexFraction = (indexNormalized * _samplesContainer.BandSize) % 1; // index of 3.7f is now 0.7f
+            float ownSampleValue = _applyAudioDebugMode ? /*originalY **/ (1 - ((float)bandIndex / _bandCount)) : _bandValues[bandIndex];
+            float indexFraction = (indexNormalized * _bandCount) % 1; // index of 3.7f is now 0.7f
 
             if (indexNormalized >= 1)
                 indexFraction = 0.999999f;
@@ -904,10 +1048,10 @@ namespace Gavi
             {
                 if (indexFraction > 0.5f)
                 {
-                    float nextValue = _samplesContainer.GetValue(bandIndex + 1);
+                    float nextValue = _bandValues[bandIndex + 1];
 #if UNITY_EDITOR
                     if (_applyAudioDebugMode)
-                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _samplesContainer.BandSize));
+                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _bandCount));
 #endif
                     float curveValue = _audioSmoothingCurve.Evaluate((indexFraction - 0.5f) * 2);
                     return ownSampleValue * curveValue + nextValue * (1 - curveValue);
@@ -916,14 +1060,14 @@ namespace Gavi
                     return ownSampleValue;
             }
             // last band: apply the second last band and the out of bounds "band"
-            else if (bandIndex == _samplesContainer.BandSize - 1)
+            else if (bandIndex == _bandCount - 1)
             {
                 if (indexFraction < 0.5f)
                 {
-                    float prevValue = _samplesContainer.GetValue(bandIndex - 1);
+                    float prevValue = _bandValues[bandIndex - 1];
 #if UNITY_EDITOR
                     if (_applyAudioDebugMode)
-                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _samplesContainer.BandSize));
+                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _bandCount));
 #endif
                     float curveValue = _audioSmoothingCurve.Evaluate(Utility.Utility.Remap(0.5f, 0, 0, 1, indexFraction)/*(indexFraction - 0.5f) * 2*/);
                     return ownSampleValue * curveValue + prevValue * (1 - curveValue);
@@ -945,20 +1089,20 @@ namespace Gavi
             {
                 if (indexFraction < 0.5f)
                 {
-                    float prevValue = _samplesContainer.GetValue(bandIndex - 1);
+                    float prevValue = _bandValues[bandIndex - 1];
 #if UNITY_EDITOR
                     if (_applyAudioDebugMode)
-                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _samplesContainer.BandSize));
+                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _bandCount));
 #endif
                     float curveValue = _audioSmoothingCurve.Evaluate(Utility.Utility.Remap(0.5f, 0, 0, 1, indexFraction)/*(indexFraction - 0.5f) * 2*/);
                     return ownSampleValue * curveValue + prevValue * (1 - curveValue);
                 }
                 else /*if (indexFraction > 0.5f)*/
                 {
-                    float nextValue = _samplesContainer.GetValue(bandIndex + 1);
+                    float nextValue = _bandValues[bandIndex + 1];
 #if UNITY_EDITOR
                     if (_applyAudioDebugMode)
-                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _samplesContainer.BandSize));
+                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _bandCount));
 #endif
                     float curveValue = _audioSmoothingCurve.Evaluate((indexFraction - 0.5f) * 2);
                     return ownSampleValue * curveValue + nextValue * (1 - curveValue);

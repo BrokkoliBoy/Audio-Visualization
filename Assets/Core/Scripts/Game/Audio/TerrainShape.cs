@@ -48,6 +48,35 @@ public class TerrainShape
     [SerializeField] private AnimationCurve _audioBandWidthCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0, 2), new Keyframe(1, 1) });
     
 
+    /// <summary>
+    /// Changes whenever a setting that has an effect on <see cref="GetNormalizedBandIndexByShape"/> changes, so results can be cached.
+    /// Calculates without allocating, it is meant to be called every frame.
+    /// </summary>
+    public int GetIndexSettingsHash()
+    {
+        unchecked
+        {
+            int hash = _applyShape ? 1 : 0;
+            hash = hash * 31 + (int)_shape;
+            hash = hash * 31 + _shapeZoom.GetHashCode();
+            hash = hash * 31 + (_invertShape ? 1 : 0);
+            hash = hash * 31 + (_applyCustomAudioBandWidth ? 1 : 0);
+            if (_applyCustomAudioBandWidth && _audioBandWidthCurve != null)
+            {
+                hash = hash * 31 + _audioBandWidthCurve.length;
+                for (int i = 0; i < _audioBandWidthCurve.length; i++)
+                {
+                    Keyframe key = _audioBandWidthCurve[i];
+                    hash = hash * 31 + key.time.GetHashCode();
+                    hash = hash * 31 + key.value.GetHashCode();
+                    hash = hash * 31 + key.inTangent.GetHashCode();
+                    hash = hash * 31 + key.outTangent.GetHashCode();
+                }
+            }
+            return hash;
+        }
+    }
+
     public float GetNormalizedBandIndexByShape(float x, float z)
     {
         float indexNormalized = GetIndexByShape(x, z);

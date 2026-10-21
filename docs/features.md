@@ -4,7 +4,7 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-21
+Last updated: 2026-10-21 (performance pass)
 
 ## Menu tabs
 
@@ -30,6 +30,7 @@ Last updated: 2026-10-21
 | Color palettes | done | JSON palettes, HDR colors, start palette Lava |
 | Saturation / glow mapping | done | Curved saturation slider, weakly saturated colors are dimmed so white does not overpower |
 | FPS display + hint | done | Hint to lower the face count when FPS stays under 60 / 30 |
+| Performance | done | Mesh update measured in the Editor at 115 x 115 faces with Domain warp: 13.6 ms before, 3.5 ms now. The noise is calculated in parallel on all processor cores, the band of every vertex per shape is cached until a shape or the face count changes, the audio bands are read once per frame |
 | Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react). "Beat strength" lifts all bands on every beat on top of the level, the bass the most; "Strength from song" takes the strength of every beat from the bass of the playing song instead of the slider. "Edit bands" lets the mouse set single bands (left button raises, right button lowers the band under the cursor). The camera beat zoom pauses while it is on. Starts off, not part of a profile |
 | Color by band | done | Three sliders (gradient position, brightness, glow) say how much each comes from the activity of the vertex's frequency band instead of its height. 0 = as before |
 | Mesh morph | done | Bends the whole mesh after the heights (shape dropdown with previous / next buttons): Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag (a wave runs through the mesh), Twist. Amount slider and "On beat" (the mesh is only bent on the beat and relaxes in between) |
