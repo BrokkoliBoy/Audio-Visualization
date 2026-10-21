@@ -88,6 +88,14 @@ namespace Gavi
         public int MorphShape = 0;
         public float MorphAmount = 0.5f;
         public float MorphBeat = 0f;
+
+        [Header("- Performance -")]
+        [Tooltip("The noise is calculated again every this many mesh updates, 1 = every update.")]
+        public int NoiseInterval = TerrainGenerator.DefaultNoiseInterval;
+        [Tooltip("The noise is calculated for every this-many-th vertex and interpolated in between, 1 = every vertex.")]
+        public int NoiseStep = TerrainGenerator.DefaultNoiseStep;
+        [Tooltip("The mesh is updated this often per second at most.")]
+        public int MeshUpdateRate = TerrainGenerator.DefaultMeshUpdatesPerSecond;
         #endregion
         
         
@@ -169,6 +177,11 @@ namespace Gavi
             MorphAmount = profile.MorphAmount;
             MorphBeat = profile.MorphBeat;
 
+            // Performance
+            NoiseInterval = profile.NoiseInterval;
+            NoiseStep = profile.NoiseStep;
+            MeshUpdateRate = profile.MeshUpdateRate;
+
             // Shape
             Shapes.Clear();
             foreach (TerrainShapeData shapeData in profile.Shapes)
@@ -235,6 +248,11 @@ namespace Gavi
             MorphShape = terrain.Morph;
             MorphAmount = terrain.MorphAmount;
             MorphBeat = terrain.MorphBeat;
+
+            // Performance
+            NoiseInterval = terrain.NoiseInterval;
+            NoiseStep = terrain.NoiseStep;
+            MeshUpdateRate = terrain.MeshUpdatesPerSecond;
 
             // Shape
             Shapes = new List<TerrainShapeData>();
@@ -310,6 +328,11 @@ namespace Gavi
             terrain.Morph = MorphShape;
             terrain.MorphAmount = MorphAmount;
             terrain.MorphBeat = MorphBeat;
+
+            // Performance
+            terrain.NoiseInterval = NoiseInterval;
+            terrain.NoiseStep = NoiseStep;
+            terrain.MeshUpdatesPerSecond = MeshUpdateRate;
 
             // Shape
             // terrain.Shapes ??= new List<TerrainShape>();

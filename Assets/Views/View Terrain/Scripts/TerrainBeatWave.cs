@@ -87,7 +87,7 @@ namespace Gavi
 
         /// <summary>The beat envelope falls to 1/e after this share of a beat.</summary>
         private const float EnvelopeBeatShare = 0.35f;
-        private const int MaxWaves = 6;
+        public const int MaxWaves = 6;
         /// <summary>Distance from the middle to the corners of the terrain (in half terrain widths), a bit more.</summary>
         private const float EdgeDistance = 1.45f;
         /// <summary>The Bass edge origin starts this many wave widths inside of the bass edge.</summary>
@@ -126,7 +126,7 @@ namespace Gavi
         private const float OverallPeakHalfLife = 8f;
         private const float MinPeak = 0.1f;
         /// <summary>Absorb pulls the terrain towards the wave only by this share, so it stays gentle.</summary>
-        private const float AbsorbShare = 0.6f;
+        public const float AbsorbShare = 0.6f;
         private const int IntervalCount = 8;
 
         private readonly float[] _startTime = new float[MaxWaves];
@@ -179,9 +179,14 @@ namespace Gavi
             _bassEdge = Mathf.Clamp(distance, 0f, EdgeDistance);
         }
 
-        /// <summary>Called once per mesh update before the vertices are calculated. Detects beats, starts new waves and moves the running ones.</summary>
-        public void Tick()
+        /// <summary>
+        /// Called once per mesh update before the vertices are calculated. Detects beats, starts new waves and moves the running ones.
+        /// deltaTime is the time since the last call, the default is the time of the last frame.
+        /// </summary>
+        public void Tick(float deltaTime = -1f)
         {
+            if (deltaTime < 0f)
+                deltaTime = Time.deltaTime;
             float time = Time.time;
             float pulse = AudioTestSignal.IsActive ? AudioTestSignal.Instance.Pulse
                 : _beatPulseModule != null ? Mathf.Clamp01(_beatPulseModule.GetValue()) : 0f;
@@ -203,8 +208,8 @@ namespace Gavi
 
             GetLevels(out float bass, out float other);
             RecordLevels(time, bass, other);
-            _bassPeak = Mathf.Max(bass, _bassPeak * Mathf.Pow(0.5f, Time.deltaTime / BassPeakHalfLife));
-            _overallPeak = Mathf.Max(Mathf.Max(bass, other), _overallPeak * Mathf.Pow(0.5f, Time.deltaTime / OverallPeakHalfLife));
+            _bassPeak = Mathf.Max(bass, _bassPeak * Mathf.Pow(0.5f, deltaTime / BassPeakHalfLife));
+            _overallPeak = Mathf.Max(Mathf.Max(bass, other), _overallPeak * Mathf.Pow(0.5f, deltaTime / OverallPeakHalfLife));
 
             // Every beat sends a flat wave off at once. While its window is open it collects the bass levels.
             if (beat)
@@ -245,7 +250,7 @@ namespace Gavi
                 }
             }
 
-            GrowWaves(Time.deltaTime);
+            GrowWaves(deltaTime);
             PrepareFrame();
         }
 
@@ -358,41 +363,19 @@ namespace Gavi
             return oldest;
         }
 
-        /// <summary>
-        /// Height of the vertex after all running waves. y is the normalized height (1 = terrain height).
-        /// noiseFactor (0-1) is how high the noise pattern leaves the terrain at this vertex, it only counts if the wave uses the noise.
-        /// </summary>
-        public float Apply(int x, int z, int faceCountX, int faceCountZ, float y, float noiseFactor = 1f)
+        /// <summary>Number of waves that run in this frame, see <see cref="CopyWaves"/>.</summary>
+        public int ActiveCount => _activeCount;
+        /// <summary>Width of the ring in half terrain widths.</summary>
+        public float ActiveWidth => _activeWidth;
+
+        /// <summary>Position (distance from the middle in half terrain widths) and height of every running wave, for the vertex job.</summary>
+        public void CopyWaves(Unity.Collections.NativeArray<float> fronts, Unity.Collections.NativeArray<float> levels)
         {
-            if (_activeCount == 0)
-                return y;
-
-            float u = (float)x / faceCountX * 2f - 1f;
-            float v = (float)z / faceCountZ * 2f - 1f;
-            float distance = Mathf.Sqrt(u * u + v * v);
-
             for (int i = 0; i < _activeCount; i++)
             {
-                float offset = (distance - _front[i]) / _activeWidth;
-                if (offset > 3f || offset < -3f)
-                    continue;
-
-                float weight = Mathf.Exp(-offset * offset);
-                float level = _useNoise ? _level[i] * noiseFactor : _level[i];
-                switch (_mode)
-                {
-                    case Mode.Add:
-                        y += level * weight;
-                        break;
-                    case Mode.Floor:
-                        y = Mathf.Max(y, level * weight);
-                        break;
-                    default:
-                        y = Mathf.Lerp(y, level, weight * AbsorbShare);
-                        break;
-                }
+                fronts[i] = _front[i];
+                levels[i] = _level[i];
             }
-            return y;
         }
 
         /// <summary>Calculates position and height of every running wave once per frame, not once per vertex.</summary>

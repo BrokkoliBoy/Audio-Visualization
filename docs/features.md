@@ -4,14 +4,14 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-21 (performance pass)
+Last updated: 2026-10-21 (Burst jobs, performance settings)
 
 ## Menu tabs
 
 | Tab | Groups |
 |---|---|
 | Color | Overall glow, background tint, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow, color from band |
-| Terrain | Terrain (face count, height, FPS hint), Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
+| Terrain | Terrain (face count, height, FPS hint), Performance, Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
 | Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
 | Shapes | Audio shapes (circle, square, diamond, stripes along X or Z) that map the spectrum onto the terrain |
 | Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
@@ -30,7 +30,8 @@ Last updated: 2026-10-21 (performance pass)
 | Color palettes | done | JSON palettes, HDR colors, start palette Lava |
 | Saturation / glow mapping | done | Curved saturation slider, weakly saturated colors are dimmed so white does not overpower |
 | FPS display + hint | done | Hint to lower the face count when FPS stays under 60 / 30 |
-| Performance | done | Mesh update measured in the Editor at 115 x 115 faces with Domain warp: 13.6 ms before, 3.5 ms now. The noise is calculated in parallel on all processor cores, the band of every vertex per shape is cached until a shape or the face count changes, the audio bands are read once per frame |
+| Performance | done | Mesh update (calculation only, Editor, Domain warp, 16 cores): 115 x 115 faces 13.6 ms at the start, 3.5 ms after the first pass, 0.7 ms now. 400 x 400 faces: 33 ms before, 5 ms now. Heights, colors, dampening, beat wave and morph run as Burst jobs on all processor cores (TerrainJobs.cs). The noise is calculated in parallel, the band of every vertex per shape is cached until a shape or the face count changes, the audio bands are read once per frame, triangles and uvs are only rebuilt when the face count or the hidden out-of-bounds triangles change |
+| Performance settings | done | Group "Performance" in the Terrain tab, part of the profile. "Noise every" (1 to 8) calculates the noise only every n-th mesh update, in between it blends from the last to the next result. "Noise step" (1 to 6) calculates it only for every n-th vertex and interpolates. "Mesh Hz" (10 to 144) limits the mesh updates per second, camera and UI keep full speed. A line shows FPS, the mesh update time in ms and the real updates per second. Defaults: 1 / 1 / 144 (no loss) |
 | Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react). "Beat strength" lifts all bands on every beat on top of the level, the bass the most; "Strength from song" takes the strength of every beat from the bass of the playing song instead of the slider. "Edit bands" lets the mouse set single bands (left button raises, right button lowers the band under the cursor). The camera beat zoom pauses while it is on. Starts off, not part of a profile |
 | Color by band | done | Three sliders (gradient position, brightness, glow) say how much each comes from the activity of the vertex's frequency band instead of its height. 0 = as before |
 | Mesh morph | done | Bends the whole mesh after the heights (shape dropdown with previous / next buttons): Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag (a wave runs through the mesh), Twist. Amount slider and "On beat" (the mesh is only bent on the beat and relaxes in between) |

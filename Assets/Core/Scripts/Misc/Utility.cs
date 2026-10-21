@@ -136,7 +136,13 @@ namespace Gavi.Utility
 
         public static float GetFpsEqualizer()
         {
-            return Application.targetFrameRate * Time.deltaTime;
+            return GetFpsEqualizer(Time.deltaTime);
+        }
+
+        /// <summary>Like <see cref="GetFpsEqualizer()"/> for something that is updated less often than every frame: pass the time since its last update.</summary>
+        public static float GetFpsEqualizer(float deltaTime)
+        {
+            return Application.targetFrameRate * deltaTime;
         }
     }
 }

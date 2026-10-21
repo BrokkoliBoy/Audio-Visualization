@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Collections;
+using Unity.Jobs;
 using Gavi.Utility;
 using Gavi.Audio;
 using Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArrayModules;
@@ -138,8 +140,8 @@ namespace Gavi
         //public SamplesContainer SamplesContainer { get => _samplesContainer; set => _samplesContainer = value; }
         //[SerializeField] private AudioSampleSettings _audioSampleSettings;
         //[SerializeField] private AudioSampler _audioSampler;
-        
-        
+
+
         [Header("- Audio Shape -")]
         [Tooltip("List of shapes that the samples should be cast onto. If none are specified, no audio will be displayed.")]
         [SerializeField] private List<TerrainShape> _audioShapeSettings = new List<TerrainShape>();
@@ -191,43 +193,97 @@ namespace Gavi
         [SerializeField] private float _dampenLerpFactorUp = 0.5f;
         public float DampenLerpFactorUp { get => _dampenLerpFactorUp; set => _dampenLerpFactorUp = value; }
 
+        [Header("--- Performance (part of the terrain profile) ---")]
+        [Tooltip("The noise pattern is calculated again only every this many mesh updates. In between it flows smoothly from the last result to the next one. 1 = every update.")]
+        [SerializeField] private int _noiseInterval = DefaultNoiseInterval;
+        [Tooltip("The noise pattern is calculated only for every this-many-th vertex (in both directions) and interpolated in between. 1 = for every vertex.")]
+        [SerializeField] private int _noiseStep = DefaultNoiseStep;
+        [Tooltip("The mesh is updated this often per second at most. The camera and the rest keep running at full speed. At or above the frame rate = every frame.")]
+        [SerializeField] private int _meshUpdatesPerSecond = DefaultMeshUpdatesPerSecond;
+
+        public const int DefaultNoiseInterval = 1;
+        public const int DefaultNoiseStep = 1;
+        public const int DefaultMeshUpdatesPerSecond = 144;
+        public const int MaxNoiseInterval = 8;
+        public const int MaxNoiseStep = 6;
+        public const int MinMeshUpdatesPerSecond = 10;
+
+        public int NoiseInterval { get => _noiseInterval; set => _noiseInterval = Mathf.Clamp(value, 1, MaxNoiseInterval); }
+        public int NoiseStep { get => _noiseStep; set => _noiseStep = Mathf.Clamp(value, 1, MaxNoiseStep); }
+        public int MeshUpdatesPerSecond { get => _meshUpdatesPerSecond; set => _meshUpdatesPerSecond = Mathf.Max(MinMeshUpdatesPerSecond, value); }
+
+        /// <summary>Time the last mesh updates took on average (milliseconds on the main thread, the worker threads included).</summary>
+        public float UpdateMilliseconds => _updateMilliseconds;
+        /// <summary>How often the mesh is really updated per second.</summary>
+        public float MeasuredUpdatesPerSecond => _measuredUpdatesPerSecond;
+        private float _updateMilliseconds;
+        private float _measuredUpdatesPerSecond;
+
         [Header("--- References ---")]
         [SerializeField] private List<MeshFilter> _meshFilters;
         // [SerializeField] private MeshRenderer _meshRenderer;
         //[SerializeField] MeshCollider _meshCollider;
 
         private Mesh _mesh;
-        private Vector3[] _vertices;
         private int[] _triangles;
         private int _triangleCount;
-        private bool[] _outOfBoundsVertices;
 
-
-        // last height and band activity per vertex (index = z * (faceCountX + 1) + x), for the dampening
-        private float[] _lastYs;
-        private float[] _lastBands;
-        private Vector3[] _drawnVertices;
-        // GetFpsEqualizer() of this frame, the same for every vertex
+        // Per vertex data (index = z * (faceCountX + 1) + x). The vertex job fills it on all processor cores.
+        private NativeArray<Vector3> _vertices;
+        private NativeArray<Vector3> _drawnVertices;
+        private NativeArray<Color> _colors;
+        // last height and band activity per vertex, for the dampening
+        private NativeArray<float> _lastYs;
+        private NativeArray<float> _lastBands;
+        // true when the mesh shows _drawnVertices (bent by the morph) instead of _vertices
+        private bool _morphed;
+        // GetFpsEqualizer() for the time since the last mesh update, the same for every vertex
         private float _fpsEqualizer;
+        // Time since the last mesh update. It is longer than a frame when the mesh is not updated every frame.
+        private float _timeSinceMesh;
+        private float _stepDelta;
 
         // Band index per vertex and shape, and whether a vertex lies outside of all shapes. They only depend on the shapes and
         // the face count, so they are calculated again only when one of those changes (see EnsureShapeCache).
-        private readonly List<float[]> _shapeIndexCache = new List<float[]>();
+        private NativeArray<float> _shapeIndices;
+        private NativeArray<bool> _outOfAllShapes;
+        private float[] _shapeScratch;
         private bool[] _outOfAllShapesCache;
         private int _shapeCacheSignature;
+        private int _shapeCacheVersion;
         private bool _shapeCacheBuilt;
 
-        // The band values of this frame, read once instead of per vertex
-        private float[] _bandValues = new float[0];
-        private int _bandCount;
-        private int _uvFaceCountX = -1;
-        private int _uvFaceCountZ = -1;
-        /// <summary>How strongly the band of the current vertex moves (0-1), set by ApplyAudio. 1 without audio. The smoothed one follows the dampening.</summary>
-        private float _bandFactor = 1f;
-        private float _bandSmoothed = 1f;
+        // The mesh structure (triangles and uvs) only changes with the face count and the out of bounds triangles.
+        private bool _structureDirty = true;
+        private int _structureFaceCountX = -1;
+        private int _structureFaceCountZ = -1;
+        private bool _structureHide;
+        private int _structureShapeVersion = -1;
         private Vector2[] _uvs;
-        private Color[] _colors;
+
+        // The band values of this frame, read once instead of per vertex
+        private NativeArray<float> _bandValues;
+        private int _bandCount;
+        private NativeArray<TerrainShapeJobData> _shapeJobData;
+        private NativeArray<float> _smoothingCurveTable;
+        private NativeArray<Color> _gradientTable;
+        private NativeArray<float> _waveFronts;
+        private NativeArray<float> _waveLevels;
         private float _outOfBoundsFactorValue; // only set when _outOfBoundsSettings != OutOfBounds.OutestBand
+
+        // The noise pattern on a grid with every NoiseStep-th vertex: the last two results, blended over NoiseInterval updates
+        private NativeArray<float> _noisePrevious;
+        private NativeArray<float> _noiseNext;
+        private float[] _noiseScratch;
+        private bool _noiseValid;
+        private int _noiseAge;
+        private float _noiseBlend = 1f;
+        private int _noiseGridStep = 1;
+        private int _noiseGridWidth;
+        private int _noiseGridHeight;
+        /// <summary>Below this many grid points the noise is calculated on the main thread, the threads would cost more than they save.</summary>
+        private const int ParallelNoiseMinPoints = 2500;
+        private System.Action<int> _noiseRowAction;
 
         //private int _bandSize;
 
@@ -236,8 +292,19 @@ namespace Gavi
         {
             ApplyPerlinSpeed();
 
-            if (_generateOnUpdate)
-                GenerateMesh();
+            if (!_generateOnUpdate)
+                return;
+
+            _timeSinceMesh += Time.deltaTime;
+            // The update comes in the frame that is closest to the wanted time.
+            if (_timeSinceMesh < 1f / Mathf.Max(MinMeshUpdatesPerSecond, _meshUpdatesPerSecond) - 0.5f * Time.deltaTime)
+                return;
+            GenerateMesh();
+        }
+
+        private void OnDestroy()
+        {
+            DisposeBuffers();
         }
         #endregion
 
@@ -256,6 +323,8 @@ namespace Gavi
         #region Mesh Generation
         private void GenerateMesh()
         {
+            long start = System.Diagnostics.Stopwatch.GetTimestamp();
+
             if (_mesh == null)
             {
                 _mesh = new Mesh();
@@ -263,8 +332,15 @@ namespace Gavi
                     meshFilter.mesh = _mesh;
             }
 
+            _stepDelta = _timeSinceMesh > 0f ? _timeSinceMesh : Time.deltaTime;
+            _timeSinceMesh = 0f;
+            _measuredUpdatesPerSecond = Mathf.Lerp(_measuredUpdatesPerSecond, 1f / Mathf.Max(0.0001f, _stepDelta), 0.05f);
+
             CreateShape();
             ApplyMesh();
+
+            float milliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000f / System.Diagnostics.Stopwatch.Frequency;
+            _updateMilliseconds = _updateMilliseconds <= 0f ? milliseconds : Mathf.Lerp(_updateMilliseconds, milliseconds, 0.05f);
         }
 
         private void CreateShape()
@@ -275,51 +351,51 @@ namespace Gavi
             {
                 if (_beatWave.NeedsBassEdge)
                     _beatWave.SetBassEdge(GetBassEdgeDistance());
-                _beatWave.Tick();
+                _beatWave.Tick(_stepDelta);
             }
             UpdateInvert();
 
-            bool redoMesh = _vertices == null || (_faceCountX + 1) * (_faceCountZ + 1) != _vertices.Length;
+            int vertexCount = (_faceCountX + 1) * (_faceCountZ + 1);
+            bool redoMesh = !_vertices.IsCreated || _vertices.Length != vertexCount;
             if (redoMesh)
-                _vertices = new Vector3[(_faceCountX + 1) * (_faceCountZ + 1)];
-            if (_applyDampening && (_lastYs == null || redoMesh))
-                _lastYs = new float[_vertices.Length];
-            if (_applyDampening && (_lastBands == null || redoMesh))
-                _lastBands = new float[_vertices.Length];
-            _fpsEqualizer = Utility.Utility.GetFpsEqualizer();
+                AllocateVertexBuffers(vertexCount);
+            _fpsEqualizer = Utility.Utility.GetFpsEqualizer(_stepDelta);
             EnsureShapeCache();
-            CalculateNoise();
-            if (_colors == null || redoMesh)
-                _colors = new Color[_vertices.Length];
-            if (_outOfBoundsVertices == null || redoMesh)
-                _outOfBoundsVertices = new bool[_vertices.Length];
+            UpdateNoise();
 
-            float scaleModifierX = _terrainSizeX / _faceCountX;
-            float scaleModifierY = _terrainSizeY;
-            float scaleModifierZ = _terrainSizeZ / _faceCountZ;
+            JobHandle handle = ScheduleVertexJob(vertexCount);
+            _morphed = ScheduleMorph(ref handle);
 
-            //Vector3 position = Vector3.zero;
-            for (int i = 0, z = 0; z < _faceCountZ + 1; z++)
-            {
-                for (int x = 0; x < _faceCountX + 1; x++)
-                {
-                    float y = GetY(x, z, i);
-                    bool outside = (_hideOutOfBounds || _colorOutOfBounds) && _outOfAllShapesCache[i];
-                    _vertices[i] = new Vector3(x * scaleModifierX, y * scaleModifierY, z * scaleModifierZ);
-                    _colors[i] = GetColor(y, _bandSmoothed, outside);
-                    _outOfBoundsVertices[i] = _hideOutOfBounds && outside;
-                    if (_applyDampening)
-                    {
-                        _lastYs[i] = y;
-                        _lastBands[i] = _bandSmoothed;
-                    }
-                    i++;
-                }
-            }
+            // the triangles are built while the vertices are calculated
+            bool structureChanged = redoMesh || _triangles == null || _structureFaceCountX != _faceCountX || _structureFaceCountZ != _faceCountZ
+                || _structureHide != _hideOutOfBounds || (_hideOutOfBounds && _structureShapeVersion != _shapeCacheVersion);
+            if (structureChanged)
+                BuildStructure(redoMesh);
 
-            if (_triangles == null || redoMesh)
+            handle.Complete();
+        }
+
+        private void AllocateVertexBuffers(int vertexCount)
+        {
+            DisposeArray(ref _vertices);
+            DisposeArray(ref _drawnVertices);
+            DisposeArray(ref _colors);
+            DisposeArray(ref _lastYs);
+            DisposeArray(ref _lastBands);
+            _vertices = new NativeArray<Vector3>(vertexCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            _colors = new NativeArray<Color>(vertexCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            _lastYs = new NativeArray<float>(vertexCount, Allocator.Persistent);
+            _lastBands = new NativeArray<float>(vertexCount, Allocator.Persistent);
+            _noiseValid = false;
+        }
+
+        /// <summary>Triangles and uvs, only needed again when the face count changes or the triangles outside of the shapes change.</summary>
+        private void BuildStructure(bool redoMesh)
+        {
+            if (_triangles == null || redoMesh || _triangles.Length != _faceCountX * _faceCountZ * 6)
                 _triangles = new int[_faceCountX * _faceCountZ * 6];
 
+            bool hide = _hideOutOfBounds && _outOfAllShapesCache != null;
             int vertexIndex = 0;
             int triangleIndex = 0;
             for (int z = 0; z < _faceCountZ; z++)
@@ -332,14 +408,14 @@ namespace Gavi
                     int v3 = vertexIndex + 2 + _faceCountX;
 
                     // skip triangles whose three vertices are all outside of every shape
-                    if (!_hideOutOfBounds || !(_outOfBoundsVertices[v0] && _outOfBoundsVertices[v2] && _outOfBoundsVertices[v1]))
+                    if (!hide || !(_outOfAllShapesCache[v0] && _outOfAllShapesCache[v2] && _outOfAllShapesCache[v1]))
                     {
                         _triangles[triangleIndex + 0] = v0;
                         _triangles[triangleIndex + 1] = v2;
                         _triangles[triangleIndex + 2] = v1;
                         triangleIndex += 3;
                     }
-                    if (!_hideOutOfBounds || !(_outOfBoundsVertices[v1] && _outOfBoundsVertices[v2] && _outOfBoundsVertices[v3]))
+                    if (!hide || !(_outOfAllShapesCache[v1] && _outOfAllShapesCache[v2] && _outOfAllShapesCache[v3]))
                     {
                         _triangles[triangleIndex + 0] = v1;
                         _triangles[triangleIndex + 1] = v2;
@@ -348,16 +424,16 @@ namespace Gavi
                     }
 
                     vertexIndex++;
-                    //yield return new WaitForSeconds(0.5f);
                 }
                 vertexIndex++;
             }
             _triangleCount = triangleIndex;
 
             // the uvs only depend on the face count
-            if (_uvs == null || redoMesh || _uvFaceCountX != _faceCountX || _uvFaceCountZ != _faceCountZ)
+            int uvCount = (_faceCountX + 1) * (_faceCountZ + 1);
+            if (_uvs == null || _uvs.Length != uvCount || _structureFaceCountX != _faceCountX || _structureFaceCountZ != _faceCountZ)
             {
-                _uvs = new Vector2[_vertices.Length];
+                _uvs = new Vector2[uvCount];
                 for (int i = 0, x = 0; x < _faceCountX + 1; x++)
                 {
                     for (int z = 0; z < _faceCountZ + 1; z++)
@@ -366,109 +442,273 @@ namespace Gavi
                         i++;
                     }
                 }
-                _uvFaceCountX = _faceCountX;
-                _uvFaceCountZ = _faceCountZ;
             }
 
-            //ApplyMesh();
-            // _mesh.vertices = _vertices;
-            // _mesh.colors = _colors;
+            _structureFaceCountX = _faceCountX;
+            _structureFaceCountZ = _faceCountZ;
+            _structureHide = _hideOutOfBounds;
+            _structureShapeVersion = _shapeCacheVersion;
+            _structureDirty = true;
         }
 
         private void ApplyMesh()
         {
-            _mesh.Clear();
-            _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            _mesh.vertices = MorphVertices();
-            _mesh.SetTriangles(_triangles, 0, _triangleCount, 0);
+            if (_structureDirty)
+            {
+                _mesh.Clear();
+                _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            }
+
+            _mesh.SetVertices(_morphed ? _drawnVertices : _vertices);
+            if (_structureDirty)
+            {
+                _mesh.SetTriangles(_triangles, 0, _triangleCount, 0);
+                _mesh.uv = _uvs;
+                _structureDirty = false;
+            }
+            _mesh.SetColors(_colors);
             _mesh.RecalculateNormals();
-            _mesh.uv = _uvs;
-            _mesh.colors = _colors;
             //if (_meshCollider != null)
             //    _meshCollider.sharedMesh = _mesh;
+        }
+
+        /// <summary>Sets up the job that calculates height and color of every vertex and starts it.</summary>
+        private JobHandle ScheduleVertexJob(int vertexCount)
+        {
+            int shapeCount = _audioShapeSettings.Count;
+            bool audio = _applyAudio && _samplesContainer != null && shapeCount > 0 && _bandCount > 0;
+            bool smoothing = audio && _applyAudioSmoothing && _audioSmoothingCurve != null;
+            bool color = _applyColorByHeight && _colorHeightGradient != null;
+
+            EnsureArray(ref _bandValues, Mathf.Max(1, _bandCount));
+            EnsureArray(ref _shapeJobData, Mathf.Max(1, shapeCount));
+            for (int i = 0; i < shapeCount; i++)
+            {
+                TerrainShape shape = _audioShapeSettings[i];
+                _shapeJobData[i] = new TerrainShapeJobData { Active = shape.ApplyShape, Operation = (int)shape.Operation, Strength = shape.Strength };
+            }
+
+            EnsureArray(ref _smoothingCurveTable, TerrainVertexJob.LutSize);
+            if (smoothing)
+            {
+                for (int i = 0; i < TerrainVertexJob.LutSize; i++)
+                    _smoothingCurveTable[i] = _audioSmoothingCurve.Evaluate((float)i / (TerrainVertexJob.LutSize - 1));
+            }
+
+            EnsureArray(ref _gradientTable, TerrainVertexJob.LutSize);
+            if (color)
+            {
+                for (int i = 0; i < TerrainVertexJob.LutSize; i++)
+                    _gradientTable[i] = _colorHeightGradient.Evaluate((float)i / (TerrainVertexJob.LutSize - 1));
+            }
+
+            EnsureArray(ref _waveFronts, TerrainBeatWave.MaxWaves);
+            EnsureArray(ref _waveLevels, TerrainBeatWave.MaxWaves);
+            int waveCount = 0;
+            if (_beatWave != null && _beatWave.ActiveCount > 0)
+            {
+                waveCount = _beatWave.ActiveCount;
+                _beatWave.CopyWaves(_waveFronts, _waveLevels);
+            }
+
+            var job = new TerrainVertexJob
+            {
+                FaceCountX = _faceCountX,
+                FaceCountZ = _faceCountZ,
+                ScaleX = _terrainSizeX / _faceCountX,
+                ScaleY = _terrainSizeY,
+                ScaleZ = _terrainSizeZ / _faceCountZ,
+
+                ApplyNoise = _applyPerlinNoise,
+                PerlinStrength = _perlinStrength,
+                InvertEased = _invertEased,
+                NoiseStep = _noiseGridStep,
+                NoiseWidth = _noiseGridWidth,
+                NoiseHeight = _noiseGridHeight,
+                NoiseBlend = _noiseBlend,
+                NoisePrevious = _noisePrevious,
+                NoiseNext = _noiseNext,
+
+                ApplyTerrace = _applyTerrace,
+                TerraceCount = _terraceCount,
+                TerracePoint = (int)_terraceExecutionPoint,
+
+                ApplyAudio = audio,
+#if UNITY_EDITOR
+                DebugMode = _applyAudioDebugMode,
+#endif
+                BandCount = _bandCount,
+                VertexCount = vertexCount,
+                ShapeCount = shapeCount,
+                OutOfBoundsOperation = (int)_outOfBoundsOperation,
+                OutOfBoundsValue = _outOfBoundsFactorValue,
+                Smoothing = smoothing,
+                SmoothLastWithOutOfBounds = _smoothLastBandWithOutOfBounds,
+                SmoothLastWithOutOfBoundsCompletely = _smoothLastBandWithOutOfBoundsCompletely,
+                BandValues = _bandValues,
+                ShapeIndices = _shapeIndices,
+                Shapes = _shapeJobData,
+                SmoothingCurve = _smoothingCurveTable,
+
+                WaveCount = waveCount,
+                WaveWidth = waveCount > 0 ? _beatWave.ActiveWidth : 1f,
+                WaveMode = _beatWave != null ? _beatWave.WaveMode : 0,
+                WaveUseNoise = _beatWave != null && _beatWave.UseNoise,
+                WaveFronts = _waveFronts,
+                WaveLevels = _waveLevels,
+
+                Dampen = _applyDampening,
+                DampenDown = _dampenLerpFactorDown,
+                DampenUp = _dampenLerpFactorUp,
+                FpsEqualizer = _fpsEqualizer,
+
+                ApplyColor = color,
+                ColorBandHue = _colorBandHue,
+                ColorBandBrightness = _colorBandBrightness,
+                ColorBandGlow = _colorBandGlow,
+                ColorOutOfBounds = _colorOutOfBounds,
+                OutOfBoundsBrightness = _outOfBoundsBrightness,
+                OutOfAllShapes = _outOfAllShapes,
+                GradientTable = _gradientTable,
+
+                Vertices = _vertices,
+                Colors = _colors,
+                LastYs = _lastYs,
+                LastBands = _lastBands,
+            };
+            return job.Schedule(_faceCountZ + 1, 1);
+        }
+
+        private static void EnsureArray<T>(ref NativeArray<T> array, int length) where T : struct
+        {
+            if (array.IsCreated && array.Length == length)
+                return;
+            DisposeArray(ref array);
+            array = new NativeArray<T>(length, Allocator.Persistent);
+        }
+
+        private static void DisposeArray<T>(ref NativeArray<T> array) where T : struct
+        {
+            if (array.IsCreated)
+                array.Dispose();
+        }
+
+        private void DisposeBuffers()
+        {
+            DisposeArray(ref _vertices);
+            DisposeArray(ref _drawnVertices);
+            DisposeArray(ref _colors);
+            DisposeArray(ref _lastYs);
+            DisposeArray(ref _lastBands);
+            DisposeArray(ref _shapeIndices);
+            DisposeArray(ref _outOfAllShapes);
+            DisposeArray(ref _bandValues);
+            DisposeArray(ref _shapeJobData);
+            DisposeArray(ref _smoothingCurveTable);
+            DisposeArray(ref _gradientTable);
+            DisposeArray(ref _waveFronts);
+            DisposeArray(ref _waveLevels);
+            DisposeArray(ref _noisePrevious);
+            DisposeArray(ref _noiseNext);
         }
         #endregion
 
 
-        #region Calculating Y
-        /// <param name="index">Index of the vertex: z * (faceCountX + 1) + x.</param>
-        private float GetY(int x, int z, int index)
-        {
-            float y = 1;
-            y = ApplyPerlin(index, y);
-            if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterPerlin)
-                y = ApplyTerrace(y);
-            y = ApplyAudio(index, y);
-            if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterAudio)
-                y = ApplyTerrace(y);
-            if (_beatWave != null)
-                y = _beatWave.Apply(x, z, _faceCountX, _faceCountZ, y, _noiseFactor);
-            y = ApplyDampening(index, y);
-            _bandSmoothed = ApplyBandDampening(index, _bandFactor);
-            if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterDampening)
-                y = ApplyTerrace(y);
-            return y;
-        }
-        /// <summary>How high the noise pattern leaves the current vertex (1 = full height). Set by ApplyPerlin, used by the beat wave.</summary>
-        private float _noiseFactor = 1f;
-
-        private float ApplyPerlin(int index, float originalY)
-        {
-            _noiseFactor = 1f;
-            if (!_applyPerlinNoise)
-                return originalY;
-
-            float y = originalY;
-            _noiseFactor = Utility.Utility.Remap(0, 1, 1, 1 - _perlinStrength, _noiseValues[index]);
-            y *= _noiseFactor;
-            return y;
-        }
-
-        /// <summary>Below this many vertices the noise is calculated on the main thread, the threads would cost more than they save.</summary>
-        private const int ParallelNoiseMinVertices = 2500;
-        private float[] _noiseValues = new float[0];
-        private System.Action<int> _noiseRowAction;
-
+        #region Noise
         /// <summary>
-        /// Calculates the pattern (with the invert already applied) for every vertex, row by row on all processor cores.
-        /// The pattern functions only read their arguments, so the rows do not disturb each other.
+        /// Keeps the pattern up to date once per mesh update. The pattern is calculated for a grid with every step-th vertex, row by
+        /// row on all processor cores, and only every NoiseInterval-th update. In between the vertex job blends from the last result
+        /// to the new one, so the pattern keeps flowing.
         /// </summary>
-        private void CalculateNoise()
+        private void UpdateNoise()
         {
             if (!_applyPerlinNoise)
-                return;
-
-            int vertexCount = (_faceCountX + 1) * (_faceCountZ + 1);
-            if (_noiseValues.Length != vertexCount)
-                _noiseValues = new float[vertexCount];
-
-            if (vertexCount < ParallelNoiseMinVertices)
             {
-                for (int z = 0; z <= _faceCountZ; z++)
-                    CalculateNoiseRow(z);
+                _noiseValid = false;
+                EnsureArray(ref _noisePrevious, 1);
+                EnsureArray(ref _noiseNext, 1);
+                _noiseGridStep = 1;
+                _noiseGridWidth = 1;
+                _noiseGridHeight = 1;
                 return;
             }
 
-            if (_noiseRowAction == null)
-                _noiseRowAction = CalculateNoiseRow;
-            System.Threading.Tasks.Parallel.For(0, _faceCountZ + 1, _noiseRowAction);
+            int step = Mathf.Clamp(_noiseStep, 1, MaxNoiseStep);
+            int width = GridCount(_faceCountX, step);
+            int height = GridCount(_faceCountZ, step);
+            if (!_noiseNext.IsCreated || _noiseNext.Length != width * height)
+            {
+                DisposeArray(ref _noisePrevious);
+                DisposeArray(ref _noiseNext);
+                _noisePrevious = new NativeArray<float>(width * height, Allocator.Persistent);
+                _noiseNext = new NativeArray<float>(width * height, Allocator.Persistent);
+                _noiseValid = false;
+            }
+            _noiseGridStep = step;
+            _noiseGridWidth = width;
+            _noiseGridHeight = height;
+
+            int interval = Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval);
+            if (!_noiseValid)
+            {
+                CalculateNoise();
+                _noisePrevious.CopyFrom(_noiseNext);
+                _noiseAge = 0;
+                _noiseValid = true;
+            }
+            else if (++_noiseAge >= interval)
+            {
+                NativeArray<float> older = _noisePrevious;
+                _noisePrevious = _noiseNext;
+                _noiseNext = older;
+                CalculateNoise();
+                _noiseAge = 0;
+            }
+            _noiseBlend = interval <= 1 ? 1f : Mathf.Min(1f, (_noiseAge + 1f) / interval);
         }
 
-        private void CalculateNoiseRow(int z)
+        /// <summary>Number of grid points along an axis with every step-th vertex, the last one always lies on the edge.</summary>
+        private static int GridCount(int faceCount, int step)
+        {
+            return (faceCount + step - 1) / step + 1;
+        }
+
+        private void CalculateNoise()
+        {
+            int count = _noiseGridWidth * _noiseGridHeight;
+            if (_noiseScratch == null || _noiseScratch.Length != count)
+                _noiseScratch = new float[count];
+
+            if (count < ParallelNoiseMinPoints)
+            {
+                for (int row = 0; row < _noiseGridHeight; row++)
+                    CalculateNoiseRow(row);
+            }
+            else
+            {
+                // The pattern functions only read their arguments, so the rows do not disturb each other.
+                if (_noiseRowAction == null)
+                    _noiseRowAction = CalculateNoiseRow;
+                System.Threading.Tasks.Parallel.For(0, _noiseGridHeight, _noiseRowAction);
+            }
+            _noiseNext.CopyFrom(_noiseScratch);
+        }
+
+        private void CalculateNoiseRow(int row)
         {
             // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
             float scaleX = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX);
-            float zScaled = z * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
-            int index = z * (_faceCountX + 1);
-            for (int x = 0; x <= _faceCountX; x++, index++)
+            float zScaled = Mathf.Min(row * _noiseGridStep, _faceCountZ) * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
+            int index = row * _noiseGridWidth;
+            for (int column = 0; column < _noiseGridWidth; column++, index++)
             {
-                float perlinValue = TerrainNoise.Evaluate(_noisePattern, x * scaleX, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
-                _noiseValues[index] = Mathf.Lerp(perlinValue, 1f - perlinValue, _invertEased);
+                float x = Mathf.Min(column * _noiseGridStep, _faceCountX) * scaleX;
+                _noiseScratch[index] = TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
             }
         }
 
         /// <summary>
-        /// Moves the pattern towards its wanted state once per frame: upside down or not, from the pattern itself, the invert
+        /// Moves the pattern towards its wanted state once per mesh update: upside down or not, from the pattern itself, the invert
         /// option and the flips on the beat. A change of the pattern jumps, a change of the options or a flip flows.
         /// </summary>
         private void UpdateInvert()
@@ -500,7 +740,7 @@ namespace Gavi
             float beatInterval = _beatWave != null ? _beatWave.BeatInterval : InvertFlowSeconds;
             float seconds = Mathf.Clamp(0.8f * beatInterval, 0.1f, InvertFlowSeconds);
             // an eased flow: the amount moves linearly, the pattern follows it smoothed
-            _invertAmount = Mathf.MoveTowards(_invertAmount, target, Time.deltaTime / seconds);
+            _invertAmount = Mathf.MoveTowards(_invertAmount, target, _stepDelta / seconds);
             _invertEased = _invertAmount * _invertAmount * (3f - 2f * _invertAmount);
         }
 
@@ -536,131 +776,10 @@ namespace Gavi
             }
             return 0.5f * (low + high);
         }
-
-        private float ApplyAudio(int index, float originalY)
-        {
-            if (!_applyAudio || _samplesContainer == null || _audioShapeSettings.Count == 0)
-            {
-                _bandFactor = 1f;
-                return originalY;
-            }
-
-            // apply y height
-            float yFactor = -1;
-            for (int shapeIndex = 0; shapeIndex < _audioShapeSettings.Count; shapeIndex++)
-            {
-                TerrainShape shapeSettings = _audioShapeSettings[shapeIndex];
-                if (!shapeSettings.ApplyShape)
-                    continue;
-
-                // get band index
-                float bandIndexNormalized = _shapeIndexCache[shapeIndex][index];
-                bandIndexNormalized = Mathf.Min(1, bandIndexNormalized);
-                float yFactorThisBand = GetHeightFactorByAudioBand(/*originalY, */bandIndexNormalized);
-                
-                float newYFactor = yFactor;
-                // the first shape always overrides
-                if (yFactor == -1)
-                {
-                    yFactor = 0;
-                    newYFactor = yFactorThisBand;
-                }
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Override)
-                    newYFactor = yFactorThisBand;
-                //else if (shapeSettings.Operation == AudioShapeSettings.AudioShapeOperation.Multiply)
-                //    y *= (yThisBand + 1);
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Add)
-                    newYFactor += yFactorThisBand;
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Subtract)
-                    newYFactor = Mathf.Abs(yFactorThisBand - yFactor);
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Maximum)
-                    newYFactor = Mathf.Max(yFactorThisBand, yFactor);
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Minimum)
-                    newYFactor = Mathf.Min(yFactorThisBand, yFactor);
-                else if (shapeSettings.Operation == TerrainShape.AudioShapeOperation.Average)
-                    newYFactor = (yFactorThisBand + yFactor) / 2;
-
-                yFactor += shapeSettings.Strength * (newYFactor - yFactor);
-            }
-
-            _bandFactor = Mathf.Clamp01(yFactor < 0f ? 1f : yFactor);
-            return originalY * yFactor;
-        }
-        private float ApplyDampening(int index, float originalY)
-        {
-            if (!_applyDampening)
-                return originalY;
-
-            float y = originalY;
-
-            if (y < _lastYs[index])
-                y = Mathf.Lerp(_lastYs[index], y, _dampenLerpFactorDown * _fpsEqualizer);
-            else
-                y = Mathf.Lerp(_lastYs[index], y, _dampenLerpFactorUp * _fpsEqualizer);
-
-            return y;
-        }
-        /// <summary>The band activity follows the same dampening as the height, so the color does not flicker.</summary>
-        private float ApplyBandDampening(int index, float band)
-        {
-            if (!_applyDampening)
-                return band;
-            float last = _lastBands[index];
-            float factor = band < last ? _dampenLerpFactorDown : _dampenLerpFactorUp;
-            return Mathf.Lerp(last, band, factor * _fpsEqualizer);
-        }
-
-        private float ApplyTerrace(float originalY)
-        {
-            if (!_applyTerrace)
-                return originalY;
-
-            float y = originalY;
-            if (_terraceCount > 0)
-                y = y - (y % (1 / _terraceCount));
-            return y;
-        }
         #endregion
 
 
-        #region Color
-        /// <param name="outsideAllShapes">The vertex lies in none of the active audio shapes.</param>
-        private Color GetColor(float y, float band, bool outsideAllShapes)
-        {
-            if (!_applyColorByHeight)
-                return Color.magenta;
-
-            Color color = GetColorByHeight(Mathf.Lerp(y, band, _colorBandHue));
-            if (_colorBandBrightness > 0f)
-                color = Scale(color, Mathf.Lerp(1f, MinBandBrightness + (1f - MinBandBrightness) * Mathf.Clamp01(band), _colorBandBrightness));
-            if (_colorBandGlow > 0f)
-                color = Scale(color, 1f + _colorBandGlow * MaxBandGlow * Mathf.Clamp01(band));
-
-            if (_colorOutOfBounds && outsideAllShapes)
-            {
-                color.r *= _outOfBoundsBrightness;
-                color.g *= _outOfBoundsBrightness;
-                color.b *= _outOfBoundsBrightness;
-            }
-
-            return color;
-        }
-
-        /// <summary>Quietest bands keep this share of the brightness when the brightness follows the band.</summary>
-        private const float MinBandBrightness = 0.2f;
-        /// <summary>Extra brightness of the strongest bands at full band glow (in addition to the normal color).</summary>
-        private const float MaxBandGlow = 3f;
-
-        private static Color Scale(Color color, float factor)
-        {
-            return new Color(color.r * factor, color.g * factor, color.b * factor, color.a);
-        }
-
-        private Color GetColorByHeight(float y)
-        {
-            return _colorHeightGradient.Evaluate(y);
-        }
-
+        #region Shape cache
         /// <summary>
         /// Calculates the band index of every vertex for every shape again when the shapes, the face count or the audio switch
         /// changed since the last frame. The index only depends on those, not on the audio itself.
@@ -683,21 +802,26 @@ namespace Gavi
 
             _shapeCacheBuilt = true;
             _shapeCacheSignature = signature;
-            _shapeIndexCache.Clear();
+            _shapeCacheVersion++;
+            int shapeCount = _audioShapeSettings.Count;
+            int indexCount = Mathf.Max(1, shapeCount * vertexCount);
+            if (_shapeScratch == null || _shapeScratch.Length != indexCount)
+                _shapeScratch = new float[indexCount];
+            else
+                System.Array.Clear(_shapeScratch, 0, indexCount);
             if (_outOfAllShapesCache == null || _outOfAllShapesCache.Length != vertexCount)
                 _outOfAllShapesCache = new bool[vertexCount];
 
-            bool audioShapes = _applyAudio && _audioShapeSettings.Count > 0;
-            foreach (TerrainShape shape in _audioShapeSettings)
+            bool audioShapes = _applyAudio && shapeCount > 0;
+            for (int s = 0; s < shapeCount; s++)
             {
-                float[] indices = new float[vertexCount];
-                if (audioShapes && shape.ApplyShape)
-                {
-                    for (int i = 0, z = 0; z <= _faceCountZ; z++)
-                        for (int x = 0; x <= _faceCountX; x++, i++)
-                            indices[i] = shape.GetNormalizedBandIndexByShape((float)x / _faceCountX, (float)z / _faceCountZ);
-                }
-                _shapeIndexCache.Add(indices);
+                TerrainShape shape = _audioShapeSettings[s];
+                if (!audioShapes || !shape.ApplyShape)
+                    continue;
+                int offset = s * vertexCount;
+                for (int i = 0, z = 0; z <= _faceCountZ; z++)
+                    for (int x = 0; x <= _faceCountX; x++, i++)
+                        _shapeScratch[offset + i] = shape.GetNormalizedBandIndexByShape((float)x / _faceCountX, (float)z / _faceCountZ);
             }
 
             for (int i = 0; i < vertexCount; i++)
@@ -706,12 +830,12 @@ namespace Gavi
                 bool anyActive = false, inside = false;
                 if (audioShapes)
                 {
-                    for (int s = 0; s < _audioShapeSettings.Count; s++)
+                    for (int s = 0; s < shapeCount; s++)
                     {
                         if (!_audioShapeSettings[s].ApplyShape)
                             continue;
                         anyActive = true;
-                        if (_shapeIndexCache[s][i] >= 0)
+                        if (_shapeScratch[s * vertexCount + i] >= 0)
                         {
                             inside = true;
                             break;
@@ -720,6 +844,11 @@ namespace Gavi
                 }
                 _outOfAllShapesCache[i] = anyActive && !inside;
             }
+
+            EnsureArray(ref _shapeIndices, indexCount);
+            _shapeIndices.CopyFrom(_shapeScratch);
+            EnsureArray(ref _outOfAllShapes, vertexCount);
+            _outOfAllShapes.CopyFrom(_outOfAllShapesCache);
         }
 
         /// <summary>Like <see cref="IsOutOfAllShapes"/>, but takes the result of the last frame when there is one.</summary>
@@ -795,7 +924,7 @@ namespace Gavi
         private bool TryRaycast(Ray ray, bool surface, out Vector3 hit)
         {
             hit = default;
-            if (_vertices == null || _meshFilters == null || _meshFilters.Count == 0)
+            if (!_vertices.IsCreated || _meshFilters == null || _meshFilters.Count == 0)
                 return false;
 
             Transform terrain = _meshFilters[0].transform;
@@ -872,115 +1001,52 @@ namespace Gavi
         #endregion
 
         #region Morph
-        /// <summary>Angle (in radians) of the planet from its top to the edge of the terrain. More than a half sphere, so the rim hangs below the equator.</summary>
-        private const float PlanetAngle = 0.75f * Mathf.PI;
-        /// <summary>Angle (in radians) of the tube from its top to the left and right edge of the terrain.</summary>
-        private const float TubeAngle = 0.75f * Mathf.PI;
-        /// <summary>Largest height of bowl, dome, halfpipe, saddle and flag, as a share of half the terrain width.</summary>
-        private const float BendHeight = 0.5f;
-        private const float SaddleHeight = 0.35f;
-        private const float FlagHeight = 0.1f;
-        /// <summary>Largest turn of the twist (in radians) at the edge of the terrain.</summary>
-        private const float TwistAngle = Mathf.PI;
-
-        /// <summary>The vertices as they are drawn: the flat terrain, or bent by the morph.</summary>
-        private Vector3[] MorphVertices()
+        /// <summary>Starts the job that bends the vertices by the morph. False (and no job) when the terrain stays flat.</summary>
+        private bool ScheduleMorph(ref JobHandle handle)
         {
             float amount = _morphAmount;
             if (_applyMorph && _morphBeat > 0f && _beatWave != null)
                 amount *= 1f - _morphBeat * (1f - _beatWave.BeatEnvelope);
             if (!_applyMorph || amount <= 0.0005f)
-                return _vertices;
+                return false;
 
-            if (_drawnVertices == null || _drawnVertices.Length != _vertices.Length)
-                _drawnVertices = new Vector3[_vertices.Length];
-
+            EnsureArray(ref _drawnVertices, _vertices.Length);
             float half = _terrainSizeX * 0.5f;
-            float centerX = _terrainSizeX * 0.5f;
-            float centerZ = _terrainSizeZ * 0.5f;
-            float time = Time.time;
-            float planetRadius = half / PlanetAngle;
-            float tubeRadius = half / TubeAngle;
-
-            for (int i = 0; i < _vertices.Length; i++)
+            var job = new TerrainMorphJob
             {
-                Vector3 flat = _vertices[i];
-                float dx = flat.x - centerX;
-                float dz = flat.z - centerZ;
-                float u = dx / half;
-                float v = dz / half;
-                float h = flat.y;
-                Vector3 bent = flat;
-
-                switch (_morphShape)
-                {
-                    case MorphShape.Bowl:
-                        bent.y = h + amount * BendHeight * half * (u * u + v * v);
-                        break;
-                    case MorphShape.Dome:
-                        bent.y = h + amount * BendHeight * half * (1f - (u * u + v * v));
-                        break;
-                    case MorphShape.Halfpipe:
-                        bent.y = h + amount * BendHeight * half * u * u;
-                        break;
-                    case MorphShape.Saddle:
-                        bent.y = h + amount * SaddleHeight * half * (u * u - v * v);
-                        break;
-                    case MorphShape.Flag:
-                        bent.y = h + amount * FlagHeight * half * Mathf.Sin(u * 5f + v * 2.5f - time * 2.5f);
-                        break;
-                    case MorphShape.Twist:
-                    {
-                        float angle = amount * TwistAngle * Mathf.Sqrt(u * u + v * v);
-                        float sin = Mathf.Sin(angle), cos = Mathf.Cos(angle);
-                        bent.x = centerX + dx * cos - dz * sin;
-                        bent.z = centerZ + dx * sin + dz * cos;
-                        break;
-                    }
-                    case MorphShape.Planet:
-                    {
-                        // the terrain wraps around a ball, its height becomes the distance from the middle of the ball
-                        float r = Mathf.Sqrt(u * u + v * v);
-                        float angle = r * PlanetAngle;
-                        float ring = (planetRadius + h) * Mathf.Sin(angle);
-                        float lift = (planetRadius + h) * Mathf.Cos(angle) - planetRadius;
-                        float scale = r > 0.0001f ? ring / (r * half) : 1f;
-                        bent.x = centerX + Mathf.Lerp(dx, dx * scale, amount);
-                        bent.z = centerZ + Mathf.Lerp(dz, dz * scale, amount);
-                        bent.y = Mathf.Lerp(h, lift, amount);
-                        break;
-                    }
-                    case MorphShape.Tube:
-                    {
-                        // the terrain rolls up along its width
-                        float angle = u * TubeAngle;
-                        float ring = (tubeRadius + h) * Mathf.Sin(angle);
-                        float lift = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius;
-                        bent.x = centerX + Mathf.Lerp(dx, ring, amount);
-                        bent.y = Mathf.Lerp(h, lift, amount);
-                        break;
-                    }
-                }
-                _drawnVertices[i] = bent;
-            }
-            return _drawnVertices;
+                Shape = (int)_morphShape,
+                Amount = amount,
+                Half = half,
+                CenterX = _terrainSizeX * 0.5f,
+                CenterZ = _terrainSizeZ * 0.5f,
+                Seconds = Time.time,
+                Flat = _vertices,
+                Bent = _drawnVertices,
+            };
+            handle = job.Schedule(_vertices.Length, 4096, handle);
+            return true;
         }
         #endregion
 
         #region Audio
         private void PrepareAudio()
         {
-            if (!_applyAudio)
+            if (!_applyAudio || _samplesContainer == null)
                 return;
 
             _samplesContainer.TryRecalculate();
 
             // read the band values once, they stay the same for the whole frame
             _bandCount = _samplesContainer.BandSize;
-            if (_bandValues.Length != _bandCount)
-                _bandValues = new float[_bandCount];
+            EnsureArray(ref _bandValues, Mathf.Max(1, _bandCount));
             for (int i = 0; i < _bandCount; i++)
                 _bandValues[i] = _samplesContainer.GetValue(i);
+#if UNITY_EDITOR
+            // the debug mode replaces the spectrum by a line that falls from the first to the last band
+            if (_applyAudioDebugMode)
+                for (int i = 0; i < _bandCount; i++)
+                    _bandValues[i] = 1f - (float)i / _bandCount;
+#endif
 
             if (_outOfBoundsOperation == OutOfBounds.Constant)
                 _outOfBoundsFactorValue = 1;
@@ -997,117 +1063,6 @@ namespace Gavi
 
             if (_outOfBoundsMaximumIsOutestBand)
                 _outOfBoundsFactorValue = Mathf.Min(_outOfBoundsFactorValue, _samplesContainer.GetValue(_bandCount - 1));
-        }
-        private float GetHeightFactorByAudioBand(/*float originalY, */float bandIndexNormalized)
-        {
-            int bandIndex = (int)(bandIndexNormalized * _bandCount);
-            bandIndex = Mathf.Min(bandIndex, _bandCount - 1);
-
-            if (bandIndexNormalized < 0) // handle out of bounds band
-            {
-                if (_outOfBoundsOperation == OutOfBounds.OuterBand)
-                {
-                    bandIndexNormalized = 0.999999f;
-                    bandIndex = _bandCount - 1;
-                    if (_applyAudioSmoothing)
-                        return ApplyAudioBandSmooth(/*originalY, */bandIndex, bandIndexNormalized);
-                    else if (_applyAudioDebugMode)
-                        return (1 - ((float)bandIndex / _bandCount));
-                    else
-                        return _outOfBoundsFactorValue;
-                }
-                else
-                    return _outOfBoundsFactorValue;
-            }
-
-
-            if (_applyAudioSmoothing)
-                return ApplyAudioBandSmooth(/*originalY, */bandIndex, bandIndexNormalized);
-            else if (_applyAudioDebugMode)
-                return 1 - ((float)bandIndex / _bandCount);
-            else
-                return _bandValues[bandIndex];
-        }
-
-        private float ApplyAudioBandSmooth(/*float originalY,*/ int bandIndex, float indexNormalized)
-        {
-            if (!_applyAudioSmoothing)
-                return 1;
-
-            if (_bandCount < 2)
-                return 1;
-
-            float ownSampleValue = _applyAudioDebugMode ? /*originalY **/ (1 - ((float)bandIndex / _bandCount)) : _bandValues[bandIndex];
-            float indexFraction = (indexNormalized * _bandCount) % 1; // index of 3.7f is now 0.7f
-
-            if (indexNormalized >= 1)
-                indexFraction = 0.999999f;
-
-            // first band: only apply the second band
-            if (bandIndex == 0)
-            {
-                if (indexFraction > 0.5f)
-                {
-                    float nextValue = _bandValues[bandIndex + 1];
-#if UNITY_EDITOR
-                    if (_applyAudioDebugMode)
-                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _bandCount));
-#endif
-                    float curveValue = _audioSmoothingCurve.Evaluate((indexFraction - 0.5f) * 2);
-                    return ownSampleValue * curveValue + nextValue * (1 - curveValue);
-                }
-                else
-                    return ownSampleValue;
-            }
-            // last band: apply the second last band and the out of bounds "band"
-            else if (bandIndex == _bandCount - 1)
-            {
-                if (indexFraction < 0.5f)
-                {
-                    float prevValue = _bandValues[bandIndex - 1];
-#if UNITY_EDITOR
-                    if (_applyAudioDebugMode)
-                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _bandCount));
-#endif
-                    float curveValue = _audioSmoothingCurve.Evaluate(Utility.Utility.Remap(0.5f, 0, 0, 1, indexFraction)/*(indexFraction - 0.5f) * 2*/);
-                    return ownSampleValue * curveValue + prevValue * (1 - curveValue);
-                }
-                else
-                {
-                    // handle smoothing to out of bounds. If _outOfBoundsOperation == OutOfBounds.OutestBand, no smoothing is neccessary
-                    if (!_smoothLastBandWithOutOfBounds)
-                        return ownSampleValue;
-
-                    float curveValue = _audioSmoothingCurve.Evaluate((indexFraction - 0.5f) * 2);
-                    if (_smoothLastBandWithOutOfBoundsCompletely) // blend in completely instead of just half (if the last curves value at x==1 equals y=0.5f
-                        curveValue = Utility.Utility.Remap(1, 0.5f, 1, 0, curveValue);
-                    return ownSampleValue * curveValue + _outOfBoundsFactorValue * (1 - curveValue);
-                }
-            }
-            // middle bands: apply left previous and next band
-            else
-            {
-                if (indexFraction < 0.5f)
-                {
-                    float prevValue = _bandValues[bandIndex - 1];
-#if UNITY_EDITOR
-                    if (_applyAudioDebugMode)
-                        prevValue = /*originalY **/ (1 - (((float)bandIndex - 1) / _bandCount));
-#endif
-                    float curveValue = _audioSmoothingCurve.Evaluate(Utility.Utility.Remap(0.5f, 0, 0, 1, indexFraction)/*(indexFraction - 0.5f) * 2*/);
-                    return ownSampleValue * curveValue + prevValue * (1 - curveValue);
-                }
-                else /*if (indexFraction > 0.5f)*/
-                {
-                    float nextValue = _bandValues[bandIndex + 1];
-#if UNITY_EDITOR
-                    if (_applyAudioDebugMode)
-                        nextValue = /*originalY **/ (1 - (((float)bandIndex + 1) / _bandCount));
-#endif
-                    float curveValue = _audioSmoothingCurve.Evaluate((indexFraction - 0.5f) * 2);
-                    return ownSampleValue * curveValue + nextValue * (1 - curveValue);
-                }
-            }
         }
         #endregion
 
