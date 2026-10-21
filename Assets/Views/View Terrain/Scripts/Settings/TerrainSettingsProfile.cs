@@ -94,6 +94,7 @@ namespace Gavi
         public int NoiseInterval = TerrainGenerator.DefaultNoiseInterval;
         [Tooltip("The noise is calculated for every this-many-th vertex and interpolated in between, 1 = every vertex.")]
         public int NoiseStep = TerrainGenerator.DefaultNoiseStep;
+        public bool NoiseSmooth = TerrainGenerator.DefaultNoiseSmooth;
         public bool NoiseSpread = TerrainGenerator.DefaultNoiseSpread;
         [Tooltip("The mesh is updated this often per second at most.")]
         public int MeshUpdateRate = TerrainGenerator.DefaultMeshUpdatesPerSecond;
@@ -181,6 +182,7 @@ namespace Gavi
             // Performance
             NoiseInterval = profile.NoiseInterval;
             NoiseStep = profile.NoiseStep;
+            NoiseSmooth = profile.NoiseSmooth;
             NoiseSpread = profile.NoiseSpread;
             MeshUpdateRate = profile.MeshUpdateRate;
 
@@ -254,6 +256,7 @@ namespace Gavi
             // Performance
             NoiseInterval = terrain.NoiseInterval;
             NoiseStep = terrain.NoiseStep;
+            NoiseSmooth = terrain.NoiseSmooth;
             NoiseSpread = terrain.NoiseSpread;
             MeshUpdateRate = terrain.MeshUpdatesPerSecond;
 
@@ -335,6 +338,7 @@ namespace Gavi
             // Performance
             terrain.NoiseInterval = NoiseInterval;
             terrain.NoiseStep = NoiseStep;
+            terrain.NoiseSmooth = NoiseSmooth;
             terrain.NoiseSpread = NoiseSpread;
             terrain.MeshUpdatesPerSecond = MeshUpdateRate;
 

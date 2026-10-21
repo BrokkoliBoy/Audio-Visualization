@@ -198,6 +198,8 @@ namespace Gavi
         [SerializeField] private int _noiseInterval = DefaultNoiseInterval;
         [Tooltip("The noise pattern is calculated only for every this-many-th vertex (in both directions) and interpolated in between. 1 = for every vertex.")]
         [SerializeField] private int _noiseStep = DefaultNoiseStep;
+        [Tooltip("Only meaningful with a noise step above 1. On: the vertices between the calculated points follow a smooth curve through them (Catmull-Rom). Off: they lie on straight lines.")]
+        [SerializeField] private bool _noiseSmooth = DefaultNoiseSmooth;
         [Tooltip("Only meaningful with a noise interval above 1. Off: the whole pattern is calculated in one update every n-th update. On: every update calculates a different n-th of the points, so the work is the same in every frame and no part of the pattern flows in step with the others.")]
         [SerializeField] private bool _noiseSpread = DefaultNoiseSpread;
         [Tooltip("The mesh is updated this often per second at most. The camera and the rest keep running at full speed. At or above the frame rate = every frame.")]
@@ -205,6 +207,7 @@ namespace Gavi
 
         public const int DefaultNoiseInterval = 1;
         public const int DefaultNoiseStep = 1;
+        public const bool DefaultNoiseSmooth = true;
         public const bool DefaultNoiseSpread = false;
         public const int DefaultMeshUpdatesPerSecond = 144;
         public const int MaxNoiseInterval = 8;
@@ -213,15 +216,13 @@ namespace Gavi
 
         public int NoiseInterval { get => _noiseInterval; set => _noiseInterval = Mathf.Clamp(value, 1, MaxNoiseInterval); }
         public int NoiseStep { get => _noiseStep; set => _noiseStep = Mathf.Clamp(value, 1, MaxNoiseStep); }
+        public bool NoiseSmooth { get => _noiseSmooth; set => _noiseSmooth = value; }
         public bool NoiseSpread { get => _noiseSpread; set => _noiseSpread = value; }
         public int MeshUpdatesPerSecond { get => _meshUpdatesPerSecond; set => _meshUpdatesPerSecond = Mathf.Max(MinMeshUpdatesPerSecond, value); }
 
         /// <summary>Time the last mesh updates took on average (milliseconds on the main thread, the worker threads included).</summary>
         public float UpdateMilliseconds => _updateMilliseconds;
-        /// <summary>How often the mesh is really updated per second.</summary>
-        public float MeasuredUpdatesPerSecond => _measuredUpdatesPerSecond;
         private float _updateMilliseconds;
-        private float _measuredUpdatesPerSecond;
 
         [Header("--- References ---")]
         [SerializeField] private List<MeshFilter> _meshFilters;
@@ -343,7 +344,6 @@ namespace Gavi
 
             _stepDelta = _timeSinceMesh > 0f ? _timeSinceMesh : Time.deltaTime;
             _timeSinceMesh = 0f;
-            _measuredUpdatesPerSecond = Mathf.Lerp(_measuredUpdatesPerSecond, 1f / Mathf.Max(0.0001f, _stepDelta), 0.05f);
 
             CreateShape();
             ApplyMesh();
@@ -534,6 +534,7 @@ namespace Gavi
                 NoiseStep = _noiseGridStep,
                 NoiseWidth = _noiseGridWidth,
                 NoiseHeight = _noiseGridHeight,
+                NoiseSmooth = _noiseSmooth,
                 NoiseInterval = _noiseIntervalUsed,
                 NoiseTick = _noiseAge,
                 NoiseSlots = _noiseSlots,
