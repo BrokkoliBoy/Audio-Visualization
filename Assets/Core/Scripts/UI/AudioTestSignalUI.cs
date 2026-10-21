@@ -17,8 +17,9 @@ namespace Gavi
         [SerializeField] private TMP_Dropdown _dropdownSignal;
         [SerializeField] private SliderG _sliderLevel;
         [SerializeField] private Toggle _toggleBeat;
-        [SerializeField] private Toggle _toggleKick;
+        [SerializeField] private SliderG _sliderBeatStrength;
         [SerializeField] private Toggle _toggleFreezeNoise;
+        [SerializeField] private Toggle _toggleEditBands;
 
         private void Awake()
         {
@@ -29,8 +30,9 @@ namespace Gavi
             _dropdownSignal.onValueChanged.AddListener(index => _signal.SignalIndex = index);
             _sliderLevel.OnValueChangedFloat.AddListener(value => _signal.Level = value);
             _toggleBeat.onValueChanged.AddListener(isOn => _signal.Beat = isOn);
-            _toggleKick.onValueChanged.AddListener(isOn => _signal.Kick = isOn);
+            _sliderBeatStrength.OnValueChangedFloat.AddListener(value => _signal.BeatStrength = value);
             _toggleFreezeNoise.onValueChanged.AddListener(isOn => _signal.FreezeNoise = isOn);
+            _toggleEditBands.onValueChanged.AddListener(isOn => _signal.EditBands = isOn);
         }
 
         private void Start()
@@ -41,8 +43,9 @@ namespace Gavi
             _dropdownSignal.RefreshShownValue();
             _sliderLevel.Value = _signal.Level;
             _toggleBeat.SetIsOnWithoutNotify(_signal.Beat);
-            _toggleKick.SetIsOnWithoutNotify(_signal.Kick);
+            _sliderBeatStrength.Value = _signal.BeatStrength;
             _toggleFreezeNoise.SetIsOnWithoutNotify(_signal.FreezeNoise);
+            _toggleEditBands.SetIsOnWithoutNotify(_signal.EditBands);
         }
     }
 }

@@ -10,11 +10,11 @@ Last updated: 2026-10-21
 
 | Tab | Groups |
 |---|---|
-| Color | Overall glow, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow |
-| Terrain | Terrain (face count, height, FPS hint), Noise pattern, Wave, Smoothing, Dampening |
+| Color | Overall glow, background tint, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow, color from band |
+| Terrain | Terrain (face count, height, FPS hint), Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
 | Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
 | Shapes | Audio shapes (circle, rectangles ...) that map the spectrum onto the terrain |
-| Profiles | Save / load / delete profiles, Test signal |
+| Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, freeze noise, edit bands) |
 
 ## Features
 
@@ -30,10 +30,12 @@ Last updated: 2026-10-21
 | Color palettes | done | JSON palettes, HDR colors, start palette Lava |
 | Saturation / glow mapping | done | Curved saturation slider, weakly saturated colors are dimmed so white does not overpower |
 | FPS display + hint | done | Hint to lower the face count when FPS stays under 60 / 30 |
-| Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react), "Kick on beat" lets all bands pulse with it, the bass the most. Starts off, not part of a profile |
+| Test signal | done | Replaces the audio with a calm, fixed spectrum to judge effects without a moving song. "Beat" sends beats on the beat of the playing song (waves and flips react). "Beat strength" lifts all bands on every beat on top of the level, the bass the most. "Edit bands" lets the mouse set single bands (left button raises, right button lowers the band under the cursor). The camera beat zoom pauses while it is on. Starts off, not part of a profile |
+| Color by band | done | Three sliders (gradient position, brightness, glow) say how much each comes from the activity of the vertex's frequency band instead of its height. 0 = as before |
+| Mesh morph | done | Bends the whole mesh after the heights: Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag (a wave runs through the mesh), Twist. Amount slider and "On beat" (the mesh is only bent on the beat and relaxes in between) |
 | Background tint | done | The sky takes the hue of the base color, brightness stays. Toggle "Tint background" in the Color tab |
 | Profiles | done | All terrain settings except the test signal |
-| Camera control | done | Mouse and keyboard, beat zoom, camera menu |
+| Camera control | done | Mouse (middle drag orbits, right drag moves, wheel zooms) and keyboard (WASD, Q / E, C resets), beat zoom, camera menu |
 
 ## Planned / ideas
 
@@ -43,10 +45,10 @@ Last updated: 2026-10-21
 | Noise speed variation | idea | One slider, e.g. a slow drift of the noise direction in a circle |
 | Zoom per pattern | idea | Each pattern remembers its own zoom |
 | More beat-driven invert effects | idea | Breathing, crossfade A to B, zoom / offset kick, bass-driven morph, reverse spiral, half-time ping-pong. Only the plain flip is built |
-| Color by band activity | idea | Color not only from the height but also from how strongly the vertex's frequency band moves |
-| Mesh morphs | idea | Bend the terrain as a whole, e.g. onto a sphere, tilt, saddle, tube, ripples of the mesh itself |
 | More patterns | idea | Stars, scales, weave, more geometric ones |
-| Watch the beat flip in the test setup | todo (Chris) | Beat on, Flip beats 1 or 2 |
-| Test signal: band editor | idea | Click bands to set their level (left / right mouse button) |
-| Interaction mode | idea | Touch the terrain with the mouse, optionally on top of a song |
+| Interaction mode | idea | Touch the terrain with the mouse and play on top of a song. The band editor of the test signal is the first step |
+| Flip as a wave | idea | "Flip beats" could run as a wave along the audio bands instead of everywhere at once: from the inside out on a circle, from side to side on vertical stripes |
+| Menu review | todo | Go over the whole menu once: right modules in the right tabs, right names |
+| Color by band: own gradient | idea | A second gradient only for the band activity, or one fixed color per band |
+| Band editor: picking with a morph | idea | The editor finds the band on the flat terrain, it is not exact while a morph bends the mesh |
 | Import own music, record video | idea | See the portfolio notes |

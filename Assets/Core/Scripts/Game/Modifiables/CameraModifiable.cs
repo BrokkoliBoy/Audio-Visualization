@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Gavi.Audio;
 using Gavi.Modules.MathModules.FloatModules;
 
 
@@ -8,7 +9,7 @@ namespace Gavi.Modifiables
 {
     public class CameraModifiable : MonoBehaviour
     {
-        /// <summary>Switched by the camera menu. While off, the cameras keep the field of view they started with instead of zooming to the beat.</summary>
+        /// <summary>Switched by the camera menu. While off, or while the test signal replaces the audio, the cameras keep the field of view they started with instead of zooming to the beat.</summary>
         public static bool BeatZoomEnabled { get; set; } = true;
 
         [SerializeField] private List<Camera> _cameras;
@@ -30,7 +31,7 @@ namespace Gavi.Modifiables
             {
                 if (camera == null)
                     continue;
-                if (BeatZoomEnabled)
+                if (BeatZoomEnabled && !AudioTestSignal.IsActive)
                 {
                     if (_fieldOfViewModule != null)
                         camera.fieldOfView = _fieldOfViewModule.GetValue();

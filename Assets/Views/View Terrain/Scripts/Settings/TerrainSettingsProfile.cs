@@ -77,6 +77,17 @@ namespace Gavi
         [Tooltip("Lens dirt on the glow: fixed strength and extra strength on the beat.")]
         public float DirtStrength = TerrainLensDirt.DefaultStrength;
         public float DirtBeat = TerrainLensDirt.DefaultBeat;
+        [Tooltip("How much the color comes from the band activity instead of the height: gradient position, brightness, glow. 0 = from the height.")]
+        public float ColorBandHue = 0f;
+        public float ColorBandBrightness = 0f;
+        public float ColorBandGlow = 0f;
+
+        [Header("- Morph -")]
+        public bool ApplyMorph = false;
+        [Tooltip("TerrainGenerator.MorphShape: 0 = Bowl, 1 = Dome, 2 = Planet, 3 = Tube, 4 = Halfpipe, 5 = Saddle, 6 = Flag, 7 = Twist.")]
+        public int MorphShape = 0;
+        public float MorphAmount = 0.5f;
+        public float MorphBeat = 0f;
         #endregion
         
         
@@ -148,6 +159,15 @@ namespace Gavi
             BloomScatter = profile.BloomScatter;
             DirtStrength = profile.DirtStrength;
             DirtBeat = profile.DirtBeat;
+            ColorBandHue = profile.ColorBandHue;
+            ColorBandBrightness = profile.ColorBandBrightness;
+            ColorBandGlow = profile.ColorBandGlow;
+
+            // Morph
+            ApplyMorph = profile.ApplyMorph;
+            MorphShape = profile.MorphShape;
+            MorphAmount = profile.MorphAmount;
+            MorphBeat = profile.MorphBeat;
 
             // Shape
             Shapes.Clear();
@@ -204,6 +224,17 @@ namespace Gavi
             ApplyTerrace = terrain.ApplyTerracing;
             TerraceCount = terrain.TerraceCount;
             TerraceExecutionPoint = (int)terrain.TerraceExecutionPoint;
+
+            // Color by band
+            ColorBandHue = terrain.ColorBandHue;
+            ColorBandBrightness = terrain.ColorBandBrightness;
+            ColorBandGlow = terrain.ColorBandGlow;
+
+            // Morph
+            ApplyMorph = terrain.ApplyMorph;
+            MorphShape = terrain.Morph;
+            MorphAmount = terrain.MorphAmount;
+            MorphBeat = terrain.MorphBeat;
 
             // Shape
             Shapes = new List<TerrainShapeData>();
@@ -268,6 +299,17 @@ namespace Gavi
             terrain.ApplyTerracing = ApplyTerrace;
             terrain.TerraceCount = TerraceCount;
             terrain.TerraceExecutionPoint = (TerrainGenerator.TerraceExecutionPointEnum)TerraceExecutionPoint;
+
+            // Color by band
+            terrain.ColorBandHue = ColorBandHue;
+            terrain.ColorBandBrightness = ColorBandBrightness;
+            terrain.ColorBandGlow = ColorBandGlow;
+
+            // Morph
+            terrain.ApplyMorph = ApplyMorph;
+            terrain.Morph = MorphShape;
+            terrain.MorphAmount = MorphAmount;
+            terrain.MorphBeat = MorphBeat;
 
             // Shape
             // terrain.Shapes ??= new List<TerrainShape>();

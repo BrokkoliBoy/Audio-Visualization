@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Gavi.Audio;
 using Gavi.Modifiables;
 
 namespace Gavi
@@ -7,17 +8,19 @@ namespace Gavi
     /// <summary>
     /// Lets the viewer move the active camera with the mouse and keyboard. The camera orbits around the CameraPivot
     /// of the current view, so every view is controlled the same way:
-    /// left drag = orbit around the view, right drag = move the view sideways and up/down,
+    /// middle drag = orbit around the view, right drag = move the view sideways and up/down (the right mouse button belongs to the test signal band editor while that is on),
     /// mouse wheel = zoom towards or away from the view, W/S = move forward and back and A/D = move sideways on the
     /// horizontal plane, Q/E = move down and up,
-    /// middle click = back to the start pose.
+    /// C = back to the start pose.
     /// One instance in the scene controls whichever view camera is currently active (Camera.main). The field of view is
     /// left alone because the beat-driven zoom already uses it. The pose a camera has when it becomes active is its start pose.
     /// </summary>
     public class CameraControl : MonoBehaviour
     {
-        [Header("--- Orbit (left mouse) ---")]
+        [Header("--- Orbit (middle mouse) ---")]
         [SerializeField] private bool _allowOrbit = true;
+        [Tooltip("Mouse button that orbits: 0 = left, 1 = right, 2 = middle.")]
+        [SerializeField] private int _orbitButton = 2;
         [Tooltip("Degrees per pixel of mouse movement.")]
         [SerializeField] private float _orbitSpeed = 0.25f;
         [Tooltip("How far the camera may tilt up or down from its start pose.")]
@@ -46,11 +49,11 @@ namespace Gavi
         [Header("--- Feel ---")]
         [Tooltip("Higher = the camera follows the input faster.")]
         [SerializeField] private float _smoothing = 12f;
-        [Tooltip("Smoothing while the camera glides back to its start pose after a middle click. Lower = slower.")]
+        [Tooltip("Smoothing while the camera glides back to its start pose after a reset. Lower = slower.")]
         [SerializeField] private float _resetSmoothing = 3f;
-        [SerializeField] private bool _middleClickResets = true;
+        [SerializeField] private bool _resetOnMiddleClick;
         [SerializeField] private bool _useKeys = true;
-        [Tooltip("Reset key. Does the same as a middle click.")]
+        [Tooltip("Reset key.")]
         [SerializeField] private KeyCode _resetKey = KeyCode.C;
         [Tooltip("Keeps the slow sway of the camera rotation (RotationModifiable) while the camera is controlled.")]
         [SerializeField] private bool _keepSway = true;
@@ -204,24 +207,24 @@ namespace Gavi
             {
                 if (!overUi)
                 {
-                    if (_allowOrbit && Input.GetMouseButtonDown(0))
+                    if (_allowOrbit && Input.GetMouseButtonDown(_orbitButton))
                     {
                         _orbiting = true;
                         _resetting = false;
                         _lastMouse = mouse;
                     }
-                    if (_allowMove && Input.GetMouseButtonDown(1))
+                    if (_allowMove && !AudioTestSignal.IsEditingBands && Input.GetMouseButtonDown(1))
                     {
                         _moving = true;
                         _resetting = false;
                         _lastMouse = mouse;
                     }
-                    if (_middleClickResets && Input.GetMouseButtonDown(2))
+                    if (_resetOnMiddleClick && _orbitButton != 2 && Input.GetMouseButtonDown(2))
                         ResetSmoothly();
                 }
                 if (_resetKey != KeyCode.None && Input.GetKeyDown(_resetKey))
                     ResetSmoothly();
-                if (Input.GetMouseButtonUp(0))
+                if (Input.GetMouseButtonUp(_orbitButton))
                     _orbiting = false;
                 if (Input.GetMouseButtonUp(1))
                     _moving = false;
@@ -230,7 +233,7 @@ namespace Gavi
             Vector2 delta = mouse - _lastMouse;
             _lastMouse = mouse;
 
-            if (_orbiting && Input.GetMouseButton(0))
+            if (_orbiting && Input.GetMouseButton(_orbitButton))
             {
                 // The scene turns with the cursor: drag right = camera goes left, drag up = camera goes down.
                 _yaw += delta.x * _orbitSpeed;

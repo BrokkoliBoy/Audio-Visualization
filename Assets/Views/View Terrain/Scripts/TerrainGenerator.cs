@@ -99,6 +99,35 @@ namespace Gavi
         [SerializeField] private float _outOfBoundsBrightness = 0.2f;
         [Tooltip("When true, triangles whose three vertices all lie outside of every active audio shape are left out of the mesh, so the unused area is not rendered at all.")]
         [SerializeField] private bool _hideOutOfBounds;
+        [Tooltip("Where the color comes from: 0 = the height of the vertex (as before), 1 = how strongly the frequency band of the vertex moves. Hue: the place in the gradient.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorBandHue;
+        public float ColorBandHue { get => _colorBandHue; set => _colorBandHue = Mathf.Clamp01(value); }
+        [Tooltip("0 = the brightness stays as the gradient gives it, 1 = quiet bands are dark and strong bands bright.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorBandBrightness;
+        public float ColorBandBrightness { get => _colorBandBrightness; set => _colorBandBrightness = Mathf.Clamp01(value); }
+        [Tooltip("0 = no extra glow, 1 = strong bands shine up to four times brighter, which the bloom turns into glow.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorBandGlow;
+        public float ColorBandGlow { get => _colorBandGlow; set => _colorBandGlow = Mathf.Clamp01(value); }
+
+        [Header("--- Morph ---")]
+        [Tooltip("Bends the whole mesh after the heights are calculated. Off = the flat terrain.")]
+        [SerializeField] private bool _applyMorph;
+        public bool ApplyMorph { get => _applyMorph; set => _applyMorph = value; }
+        [SerializeField] private MorphShape _morphShape = MorphShape.Bowl;
+        public enum MorphShape { Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag, Twist }
+        public static readonly string[] MorphNames = { "Bowl", "Dome", "Planet", "Tube", "Halfpipe", "Saddle", "Flag", "Twist" };
+        public int Morph { get => (int)_morphShape; set => _morphShape = (MorphShape)Mathf.Clamp(value, 0, MorphNames.Length - 1); }
+        [Tooltip("How far the mesh is bent. 0 = flat, 1 = fully bent.")]
+        [Range(0, 1)]
+        [SerializeField] private float _morphAmount = 0.5f;
+        public float MorphAmount { get => _morphAmount; set => _morphAmount = Mathf.Clamp01(value); }
+        [Tooltip("0 = the bend stays, 1 = the mesh is only bent on the beat and relaxes in between.")]
+        [Range(0, 1)]
+        [SerializeField] private float _morphBeat;
+        public float MorphBeat { get => _morphBeat; set => _morphBeat = Mathf.Clamp01(value); }
 
         [Header("--- Audio ---")]
         [Tooltip("When true, the mesh will apply height to the vertices according to audio sample data.")]
@@ -175,6 +204,11 @@ namespace Gavi
 
 
         private float[,] _lastYs;
+        private float[,] _lastBands;
+        private Vector3[] _drawnVertices;
+        /// <summary>How strongly the band of the current vertex moves (0-1), set by ApplyAudio. 1 without audio. The smoothed one follows the dampening.</summary>
+        private float _bandFactor = 1f;
+        private float _bandSmoothed = 1f;
         private Vector2[] _uvs;
         private Color[] _colors;
         private float _outOfBoundsFactorValue; // only set when _outOfBoundsSettings != OutOfBounds.OutestBand
@@ -234,6 +268,8 @@ namespace Gavi
                 _vertices = new Vector3[(_faceCountX + 1) * (_faceCountZ + 1)];
             if (_applyDampening && (_lastYs == null || redoMesh))
                 _lastYs = new float[_faceCountX + 1, _faceCountZ + 1];
+            if (_applyDampening && (_lastBands == null || redoMesh))
+                _lastBands = new float[_faceCountX + 1, _faceCountZ + 1];
             if (_colors == null || redoMesh)
                 _colors = new Color[_vertices.Length];
             if (_outOfBoundsVertices == null || redoMesh)
@@ -250,11 +286,14 @@ namespace Gavi
                 {
                     float y = GetY(x, z);
                     _vertices[i] = new Vector3(x * scaleModifierX, y * scaleModifierY, z * scaleModifierZ);
-                    _colors[i] = GetColor(x, y, z);
+                    _colors[i] = GetColor(x, y, z, _bandSmoothed);
                     _outOfBoundsVertices[i] = _hideOutOfBounds && IsOutOfAllShapes(x, z);
                     i++;
                     if (_applyDampening)
+                    {
                         _lastYs[x, z] = y;
+                        _lastBands[x, z] = _bandSmoothed;
+                    }
                 }
             }
 
@@ -315,7 +354,7 @@ namespace Gavi
         {
             _mesh.Clear();
             _mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            _mesh.vertices = _vertices;
+            _mesh.vertices = MorphVertices();
             _mesh.SetTriangles(_triangles, 0, _triangleCount, 0);
             _mesh.RecalculateNormals();
             _mesh.uv = _uvs;
@@ -339,6 +378,7 @@ namespace Gavi
             if (_beatWave != null)
                 y = _beatWave.Apply(x, z, _faceCountX, _faceCountZ, y, _noiseFactor);
             y = ApplyDampening(x, y, z);
+            _bandSmoothed = ApplyBandDampening(x, _bandFactor, z);
             if (_terraceExecutionPoint == TerraceExecutionPointEnum.AfterDampening)
                 y = ApplyTerrace(y);
             return y;
@@ -436,7 +476,10 @@ namespace Gavi
         private float ApplyAudio(int x, float originalY, int z)
         {
             if (!_applyAudio || _samplesContainer == null || _audioShapeSettings.Count == 0)
+            {
+                _bandFactor = 1f;
                 return originalY;
+            }
 
             // apply y height
             float yFactor = -1;
@@ -475,6 +518,7 @@ namespace Gavi
                 yFactor += shapeSettings.Strength * (newYFactor - yFactor);
             }
 
+            _bandFactor = Mathf.Clamp01(yFactor < 0f ? 1f : yFactor);
             return originalY * yFactor;
         }
         private float ApplyDampening(int x, float originalY, int z)
@@ -491,6 +535,16 @@ namespace Gavi
 
             return y;
         }
+        /// <summary>The band activity follows the same dampening as the height, so the color does not flicker.</summary>
+        private float ApplyBandDampening(int x, float band, int z)
+        {
+            if (!_applyDampening)
+                return band;
+            float last = _lastBands[x, z];
+            float factor = band < last ? _dampenLerpFactorDown : _dampenLerpFactorUp;
+            return Mathf.Lerp(last, band, factor * Utility.Utility.GetFpsEqualizer());
+        }
+
         private float ApplyTerrace(float originalY)
         {
             if (!_applyTerrace)
@@ -505,12 +559,16 @@ namespace Gavi
 
 
         #region Color
-        private Color GetColor(float x, float y, float z)
+        private Color GetColor(float x, float y, float z, float band)
         {
             if (!_applyColorByHeight)
                 return Color.magenta;
 
-            Color color = GetColorByHeight(y);
+            Color color = GetColorByHeight(Mathf.Lerp(y, band, _colorBandHue));
+            if (_colorBandBrightness > 0f)
+                color = Scale(color, Mathf.Lerp(1f, MinBandBrightness + (1f - MinBandBrightness) * Mathf.Clamp01(band), _colorBandBrightness));
+            if (_colorBandGlow > 0f)
+                color = Scale(color, 1f + _colorBandGlow * MaxBandGlow * Mathf.Clamp01(band));
 
             if (_colorOutOfBounds && IsOutOfAllShapes((int)x, (int)z))
             {
@@ -520,6 +578,16 @@ namespace Gavi
             }
 
             return color;
+        }
+
+        /// <summary>Quietest bands keep this share of the brightness when the brightness follows the band.</summary>
+        private const float MinBandBrightness = 0.2f;
+        /// <summary>Extra brightness of the strongest bands at full band glow (in addition to the normal color).</summary>
+        private const float MaxBandGlow = 3f;
+
+        private static Color Scale(Color color, float factor)
+        {
+            return new Color(color.r * factor, color.g * factor, color.b * factor, color.a);
         }
 
         private Color GetColorByHeight(float y)
@@ -548,6 +616,182 @@ namespace Gavi
         }
         #endregion
 
+
+        #region Picking
+        /// <summary>Steps of the search along a camera ray in <see cref="TryPickBand"/>.</summary>
+        private const int PickSteps = 320;
+
+        /// <summary>
+        /// Finds the audio band under a ray (for example from the camera through the mouse) on the terrain as it is drawn right now.
+        /// False when the ray misses the terrain or hits a spot that lies outside of all shapes.
+        /// </summary>
+        public bool TryPickBand(Ray ray, out int band)
+        {
+            band = -1;
+            if (_vertices == null || _meshFilters == null || _meshFilters.Count == 0 || _samplesContainer == null || _samplesContainer.BandSize < 1)
+                return false;
+
+            Transform terrain = _meshFilters[0].transform;
+            Vector3 origin = terrain.InverseTransformPoint(ray.origin);
+            Vector3 direction = terrain.InverseTransformPoint(ray.origin + ray.direction) - origin;
+
+            // the part of the ray inside the box around the terrain (heights can exceed the terrain height a little)
+            Vector3 min = new Vector3(0f, -0.2f * _terrainSizeY, 0f);
+            Vector3 max = new Vector3(_terrainSizeX, 2f * _terrainSizeY, _terrainSizeZ);
+            float enter = 0f, exit = 100000f;
+            for (int axis = 0; axis < 3; axis++)
+            {
+                if (Mathf.Abs(direction[axis]) < 1e-6f)
+                {
+                    if (origin[axis] < min[axis] || origin[axis] > max[axis])
+                        return false;
+                    continue;
+                }
+                float t0 = (min[axis] - origin[axis]) / direction[axis];
+                float t1 = (max[axis] - origin[axis]) / direction[axis];
+                enter = Mathf.Max(enter, Mathf.Min(t0, t1));
+                exit = Mathf.Min(exit, Mathf.Max(t0, t1));
+            }
+            if (enter >= exit)
+                return false;
+
+            for (int i = 0; i <= PickSteps; i++)
+            {
+                Vector3 point = origin + direction * Mathf.Lerp(enter, exit, (float)i / PickSteps);
+                if (point.x < 0f || point.x > _terrainSizeX || point.z < 0f || point.z > _terrainSizeZ)
+                    continue;
+                if (point.y > HeightAt(point.x, point.z))
+                    continue;
+                return BandAt(point.x / _terrainSizeX, point.z / _terrainSizeZ, out band);
+            }
+            return false;
+        }
+
+        /// <summary>Height of the drawn surface at a local position, bilinear between the vertices.</summary>
+        private float HeightAt(float localX, float localZ)
+        {
+            float fx = Mathf.Clamp(localX / _terrainSizeX * _faceCountX, 0f, _faceCountX - 0.001f);
+            float fz = Mathf.Clamp(localZ / _terrainSizeZ * _faceCountZ, 0f, _faceCountZ - 0.001f);
+            int ix = (int)fx, iz = (int)fz;
+            float tx = fx - ix, tz = fz - iz;
+            int stride = _faceCountX + 1;
+            float a = Mathf.Lerp(_vertices[iz * stride + ix].y, _vertices[iz * stride + ix + 1].y, tx);
+            float b = Mathf.Lerp(_vertices[(iz + 1) * stride + ix].y, _vertices[(iz + 1) * stride + ix + 1].y, tx);
+            return Mathf.Lerp(a, b, tz);
+        }
+
+        private bool BandAt(float normalizedX, float normalizedZ, out int band)
+        {
+            band = -1;
+            foreach (TerrainShape shape in _audioShapeSettings)
+            {
+                if (!shape.ApplyShape)
+                    continue;
+                float index = shape.GetNormalizedBandIndexByShape(normalizedX, normalizedZ);
+                if (index < 0f)
+                    continue;
+                band = Mathf.Min((int)(Mathf.Min(1f, index) * _samplesContainer.BandSize), _samplesContainer.BandSize - 1);
+                return true;
+            }
+            return false;
+        }
+        #endregion
+
+        #region Morph
+        /// <summary>Angle (in radians) of the planet from its top to the edge of the terrain. More than a half sphere, so the rim hangs below the equator.</summary>
+        private const float PlanetAngle = 0.75f * Mathf.PI;
+        /// <summary>Angle (in radians) of the tube from its top to the left and right edge of the terrain.</summary>
+        private const float TubeAngle = 0.75f * Mathf.PI;
+        /// <summary>Largest height of bowl, dome, halfpipe, saddle and flag, as a share of half the terrain width.</summary>
+        private const float BendHeight = 0.5f;
+        private const float SaddleHeight = 0.35f;
+        private const float FlagHeight = 0.1f;
+        /// <summary>Largest turn of the twist (in radians) at the edge of the terrain.</summary>
+        private const float TwistAngle = Mathf.PI;
+
+        /// <summary>The vertices as they are drawn: the flat terrain, or bent by the morph.</summary>
+        private Vector3[] MorphVertices()
+        {
+            float amount = _morphAmount;
+            if (_applyMorph && _morphBeat > 0f && _beatWave != null)
+                amount *= 1f - _morphBeat * (1f - _beatWave.BeatEnvelope);
+            if (!_applyMorph || amount <= 0.0005f)
+                return _vertices;
+
+            if (_drawnVertices == null || _drawnVertices.Length != _vertices.Length)
+                _drawnVertices = new Vector3[_vertices.Length];
+
+            float half = _terrainSizeX * 0.5f;
+            float centerX = _terrainSizeX * 0.5f;
+            float centerZ = _terrainSizeZ * 0.5f;
+            float time = Time.time;
+            float planetRadius = half / PlanetAngle;
+            float tubeRadius = half / TubeAngle;
+
+            for (int i = 0; i < _vertices.Length; i++)
+            {
+                Vector3 flat = _vertices[i];
+                float dx = flat.x - centerX;
+                float dz = flat.z - centerZ;
+                float u = dx / half;
+                float v = dz / half;
+                float h = flat.y;
+                Vector3 bent = flat;
+
+                switch (_morphShape)
+                {
+                    case MorphShape.Bowl:
+                        bent.y = h + amount * BendHeight * half * (u * u + v * v);
+                        break;
+                    case MorphShape.Dome:
+                        bent.y = h + amount * BendHeight * half * (1f - (u * u + v * v));
+                        break;
+                    case MorphShape.Halfpipe:
+                        bent.y = h + amount * BendHeight * half * u * u;
+                        break;
+                    case MorphShape.Saddle:
+                        bent.y = h + amount * SaddleHeight * half * (u * u - v * v);
+                        break;
+                    case MorphShape.Flag:
+                        bent.y = h + amount * FlagHeight * half * Mathf.Sin(u * 5f + v * 2.5f - time * 2.5f);
+                        break;
+                    case MorphShape.Twist:
+                    {
+                        float angle = amount * TwistAngle * Mathf.Sqrt(u * u + v * v);
+                        float sin = Mathf.Sin(angle), cos = Mathf.Cos(angle);
+                        bent.x = centerX + dx * cos - dz * sin;
+                        bent.z = centerZ + dx * sin + dz * cos;
+                        break;
+                    }
+                    case MorphShape.Planet:
+                    {
+                        // the terrain wraps around a ball, its height becomes the distance from the middle of the ball
+                        float r = Mathf.Sqrt(u * u + v * v);
+                        float angle = r * PlanetAngle;
+                        float ring = (planetRadius + h) * Mathf.Sin(angle);
+                        float lift = (planetRadius + h) * Mathf.Cos(angle) - planetRadius;
+                        float scale = r > 0.0001f ? ring / (r * half) : 1f;
+                        bent.x = centerX + Mathf.Lerp(dx, dx * scale, amount);
+                        bent.z = centerZ + Mathf.Lerp(dz, dz * scale, amount);
+                        bent.y = Mathf.Lerp(h, lift, amount);
+                        break;
+                    }
+                    case MorphShape.Tube:
+                    {
+                        // the terrain rolls up along its width
+                        float angle = u * TubeAngle;
+                        float ring = (tubeRadius + h) * Mathf.Sin(angle);
+                        float lift = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius;
+                        bent.x = centerX + Mathf.Lerp(dx, ring, amount);
+                        bent.y = Mathf.Lerp(h, lift, amount);
+                        break;
+                    }
+                }
+                _drawnVertices[i] = bent;
+            }
+            return _drawnVertices;
+        }
+        #endregion
 
         #region Audio
         private void PrepareAudio()

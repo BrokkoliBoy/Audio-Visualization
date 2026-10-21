@@ -64,6 +64,8 @@ namespace Gavi
 
         /// <summary>Number of beats detected so far. Counts also while the waves are off.</summary>
         public int BeatCount { get; private set; }
+        /// <summary>1 right at a beat, falling back to 0 within a part of the beat interval. Only moves while beats come in.</summary>
+        public float BeatEnvelope => Mathf.Exp(-(Time.time - _lastBeatTime) / Mathf.Max(0.05f, EnvelopeBeatShare * BeatInterval));
         /// <summary>True when the waves start from the bass edge, the terrain then has to tell where it is (<see cref="SetBassEdge"/>).</summary>
         public bool NeedsBassEdge => _enabled && _origin == Origin.BassEdge;
         /// <summary>Number of lowest bands that count as bass.</summary>
@@ -83,6 +85,8 @@ namespace Gavi
             }
         }
 
+        /// <summary>The beat envelope falls to 1/e after this share of a beat.</summary>
+        private const float EnvelopeBeatShare = 0.35f;
         private const int MaxWaves = 6;
         /// <summary>Distance from the middle to the corners of the terrain (in half terrain widths), a bit more.</summary>
         private const float EdgeDistance = 1.45f;
