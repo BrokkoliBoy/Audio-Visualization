@@ -8,7 +8,7 @@ namespace Gavi
     public class TerrainSettingsProfile
     {
         /// <summary>Version of the file format. 0 = files from before versions existed. Raise CurrentFormatVersion when a change needs old files to be converted.</summary>
-        public const int CurrentFormatVersion = 1;
+        public const int CurrentFormatVersion = 2;
         public int FormatVersion;
         public string Name = "Terrain Profile";
         
@@ -85,8 +85,6 @@ namespace Gavi
         public float ColorNoiseBalance = 1f;
         [Tooltip("Soft end of the gradient for heights over 1. 0 = hard end.")]
         public float ColorHeadroom = 0f;
-        [Tooltip("Flat color areas get darker towards their lower end. 0 = flat.")]
-        public float ColorPlateauSlope = 0.5f;
 
         [Header("- Morph -")]
         public bool ApplyMorph = false;
@@ -176,7 +174,6 @@ namespace Gavi
             ColorBandGlow = profile.ColorBandGlow;
             ColorNoiseBalance = profile.ColorNoiseBalance;
             ColorHeadroom = profile.ColorHeadroom;
-            ColorPlateauSlope = profile.ColorPlateauSlope;
 
             // Morph
             ApplyMorph = profile.ApplyMorph;

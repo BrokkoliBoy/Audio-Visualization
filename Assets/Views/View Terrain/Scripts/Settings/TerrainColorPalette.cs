@@ -23,7 +23,8 @@ namespace Gavi
         public const float DefaultBloomIntensity = 0.6f;
         public const float DefaultBloomScatter = 0.7f;
 
-        public const int CurrentFormatVersion = 1;
+        /// <summary>2 = menu intensity with the default at 3 (version 1 had it at 1, see TerrainColorMapping.ConvertLegacyMenu).</summary>
+        public const int CurrentFormatVersion = 2;
         public int FormatVersion;
         public string Name = "My Palette";
         [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity (0-10, 1 = Unity intensity 0).")]
@@ -66,7 +67,16 @@ namespace Gavi
                         TerrainColorPalette palette = JsonUtility.FromJson<TerrainColorPalette>(File.ReadAllText(file));
                         if (palette == null || string.IsNullOrEmpty(palette.Name) || palette.Colors == null || palette.Colors.Count == 0)
                             continue;
-                        // Files from older versions: FormatVersion < CurrentFormatVersion. Convert here when a change needs it.
+                        if (palette.FormatVersion < 2)
+                        {
+                            for (int c = 0; c < palette.Colors.Count; c++)
+                            {
+                                Vector3 color = palette.Colors[c];
+                                color.z = TerrainColorMapping.ConvertLegacyMenu(color.z);
+                                palette.Colors[c] = color;
+                            }
+                            palette.FormatVersion = 2;
+                        }
                         palettes.RemoveAll(p => p.Name == palette.Name);
                         palettes.Add(palette);
                     }

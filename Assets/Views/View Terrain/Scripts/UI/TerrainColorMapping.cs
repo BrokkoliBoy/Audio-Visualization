@@ -4,28 +4,39 @@ namespace Gavi
 {
     /// <summary>
     /// Maps the color menu values (hue, saturation, intensity) to HDR colors.
-    /// Menu intensity 1 is the default Unity color intensity of 0 (color x 1). Menu 0 is intensity -1,
+    /// Menu intensity 3 is the default Unity color intensity of 0 (color x 1). Menu 0 is <see cref="MinIntensity"/> (nearly black),
     /// menu 10 is <see cref="MaxIntensity"/>. Unity intensity is an exposure value: color x 2^intensity.
+    /// Before palette and profile format version 2 the default sat at menu 1 and menu 0 was intensity -1,
+    /// <see cref="ConvertLegacyMenu"/> turns such values into the current scale.
     /// </summary>
     public static class TerrainColorMapping
     {
         public const float MenuIntensityMax = 10f;
-        public const float MenuIntensityDefault = 1f;
+        public const float MenuIntensityDefault = 3f;
+        /// <summary>Unity intensity (exposure value) that menu intensity 0 stands for.</summary>
+        public const float MinIntensity = -5f;
         /// <summary>Unity intensity (exposure value) that menu intensity 10 stands for.</summary>
         public const float MaxIntensity = 6f;
 
         public static float MenuToIntensity(float menu)
         {
             if (menu <= MenuIntensityDefault)
-                return menu - MenuIntensityDefault;
+                return (menu - MenuIntensityDefault) / MenuIntensityDefault * -MinIntensity;
             return (menu - MenuIntensityDefault) / (MenuIntensityMax - MenuIntensityDefault) * MaxIntensity;
         }
 
         public static float IntensityToMenu(float intensity)
         {
             if (intensity <= 0f)
-                return Mathf.Max(0f, MenuIntensityDefault + intensity);
+                return Mathf.Max(0f, MenuIntensityDefault + intensity / -MinIntensity * MenuIntensityDefault);
             return Mathf.Min(MenuIntensityMax, MenuIntensityDefault + intensity / MaxIntensity * (MenuIntensityMax - MenuIntensityDefault));
+        }
+
+        /// <summary>Menu value of the old scale (format version 1: default at 1, menu 0 = intensity -1, menu 10 = +6) in the current scale. Same color.</summary>
+        public static float ConvertLegacyMenu(float legacyMenu)
+        {
+            float intensity = legacyMenu <= 1f ? legacyMenu - 1f : (legacyMenu - 1f) / 9f * MaxIntensity;
+            return IntensityToMenu(intensity);
         }
 
         /// <summary>

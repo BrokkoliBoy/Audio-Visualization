@@ -49,7 +49,17 @@ namespace Gavi
                         TerrainSettingsProfile profile = JsonUtility.FromJson<TerrainSettingsProfile>(File.ReadAllText(currentFile));
                         if (profile == null || string.IsNullOrEmpty(profile.Name))
                             continue;
-                        // Files from older versions: FormatVersion < CurrentFormatVersion. Convert here when a change needs it.
+                        // Version 2: the menu intensity of the colors has its default at 3 instead of 1.
+                        if (profile.FormatVersion < 2)
+                        {
+                            for (int c = 0; profile.ColorValues != null && c < profile.ColorValues.Count; c++)
+                            {
+                                Vector3 color = profile.ColorValues[c];
+                                color.z = TerrainColorMapping.ConvertLegacyMenu(color.z);
+                                profile.ColorValues[c] = color;
+                            }
+                            profile.FormatVersion = 2;
+                        }
                         profiles.RemoveAll(p => p.Name == profile.Name);
                         profiles.Add(profile);
                     }

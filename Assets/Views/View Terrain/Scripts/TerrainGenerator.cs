@@ -94,6 +94,10 @@ namespace Gavi
         [GradientUsage(true)]
         [SerializeField] private Gradient _colorHeightGradient;
         public Gradient ColorHeightGradient => _colorHeightGradient;
+
+        /// <summary>Own color table (TerrainJobs.LutSize entries) that replaces the gradient. Null = use the gradient.</summary>
+        private Color[] _colorTableOverride;
+        public void SetColorTable(Color[] table) => _colorTableOverride = table;
         [Tooltip("When true, vertices that lie outside of every active audio shape are darkened by the brightness below. Only the color changes, their height still follows the out of bounds operation.")]
         [SerializeField] private bool _colorOutOfBounds;
         [Tooltip("Brightness of the height gradient color for vertices outside of all active audio shapes. 1 = unchanged, 0 = black. Only used if _colorOutOfBounds is true.")]
@@ -504,8 +508,9 @@ namespace Gavi
             EnsureArray(ref _gradientTable, TerrainVertexJob.LutSize);
             if (color)
             {
+                bool own = _colorTableOverride != null && _colorTableOverride.Length == TerrainVertexJob.LutSize;
                 for (int i = 0; i < TerrainVertexJob.LutSize; i++)
-                    _gradientTable[i] = _colorHeightGradient.Evaluate((float)i / (TerrainVertexJob.LutSize - 1));
+                    _gradientTable[i] = own ? _colorTableOverride[i] : _colorHeightGradient.Evaluate((float)i / (TerrainVertexJob.LutSize - 1));
             }
 
             EnsureArray(ref _waveFronts, TerrainBeatWave.MaxWaves);

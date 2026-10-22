@@ -8,10 +8,10 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>
-    /// Color tab of the terrain menu. Four colors (hue, saturation, intensity) are written into the keys of the
-    /// terrain height gradient. Each color owns a few keys of the gradient. The keys of a color share its hue and keep their saturation
-    /// and intensity relative to the first (reference) key of their color, so hue 0 makes all its keys the same pure red,
-    /// and the palette made from the reference keys matches the gradient from the scene in hue.
+    /// Color tab of the terrain menu. Four colors (hue, saturation, glow) are turned into the color table of the terrain
+    /// (see ApplyColorCurve): the glow of every color is exact, the colors blend in a straight line, and flat stretches are
+    /// filled with a wave. The gradient of the scene is only the template for the key times (which color owns which stretch)
+    /// and for the dark start key.
     /// The bloom (glow) of the terrain volume is part of the look and saved with the palette.
     /// Palettes can be saved to disk and are part of the terrain profiles.
     /// </summary>
@@ -36,10 +36,6 @@ namespace Gavi
         [SerializeField] private SliderG _sliderPatternBalance;
         [Tooltip("Soft end of the gradient for heights over 1, see TerrainGenerator.ColorHeadroom. 0 = hard end.")]
         [SerializeField] private SliderG _sliderHeadroom;
-        [Tooltip("Flat color areas (two keys of one color) get darker towards their lower end, so the height stays readable inside them. 0 = flat.")]
-        [SerializeField] private SliderG _sliderPlateauSlope;
-        [Tooltip("Exposure steps the lower key of a flat area is darkened by at slope 1.")]
-        [SerializeField] private float _plateauSlopeStops = 1.5f;
 
         [Header("--- Bloom ---")]
         [Tooltip("Volume of the terrain view. Its profile is copied at runtime, so the profile asset stays unchanged.")]
@@ -65,9 +61,24 @@ namespace Gavi
         [Tooltip("The first key of the gradient (the lowest vertices) never gets brighter than this exposure value, whatever the base color is set to. The gradient then rises to the chosen brightness.")]
         [SerializeField] private float _startKeyMaxIntensity = -4.5f;
 
+        public enum CurveShape { Plateau, ZigZag, SpikesUp, SpikesDown, SawUp, SawDown }
+
+        [Header("--- Color curve ---")]
+        [Tooltip("How flat stretches (two keys of one color, or neighbours with nearly the same glow) are filled. Plateau = left flat.")]
+        [SerializeField] private CurveShape _curveShape = CurveShape.ZigZag;
+        [Tooltip("Slope of the waves in exposure steps per full height of the gradient. A stretch counts as flat when its own slope is under half of this.")]
+        [SerializeField, Min(0f)] private float _curveSteepness = 10f;
+        [Tooltip("Width of one wave as a share of the gradient height. Narrow stretches get fewer waves, at least one.")]
+        [SerializeField, Range(0.02f, 0.4f)] private float _curveWidth = 0.1f;
+
+        private Color[] _curveTable;
+        private CurveShape _appliedShape;
+        private float _appliedSteepness;
+        private float _appliedWidth;
+
+        /// <summary>The gradient of the scene is only the template: key times and the start key. The table comes from ApplyColorCurve.</summary>
         private Gradient _gradient;
         private GradientColorKey[] _originalColorKeys;
-        private GradientAlphaKey[] _originalAlphaKeys;
         private float[] _saturationOffset;
         private float[] _intensityOffset;
         private float[] _referenceHue;
@@ -90,7 +101,6 @@ namespace Gavi
 
         private float OverallIntensity => _sliderOverallIntensity != null ? _sliderOverallIntensity.Value : _defaultOverallIntensity;
         private float Headroom => _sliderHeadroom != null ? _sliderHeadroom.Value : 0f;
-        private float PlateauSlope => _sliderPlateauSlope != null ? _sliderPlateauSlope.Value : 0f;
         private float PatternBalance => _sliderPatternBalance != null ? _sliderPatternBalance.Value : 1f;
         private float BloomThreshold => _sliderBloomThreshold != null ? _sliderBloomThreshold.Value : TerrainColorPalette.DefaultBloomThreshold;
         private float BloomIntensity => _sliderBloomIntensity != null ? _sliderBloomIntensity.Value : TerrainColorPalette.DefaultBloomIntensity;
@@ -119,7 +129,6 @@ namespace Gavi
             ListenToSlider(_sliderOverallIntensity, _defaultOverallIntensity, OnOverallIntensityChanged);
             ListenToSlider(_sliderPatternBalance, 1f, OnPatternBalanceChanged);
             ListenToSlider(_sliderHeadroom, 0f, OnPatternBalanceChanged);
-            ListenToSlider(_sliderPlateauSlope, 0.5f, OnPlateauSlopeChanged);
             ListenToSlider(_sliderBloomThreshold, TerrainColorPalette.DefaultBloomThreshold, OnBloomChanged);
             ListenToSlider(_sliderBloomIntensity, TerrainColorPalette.DefaultBloomIntensity, OnBloomChanged);
             ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
@@ -182,7 +191,6 @@ namespace Gavi
             profile.ColorOverallIntensity = OverallIntensity;
             profile.ColorNoiseBalance = PatternBalance;
             profile.ColorHeadroom = Headroom;
-            profile.ColorPlateauSlope = PlateauSlope;
             profile.BloomThreshold = BloomThreshold;
             profile.BloomIntensity = BloomIntensity;
             profile.BloomScatter = BloomScatter;
@@ -208,8 +216,6 @@ namespace Gavi
                 _sliderPatternBalance.Value = profile.ColorNoiseBalance;
                 if (_sliderHeadroom != null)
                     _sliderHeadroom.Value = profile.ColorHeadroom;
-                if (_sliderPlateauSlope != null)
-                    _sliderPlateauSlope.Value = profile.ColorPlateauSlope;
                 _suppress = wasSuppressed;
             }
             ApplyDirt();
@@ -240,7 +246,7 @@ namespace Gavi
             _baseName = palette != null ? palette.Name : null;
             _modified = palette != null && !Matches(palette, profile);
             ShowNameInInputField();
-            ApplyEntriesToGradient();
+            ApplyColors();
             ApplyBloom();
             RebuildDropdown();
         }
@@ -264,7 +270,6 @@ namespace Gavi
         private void BuildTemplate()
         {
             _originalColorKeys = _gradient.colorKeys;
-            _originalAlphaKeys = _gradient.alphaKeys;
 
             int colorCount = _referenceKey.Length;
             _referenceHue = new float[colorCount];
@@ -316,7 +321,7 @@ namespace Gavi
 
             _baseName = null;
             _modified = false;
-            ApplyEntriesToGradient();
+            ApplyColors();
             ApplyBloom();
         }
 
@@ -379,7 +384,7 @@ namespace Gavi
             _baseName = palette.Name;
             _modified = false;
             ShowNameInInputField();
-            ApplyEntriesToGradient();
+            ApplyColors();
             ApplyBloom();
         }
 
@@ -509,7 +514,7 @@ namespace Gavi
                 return;
 
             MarkModified();
-            ApplyEntriesToGradient();
+            ApplyColors();
             ApplyBloom();
             OnUIValueChanged();
         }
@@ -520,16 +525,7 @@ namespace Gavi
                 return;
 
             MarkModified();
-            ApplyEntriesToGradient();
-            OnUIValueChanged();
-        }
-
-        private void OnPlateauSlopeChanged(float value)
-        {
-            if (!_ready || _suppress)
-                return;
-
-            ApplyEntriesToGradient();
+            ApplyColors();
             OnUIValueChanged();
         }
 
@@ -551,34 +547,104 @@ namespace Gavi
             OnUIValueChanged();
         }
 
-        private void ApplyEntriesToGradient()
+        private void ApplyColors()
         {
-            var keys = new GradientColorKey[_originalColorKeys.Length];
-            float overall = OverallIntensity;
-
-            for (int i = 0; i < keys.Length; i++)
-            {
-                int c = _keyColorIndex[i];
-                TerrainColorEntryUI entry = _entries[c];
-
-                float hue = entry.Hue;
-                float saturation = Mathf.Clamp01(entry.Saturation + _saturationOffset[i]);
-                // The intensity is an exposure value, so a factor becomes log2 of it.
-                float intensity = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + _intensityOffset[i]
-                    + Mathf.Log(ColorCompensation(entry), 2f);
-                if (i == 0)
-                    intensity = Mathf.Min(intensity, _startKeyMaxIntensity);
-                // the lower key of a flat area (next key has the same color) is darker, so the area still shows the height
-                if (i > 0 && i + 1 < keys.Length && _keyColorIndex[i + 1] == c)
-                    intensity -= PlateauSlope * _plateauSlopeStops;
-
-                Color color = TerrainColorMapping.ToHdrColor(hue, saturation, intensity);
-                keys[i] = new GradientColorKey(new Color(color.r * overall, color.g * overall, color.b * overall, 1f), _originalColorKeys[i].time);
-            }
-
-            _gradient.SetKeys(keys, _originalAlphaKeys);
+            ApplyColorCurve();
             ApplyBackground();
         }
+
+        #region Color curve
+        /// <summary>Called every frame by the TerrainSettingsManager (this group is switched off while another menu tab is open): picks up changes made in the Inspector.</summary>
+        public void PollColorCurve()
+        {
+            if (!_ready)
+                return;
+            if (_curveShape != _appliedShape || !Mathf.Approximately(_curveSteepness, _appliedSteepness)
+                || !Mathf.Approximately(_curveWidth, _appliedWidth))
+                ApplyColorCurve();
+        }
+
+        /// <summary>
+        /// Calculates the color table straight from the four colors instead of reading the gradient. The glow (exposure) of
+        /// every key is exactly the menu value of its color, the color between two keys is a straight blend of the two
+        /// colors, and the glow between them runs on a straight line plus a wave where that line is (nearly) flat.
+        /// </summary>
+        private void ApplyColorCurve()
+        {
+            _appliedShape = _curveShape;
+            _appliedSteepness = _curveSteepness;
+            _appliedWidth = _curveWidth;
+            if (_terrain == null)
+                return;
+
+            int keyCount = _originalColorKeys.Length;
+            var time = new float[keyCount];
+            var glow = new float[keyCount];
+            var unit = new Color[keyCount];
+            for (int i = 0; i < keyCount; i++)
+            {
+                TerrainColorEntryUI entry = _entries[_keyColorIndex[i]];
+                float saturation = i == 0 ? Mathf.Clamp01(entry.Saturation + _saturationOffset[i]) : entry.Saturation;
+                time[i] = _originalColorKeys[i].time;
+                unit[i] = TerrainColorMapping.ToHdrColor(entry.Hue, saturation, 0f);
+                glow[i] = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + Mathf.Log(ColorCompensation(entry), 2f);
+                if (i == 0)
+                    glow[i] = Mathf.Min(glow[i] + _intensityOffset[i], _startKeyMaxIntensity);
+            }
+
+            int size = TerrainVertexJob.LutSize;
+            if (_curveTable == null || _curveTable.Length != size)
+                _curveTable = new Color[size];
+            float overall = OverallIntensity;
+            int segment = 0;
+            for (int t = 0; t < size; t++)
+            {
+                float h = (float)t / (size - 1);
+                while (segment < keyCount - 2 && h > time[segment + 1])
+                    segment++;
+                float width = time[segment + 1] - time[segment];
+                float u = width > 0f ? Mathf.Clamp01((h - time[segment]) / width) : 0f;
+                float g = Mathf.Lerp(glow[segment], glow[segment + 1], u);
+                if (segment > 0)
+                    g += CurveWave(h, time[segment], width, glow[segment + 1] - glow[segment]);
+                Color c = Color.Lerp(unit[segment], unit[segment + 1], u);
+                float factor = Mathf.Pow(2f, g) * overall;
+                _curveTable[t] = new Color(c.r * factor, c.g * factor, c.b * factor, 1f);
+            }
+            _terrain.SetColorTable(_curveTable);
+        }
+
+        /// <summary>Wave in exposure steps added to a stretch of the glow line, 0 at both ends of the stretch.</summary>
+        private float CurveWave(float h, float start, float width, float rise)
+        {
+            if (_curveShape == CurveShape.Plateau || _curveSteepness <= 0f || width <= 0f)
+                return 0f;
+            if (Mathf.Abs(rise / width) >= _curveSteepness * 0.5f)
+                return 0f;
+
+            int count = Mathf.Max(1, Mathf.RoundToInt(width / _curveWidth));
+            float period = width / count;
+            float u = (h - start) / width * count;
+            float f = u - Mathf.Floor(u);
+            if (h >= start + width)
+                f = 0f;
+
+            switch (_curveShape)
+            {
+                case CurveShape.SpikesUp:
+                    return _curveSteepness * period * 0.5f * (1f - Mathf.Abs(2f * f - 1f));
+                case CurveShape.SpikesDown:
+                    return -_curveSteepness * period * 0.5f * (1f - Mathf.Abs(2f * f - 1f));
+                case CurveShape.ZigZag:
+                    float zig = f < 0.25f ? 4f * f : (f < 0.75f ? 2f - 4f * f : 4f * f - 4f);
+                    return _curveSteepness * period * 0.25f * zig;
+                case CurveShape.SawUp:
+                    return _curveSteepness * period * f;
+                default:
+                    return -_curveSteepness * period * f;
+            }
+        }
+        #endregion
 
         /// <summary>Turns the sky colors by the same angle the base color is turned away from the reference hue.</summary>
         private void ApplyBackground()
