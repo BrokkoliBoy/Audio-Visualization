@@ -11,8 +11,19 @@ namespace Gavi
         [SerializeField] private SliderG _sliderDampeningUp;
         [SerializeField] private SliderG _sliderDampeningDown;
 
+        [Tooltip("Optional. Tracks of the two sliders: dim and slow on the left, bright and snappy on the right.")]
+        [SerializeField] private UiSliderGradient _gradientUp;
+        [SerializeField] private UiSliderGradient _gradientDown;
+
         private void Awake()
         {
+            Color slow = new Color(0.16f, 0.2f, 0.3f);
+            Color fast = new Color(0.8f, 0.9f, 1f);
+            if (_gradientUp != null)
+                _gradientUp.Bind(_sliderDampeningUp, t => Color.Lerp(slow, fast, t));
+            if (_gradientDown != null)
+                _gradientDown.Bind(_sliderDampeningDown, t => Color.Lerp(slow, fast, t));
+
             _toggleApplyDampening.onValueChanged.AddListener(OnUIValueChanged);
             _sliderDampeningUp.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderDampeningDown.OnValueChangedFloat.AddListener(OnUIValueChanged);

@@ -31,6 +31,29 @@ namespace Gavi
                 Destroy(_texture);
         }
 
+        private SliderG _boundSlider;
+        private Func<float, Color> _boundSampler;
+
+        /// <summary>
+        /// Keeps the track on sampler(position 0..1) and the handle on the color at the slider's position.
+        /// The sampler may read other values, call <see cref="Refresh"/> when they change.
+        /// </summary>
+        public void Bind(SliderG slider, Func<float, Color> sampler)
+        {
+            if (_boundSlider == null && slider != null)
+                slider.OnValueChangedFloat.AddListener(_ => Refresh());
+            _boundSlider = slider;
+            _boundSampler = sampler;
+            Refresh();
+        }
+
+        public void Refresh()
+        {
+            if (_boundSlider == null || _boundSampler == null)
+                return;
+            Apply(_boundSampler, _boundSampler(_boundSlider.Position));
+        }
+
         /// <summary>Fills the track with sampler(0..1) and tints the handle.</summary>
         public void Apply(Func<float, Color> sampler, Color handleColor)
         {

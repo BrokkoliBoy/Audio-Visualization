@@ -69,7 +69,7 @@ namespace Gavi.Audio
 
             // audio clip settings
             if (AudioSampler.Instance.AudioPlayer == null ||
-                !AudioSampler.Instance.AudioPlayer.IsPlaying ||
+                !AudioSampler.Instance.AudioPlayer.IsPlayingOrPaused ||
                 AudioSampler.Instance.AudioPlayer.CurrentlyPlayingClip == null ||
                 AudioSampler.Instance.AudioPlayer.CurrentlyPlayingClip.Settings == null)
             {

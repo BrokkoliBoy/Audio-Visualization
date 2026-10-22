@@ -28,7 +28,7 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
 
             // if no audio clip settings, just generate spectrum data and return
             if (AudioSampler.Instance.AudioPlayer == null ||
-                !AudioSampler.Instance.AudioPlayer.IsPlaying ||
+                !AudioSampler.Instance.AudioPlayer.IsPlayingOrPaused ||
                 AudioSampler.Instance.AudioPlayer.CurrentlyPlayingClip == null ||
                 AudioSampler.Instance.AudioPlayer.CurrentlyPlayingClip.Settings == null)
             {

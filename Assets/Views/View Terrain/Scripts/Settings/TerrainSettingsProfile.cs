@@ -22,6 +22,7 @@ namespace Gavi
         public bool ApplyPerlin = true;
         public float PerlinDepth = 0.6f;
         public float PerlinZoom = 0.3f;
+        public float HeightZoomStrength;
         public float PerlinSpeedX = 0;
         public float PerlinSpeedY = 1;
         [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old profiles.")]
@@ -134,6 +135,7 @@ namespace Gavi
             ApplyPerlin = profile.ApplyPerlin;
             PerlinDepth = profile.PerlinDepth;
             PerlinZoom = profile.PerlinZoom;
+            HeightZoomStrength = profile.HeightZoomStrength;
             PerlinSpeedX = profile.PerlinSpeedX;
             PerlinSpeedY = profile.PerlinSpeedY;
             NoisePattern = profile.NoisePattern;
@@ -219,6 +221,7 @@ namespace Gavi
             ApplyPerlin = terrain.ApplyPerlinNoise;
             PerlinDepth = terrain.PerlinStrength;
             PerlinZoom = terrain.PerlinNoiseZoom;
+            HeightZoomStrength = terrain.HeightZoomStrength;
             PerlinSpeedX = terrain.PerlinOffsetSpeed.x;
             PerlinSpeedY = terrain.PerlinOffsetSpeed.y;
             NoisePattern = terrain.NoisePattern;
@@ -301,6 +304,7 @@ namespace Gavi
             terrain.ApplyPerlinNoise = ApplyPerlin;
             terrain.PerlinStrength = PerlinDepth;
             terrain.PerlinNoiseZoom = PerlinZoom;
+            terrain.HeightZoomStrength = HeightZoomStrength;
             terrain.PerlinOffsetSpeed = new Vector2(PerlinSpeedX, PerlinSpeedY);
             terrain.NoisePattern = NoisePattern;
             terrain.NoiseInvert = NoiseInvert;

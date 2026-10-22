@@ -49,6 +49,17 @@ namespace Gavi
         [Tooltip("Zoom factor of perlin noise.")]
         [SerializeField] private float _noiseZoom = 0.3f;
         public float PerlinNoiseZoom { get => _noiseZoom; set => _noiseZoom = value; }
+        [Tooltip("How strongly the terrain height follows the noise zoom, so the slope of the shapes stays the same: zooming out lowers the terrain, zooming in raises it. 0 = off, 1 = full.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _heightZoomStrength;
+        public float HeightZoomStrength { get => _heightZoomStrength; set => _heightZoomStrength = Mathf.Clamp01(value); }
+        private const float HeightZoomReference = 0.354f; // the noise zoom around the middle of the zoom slider, where the height is the set terrain height
+        private const float HeightZoomMinFactor = 0.35f;
+        private const float HeightZoomMaxFactor = 2.5f;
+        /// <summary>Terrain height with the zoom coupling applied, limited so extreme zoom values neither flatten nor spike the terrain.</summary>
+        public float EffectiveTerrainSizeY => _heightZoomStrength <= 0f
+            ? _terrainSizeY
+            : _terrainSizeY * Mathf.Lerp(1f, Mathf.Clamp(HeightZoomReference / Mathf.Max(0.01f, _noiseZoom), HeightZoomMinFactor, HeightZoomMaxFactor), _heightZoomStrength);
         /// <summary>The face count the perlin zoom values were made for. At this face count the zoom is unchanged.</summary>
         private const float PerlinReferenceFaceCount = 97f;
         [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
@@ -492,6 +503,7 @@ namespace Gavi
         {
             int shapeCount = _audioShapeSettings.Count;
             bool audio = _applyAudio && _samplesContainer != null && shapeCount > 0 && _bandCount > 0;
+            bool paused = AudioSampler.Instance != null && AudioSampler.Instance.AudioPlayer.IsPaused;
             bool smoothing = audio && _applyAudioSmoothing && _audioSmoothingCurve != null;
             bool color = _applyColorByHeight && _colorHeightGradient != null;
 
@@ -534,7 +546,7 @@ namespace Gavi
                 FaceCountX = _faceCountX,
                 FaceCountZ = _faceCountZ,
                 ScaleX = _terrainSizeX / _faceCountX,
-                ScaleY = _terrainSizeY,
+                ScaleY = EffectiveTerrainSizeY,
                 ScaleZ = _terrainSizeZ / _faceCountZ,
 
                 ApplyNoise = _applyPerlinNoise,
@@ -575,8 +587,9 @@ namespace Gavi
                 WaveLevels = _waveLevels,
 
                 Dampen = _applyDampening,
-                DampenDown = _dampenLerpFactorDown,
-                DampenUp = _dampenLerpFactorUp,
+                // Paused: no more dampening steps, so the picture stays exactly where it is.
+                DampenDown = paused ? 0f : _dampenLerpFactorDown,
+                DampenUp = paused ? 0f : _dampenLerpFactorUp,
                 FpsEqualizer = _fpsEqualizer,
 
                 ApplyColor = color,
@@ -1006,7 +1019,7 @@ namespace Gavi
         public Transform TerrainTransform => _meshFilters != null && _meshFilters.Count > 0 ? _meshFilters[0].transform : null;
 
         /// <summary>Middle of the terrain box in the local space of <see cref="TerrainTransform"/>.</summary>
-        public Vector3 LocalCenter => new Vector3(0.5f * _terrainSizeX, 0.5f * _terrainSizeY, 0.5f * _terrainSizeZ);
+        public Vector3 LocalCenter => new Vector3(0.5f * _terrainSizeX, 0.5f * EffectiveTerrainSizeY, 0.5f * _terrainSizeZ);
 
         /// <summary>
         /// Finds the audio band under a ray (for example from the camera through the mouse) on the terrain as it is drawn right now.
@@ -1048,8 +1061,9 @@ namespace Gavi
             Vector3 direction = terrain.InverseTransformPoint(ray.origin + ray.direction) - origin;
 
             // the part of the ray inside the box around the terrain (heights can exceed the terrain height a little)
-            Vector3 min = new Vector3(0f, -0.2f * _terrainSizeY, 0f);
-            Vector3 max = new Vector3(_terrainSizeX, 2f * _terrainSizeY, _terrainSizeZ);
+            float height = EffectiveTerrainSizeY;
+            Vector3 min = new Vector3(0f, -0.2f * height, 0f);
+            Vector3 max = new Vector3(_terrainSizeX, 2f * height, _terrainSizeZ);
             float enter = 0f, exit = 100000f;
             for (int axis = 0; axis < 3; axis++)
             {

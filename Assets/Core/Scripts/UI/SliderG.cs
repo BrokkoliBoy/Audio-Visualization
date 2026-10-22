@@ -75,6 +75,12 @@ namespace Gavi
         
         
         
+        /// <summary>The value the slider gives at a position (0-1), for previews along the track.</summary>
+        /// <summary>The slider position (0-1).</summary>
+        public float Position => _slider.value;
+
+        public float ValueAtPosition(float position) => PositionToValue(Mathf.Clamp01(position));
+
         private void Awake()
         {
             _slider.onValueChanged.AddListener(OnValueChangedM);

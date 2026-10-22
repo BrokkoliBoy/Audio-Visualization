@@ -32,6 +32,8 @@ namespace Gavi
         [Tooltip("Multiplies the color of the whole gradient. 1 = unchanged.")]
         [SerializeField] private SliderG _sliderOverallIntensity;
         [SerializeField] private float _defaultOverallIntensity = 1f;
+        [Tooltip("Optional. Shows the Base color from dark to bright as the track of the Brightness slider.")]
+        [SerializeField] private UiSliderGradient _gradientOverallIntensity;
         [Tooltip("Evens out the colors between noise patterns, see TerrainGenerator.ColorNoiseBalance. 0 = off.")]
         [SerializeField] private SliderG _sliderPatternBalance;
         [Tooltip("Soft end of the gradient for heights over 1, see TerrainGenerator.ColorHeadroom. 0 = hard end.")]
@@ -42,6 +44,8 @@ namespace Gavi
         [SerializeField] private Volume _bloomVolume;
         [SerializeField] private SliderG _sliderBloomThreshold;
         [SerializeField] private SliderG _sliderBloomIntensity;
+        [Tooltip("Optional. Track of the bloom strength slider: the Base color, bleaching out with more bloom.")]
+        [SerializeField] private UiSliderGradient _gradientBloomIntensity;
         [SerializeField] private SliderG _sliderBloomScatter;
 
         [Header("--- Background ---")]
@@ -51,6 +55,8 @@ namespace Gavi
         [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
         [SerializeField] private SliderG _sliderDirtStrength;
+        [Tooltip("Optional. Track of the dirt strength slider: from a clean dark lens to a dirty, lit one.")]
+        [SerializeField] private UiSliderGradient _gradientDirtStrength;
         [SerializeField] private SliderG _sliderDirtBeat;
 
         [Header("--- Gradient keys ---")]
@@ -144,6 +150,7 @@ namespace Gavi
             BuildTemplate();
 
             _suppress = true;
+            BindSliderPreviews();
             ListenToSlider(_sliderOverallIntensity, _defaultOverallIntensity, OnOverallIntensityChanged);
             ListenToSlider(_sliderPatternBalance, 1f, OnPatternBalanceChanged);
             ListenToSlider(_sliderHeadroom, 0f, OnPatternBalanceChanged);
@@ -632,6 +639,41 @@ namespace Gavi
         {
             ApplyColorCurve();
             ApplyBackground();
+            RefreshBrightnessPreview();
+        }
+
+        private Color BaseColorPreview()
+        {
+            if (_entries.Count == 0)
+                return Color.white;
+            TerrainColorEntryUI baseEntry = _entries[0];
+            return TerrainColorMapping.Preview(baseEntry.Hue, baseEntry.Saturation, baseEntry.MenuIntensity);
+        }
+
+        /// <summary>Binds the slider tracks that show the Base color. They follow the sliders and refresh when the colors change.</summary>
+        private void BindSliderPreviews()
+        {
+            if (_gradientOverallIntensity != null && _sliderOverallIntensity != null)
+                _gradientOverallIntensity.Bind(_sliderOverallIntensity, t =>
+                {
+                    // the Base color times the brightness the slider would give: dark on the left, white-hot over 1
+                    float brightness = _sliderOverallIntensity.ValueAtPosition(t);
+                    Color baseColor = BaseColorPreview();
+                    if (brightness <= 1f)
+                        return Color.Lerp(Color.black, baseColor, brightness);
+                    return Color.Lerp(baseColor, Color.white, Mathf.Clamp01((brightness - 1f) * 0.5f));
+                });
+            if (_gradientBloomIntensity != null && _sliderBloomIntensity != null)
+                _gradientBloomIntensity.Bind(_sliderBloomIntensity, t => Color.Lerp(BaseColorPreview(), Color.white, 0.85f * t));
+            if (_gradientDirtStrength != null && _sliderDirtStrength != null)
+                _gradientDirtStrength.Bind(_sliderDirtStrength, t => Color.Lerp(new Color(0.08f, 0.08f, 0.1f), Color.Lerp(BaseColorPreview(), new Color(0.75f, 0.7f, 0.6f), 0.5f), t));
+        }
+
+        private void RefreshBrightnessPreview()
+        {
+            if (_gradientOverallIntensity != null) _gradientOverallIntensity.Refresh();
+            if (_gradientBloomIntensity != null) _gradientBloomIntensity.Refresh();
+            if (_gradientDirtStrength != null) _gradientDirtStrength.Refresh();
         }
 
         #region Color curve
@@ -897,11 +939,16 @@ namespace Gavi
             _sky.bottom.Override(tint ? WithHue(_skyBottom, hue) : Neutral(_skyBottom));
         }
 
-        /// <summary>The same brightness without any hue: the background when it is not tinted.</summary>
+        // The untinted background is darkened. SDR already looks darker than HDR, so it gets less.
+        private const float UntintedDarkenHdr = 0.3f;
+        private const float UntintedDarkenSdr = 0.6f;
+
+        /// <summary>A dark gray without any hue: the background when it is not tinted.</summary>
         private static Color Neutral(Color color)
         {
             Color.RGBToHSV(color, out _, out _, out float v);
-            Color gray = Color.HSVToRGB(0f, 0f, v, true);
+            bool hdr = UnityEngine.HDROutputSettings.main != null && UnityEngine.HDROutputSettings.main.active;
+            Color gray = Color.HSVToRGB(0f, 0f, v * (hdr ? UntintedDarkenHdr : UntintedDarkenSdr), true);
             gray.a = color.a;
             return gray;
         }

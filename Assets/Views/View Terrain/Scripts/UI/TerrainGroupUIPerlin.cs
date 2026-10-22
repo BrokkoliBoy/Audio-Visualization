@@ -17,6 +17,8 @@ namespace Gavi
         [SerializeField] private Toggle _toggleInvert;
         [SerializeField] private SliderG _sliderPerlinDepth;
         [SerializeField] private SliderG _sliderPerlinZoom;
+        [Tooltip("Optional: how strongly the terrain height follows the zoom (0 = off), so zooming out keeps the shapes instead of making them steeper.")]
+        [SerializeField] private SliderG _sliderHeightZoom;
         [SerializeField] private SliderG _sliderPerlinSpeed;
         [Tooltip("Optional: the pattern is turned upside down on the beat every this many beats, 0 = off.")]
         [SerializeField] private SliderG _sliderFlipBeats;
@@ -28,6 +30,8 @@ namespace Gavi
             _toggleApplyPerlin.onValueChanged.AddListener(OnUIValueChanged);
             _sliderPerlinDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderPerlinZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
+            if (_sliderHeightZoom != null)
+                _sliderHeightZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
             if (_sliderPerlinSpeed != null)
                 _sliderPerlinSpeed.OnValueChangedFloat.AddListener(OnUIValueChanged);
             if (_sliderFlipBeats != null)
@@ -80,6 +84,8 @@ namespace Gavi
             profile.ApplyPerlin = _toggleApplyPerlin.isOn;
             profile.PerlinDepth = _sliderPerlinDepth.Value;
             profile.PerlinZoom = _sliderPerlinZoom.Value;
+            if (_sliderHeightZoom != null)
+                profile.HeightZoomStrength = _sliderHeightZoom.Value;
             float speed = _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 1f;
             profile.PerlinSpeedX = _speedDirection.x * speed;
             profile.PerlinSpeedY = _speedDirection.y * speed;
@@ -97,6 +103,8 @@ namespace Gavi
             _toggleApplyPerlin.isOn = profile.ApplyPerlin;
             _sliderPerlinDepth.Value = profile.PerlinDepth;
             _sliderPerlinZoom.Value = profile.PerlinZoom;
+            if (_sliderHeightZoom != null)
+                _sliderHeightZoom.Value = profile.HeightZoomStrength;
             if (_sliderPerlinSpeed != null)
             {
                 // the length of the stored speed along the direction of the menu

@@ -21,7 +21,13 @@ namespace Gavi.Audio
         private AudioClipContainer _currentlyPlayingClip;
 
         public bool IsPlaying => _audioSource.isPlaying;
+        /// <summary>True while a song is playing or paused, so the terrain keeps the song's settings when paused.</summary>
+        public bool IsPlayingOrPaused => _audioSource.isPlaying || _isPaused;
+        public bool IsPaused => _isPaused;
+        private bool _isPaused;
         private bool _isMic;
+        // A paused source returns silence; the last spectrum is kept so the terrain keeps running on it.
+        private readonly Dictionary<(int channel, int length), float[]> _lastSpectrum = new Dictionary<(int, int), float[]>();
         public float Volume
         {
             get => _audioSource.volume;
@@ -44,6 +50,8 @@ namespace Gavi.Audio
         {
             _currentlyPlayingClip = clip;
             _audioSource.Stop();
+            _isPaused = false;
+            _lastSpectrum.Clear();
             if (clip.UseMic)
                 SwitchToMic();
             else
@@ -56,15 +64,19 @@ namespace Gavi.Audio
             if (!_audioSource.isPlaying)
                 return;
             _audioSource.Pause();
+            _isPaused = true;
         }
 
         public void UnPause()
         {
+            _isPaused = false;
             _audioSource.UnPause();
         }
 
         public void Stop()
         {
+            _isPaused = false;
+            _lastSpectrum.Clear();
             _audioSource.Stop();
             _currentlyPlayingClip = null;
         }
@@ -103,7 +115,19 @@ namespace Gavi.Audio
 
         public void GetSpectrumData(float[] samples, int channel, FFTWindow fftWindow)
         {
+            var key = (channel, samples.Length);
+            if (_isPaused && _lastSpectrum.TryGetValue(key, out float[] last))
+            {
+                System.Array.Copy(last, samples, samples.Length);
+                return;
+            }
+
             _audioSource.GetSpectrumData(samples, channel, fftWindow);
+            if (!_audioSource.isPlaying)
+                return;
+            if (!_lastSpectrum.TryGetValue(key, out last))
+                _lastSpectrum[key] = last = new float[samples.Length];
+            System.Array.Copy(samples, last, samples.Length);
         }
     }
 }
