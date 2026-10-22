@@ -72,15 +72,12 @@ namespace Gavi
         public List<Vector3> ColorValues = new List<Vector3>();
         public float ColorOverallIntensity = 1f;
         [Tooltip("Color curve, see TerrainColorPalette.")]
-        public int CurveShape = TerrainColorPalette.DefaultCurveShape;
-        public float CurveStrength = TerrainColorPalette.DefaultCurveStrength;
+        public int TiltDirection = TerrainColorPalette.DefaultTiltDirection;
         public float CurveFloor = TerrainColorPalette.DefaultCurveFloor;
         public float ColorShift = TerrainColorPalette.DefaultColorShift;
         public float ColorHold = TerrainColorPalette.DefaultColorHold;
-        public float CurveWidth = TerrainColorPalette.DefaultCurveWidth;
-        public float CurveRounding = TerrainColorPalette.DefaultCurveRounding;
-        public float CurveVariation = TerrainColorPalette.DefaultCurveVariation;
         public float PlateauTilt = TerrainColorPalette.DefaultPlateauTilt;
+        public float ReliefStrength = TerrainColorPalette.DefaultRelief;
         public float HueBalance = TerrainColorPalette.DefaultHueBalance;
         public float BloomThreshold = TerrainColorPalette.DefaultBloomThreshold;
         public float BloomIntensity = TerrainColorPalette.DefaultBloomIntensity;
@@ -175,15 +172,12 @@ namespace Gavi
             ColorPaletteName = profile.ColorPaletteName;
             ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
             ColorOverallIntensity = profile.ColorOverallIntensity;
-            CurveShape = profile.CurveShape;
-            CurveStrength = profile.CurveStrength;
+            TiltDirection = profile.TiltDirection;
             CurveFloor = profile.CurveFloor;
             ColorShift = profile.ColorShift;
             ColorHold = profile.ColorHold;
-            CurveWidth = profile.CurveWidth;
-            CurveRounding = profile.CurveRounding;
-            CurveVariation = profile.CurveVariation;
             PlateauTilt = profile.PlateauTilt;
+            ReliefStrength = profile.ReliefStrength;
             HueBalance = profile.HueBalance;
             BloomThreshold = profile.BloomThreshold;
             BloomIntensity = profile.BloomIntensity;

@@ -34,28 +34,22 @@ namespace Gavi
         public float BloomIntensity = DefaultBloomIntensity;
         public float BloomScatter = DefaultBloomScatter;
 
-        public const int DefaultCurveShape = 1;
-        public const float DefaultCurveStrength = 10f;
+        public const int DefaultTiltDirection = 0;
         public const float DefaultCurveFloor = 0.3f;
         public const float DefaultColorShift = 0f;
         public const float DefaultColorHold = 1f;
-        public const float DefaultCurveWidth = 0.1f;
-        public const float DefaultCurveRounding = 0.2f;
-        public const float DefaultCurveVariation = 0f;
-        public const float DefaultPlateauTilt = 0f;
+        public const float DefaultPlateauTilt = 2f;
+        public const float DefaultRelief = 0.15f;
         public const float DefaultHueBalance = 0f;
 
-        [Tooltip("Color curve: shape of the waves (TerrainColorGroupUI.CurveShape), their steepness, the glow of the lowest vertices on the menu glow scale (0.3 = exposure -4.5).")]
-        public int CurveShape = DefaultCurveShape;
-        public float CurveStrength = DefaultCurveStrength;
+        [Tooltip("Color curve: direction of the plateau tilt (TerrainColorGroupUI.TiltMode), the glow of the lowest vertices on the menu glow scale (0.3 = exposure -4.5).")]
+        public int TiltDirection = DefaultTiltDirection;
         public float CurveFloor = DefaultCurveFloor;
         [Tooltip("Color curve: -1..1 moves the colors down (+) or up (-) the height, hold = width of the two long color areas (1 = as in the scene gradient).")]
         public float ColorShift = DefaultColorShift;
         public float ColorHold = DefaultColorHold;
-        public float CurveWidth = DefaultCurveWidth;
-        public float CurveRounding = DefaultCurveRounding;
-        public float CurveVariation = DefaultCurveVariation;
         public float PlateauTilt = DefaultPlateauTilt;
+        public float ReliefStrength = DefaultRelief;
         public float HueBalance = DefaultHueBalance;
 
         public TerrainColorPalette Clone()
@@ -69,15 +63,12 @@ namespace Gavi
                 BloomThreshold = BloomThreshold,
                 BloomIntensity = BloomIntensity,
                 BloomScatter = BloomScatter,
-                CurveShape = CurveShape,
-                CurveStrength = CurveStrength,
+                TiltDirection = TiltDirection,
                 CurveFloor = CurveFloor,
                 ColorShift = ColorShift,
                 ColorHold = ColorHold,
-                CurveWidth = CurveWidth,
-                CurveRounding = CurveRounding,
-                CurveVariation = CurveVariation,
                 PlateauTilt = PlateauTilt,
+                ReliefStrength = ReliefStrength,
                 HueBalance = HueBalance
             };
         }

@@ -400,6 +400,58 @@ namespace Gavi
         #endregion
     }
 
+    /// <summary>
+    /// Fake light on the colors: the terrain has no light of its own, so every contour comes from the color. This job shades every
+    /// vertex by the slope of the ground against a fixed light direction (surfaces facing the light brighter, the others darker),
+    /// after the colors are set. The alpha of the color is the weight (1 = flat glow curve there, less where the curve is steep), it is set back to 1. The shading is in exposure steps, and stronger for bright colors because the tone mapping
+    /// flattens steps there.
+    /// </summary>
+    [BurstCompile]
+    public struct TerrainReliefJob : IJobParallelFor
+    {
+        /// <summary>Largest factor the shading of a bright color is scaled up by.</summary>
+        private const float MaxBoost = 4f;
+        /// <summary>Slope at which the shading reaches half of its strength.</summary>
+        private const float HalfSlope = 0.5f;
+
+        public int FaceCountX;
+        public int FaceCountZ;
+        public float ScaleX;
+        public float ScaleZ;
+        /// <summary>Largest shading in exposure steps, up and down.</summary>
+        public float Strength;
+        /// <summary>Direction towards the light on the ground (length 1).</summary>
+        public float LightX;
+        public float LightZ;
+        [ReadOnly] public NativeArray<Vector3> Vertices;
+        [NativeDisableParallelForRestriction] public NativeArray<Color> Colors;
+
+        public void Execute(int z)
+        {
+            int stride = FaceCountX + 1;
+            int zA = Mathf.Max(z - 1, 0);
+            int zB = Mathf.Min(z + 1, FaceCountZ);
+            for (int x = 0; x <= FaceCountX; x++)
+            {
+                int xA = Mathf.Max(x - 1, 0);
+                int xB = Mathf.Min(x + 1, FaceCountX);
+                float gradientX = (Vertices[z * stride + xB].y - Vertices[z * stride + xA].y) / Mathf.Max((xB - xA) * ScaleX, 0.0001f);
+                float gradientZ = (Vertices[zB * stride + x].y - Vertices[zA * stride + x].y) / Mathf.Max((zB - zA) * ScaleZ, 0.0001f);
+                float lit = -(gradientX * LightX + gradientZ * LightZ);
+                float relief = lit / (HalfSlope + Mathf.Abs(lit));
+
+                int index = z * stride + x;
+                Color color = Colors[index];
+                float brightness = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+                float x2 = Mathf.Min(brightness, 20f);
+                float sensitivity = x2 < 0.001f ? 1f : x2 / (Mathf.Exp(x2) - 1f);
+                float boost = Mathf.Clamp(1f / Mathf.Max(sensitivity, 0.01f), 1f, MaxBoost);
+                float factor = Mathf.Pow(2f, Strength * relief * boost * color.a);
+                Colors[index] = new Color(color.r * factor, color.g * factor, color.b * factor, 1f);
+            }
+        }
+    }
+
     /// <summary>Bends the flat vertices of the terrain by the morph (bowl, planet, tube ...), one vertex per job step.</summary>
     [BurstCompile]
     public struct TerrainMorphJob : IJobParallelFor

@@ -121,6 +121,10 @@ namespace Gavi
         [Range(0, 1)]
         [SerializeField] private float _colorNoiseBalance = 1f;
         public float ColorNoiseBalance { get => _colorNoiseBalance; set => _colorNoiseBalance = Mathf.Clamp01(value); }
+        [Tooltip("Fake light: shades the colors by the slope of the ground against a fixed light, in exposure steps (surfaces facing the light brighter, the others darker). Gives contours where the color is flat. 0 = off.")]
+        [Range(0, 3)]
+        [SerializeField] private float _reliefStrength;
+        public float ReliefStrength { get => _reliefStrength; set => _reliefStrength = Mathf.Clamp(value, 0f, 3f); }
         [Tooltip("Heights above the top of the gradient (loud bands push vertices over 1) keep a little color variation instead of all showing the last color. 0 = hard end as before, 1 = soft end: the top colors are reached later and the last one only approaches.")]
         [Range(0, 1)]
         [SerializeField] private float _colorHeadroom;
@@ -374,6 +378,7 @@ namespace Gavi
             UpdateNoise();
 
             JobHandle handle = ScheduleVertexJob(vertexCount);
+            handle = ScheduleRelief(handle);
             _morphed = ScheduleMorph(ref handle);
 
             // the triangles are built while the vertices are calculated
@@ -591,6 +596,27 @@ namespace Gavi
                 LastBands = _lastBands,
             };
             return job.Schedule(_faceCountZ + 1, 1);
+        }
+
+        /// <summary>Shades the colors by the slope once the vertex job is done, see <see cref="TerrainReliefJob"/>. Does nothing at strength 0.</summary>
+        private JobHandle ScheduleRelief(JobHandle handle)
+        {
+            if (_reliefStrength <= 0.0005f || !_applyColorByHeight)
+                return handle;
+
+            var job = new TerrainReliefJob
+            {
+                FaceCountX = _faceCountX,
+                FaceCountZ = _faceCountZ,
+                ScaleX = _terrainSizeX / _faceCountX,
+                ScaleZ = _terrainSizeZ / _faceCountZ,
+                Strength = _reliefStrength,
+                LightX = -0.7071f,
+                LightZ = -0.7071f,
+                Vertices = _vertices,
+                Colors = _colors,
+            };
+            return job.Schedule(_faceCountZ + 1, 1, handle);
         }
 
         private static void EnsureArray<T>(ref NativeArray<T> array, int length) where T : struct
