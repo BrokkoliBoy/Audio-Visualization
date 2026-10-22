@@ -23,8 +23,8 @@ namespace Gavi.Audio
 
         [SerializeField] private bool _enabled;
         [SerializeField] private Signal _signal = Signal.Flat;
-        [Tooltip("Level of the bands (0-1).")]
-        [Range(0f, 1f)]
+        [Tooltip("Level of the bands (0-3). Above 1 the bands overdrive like loud songs do.")]
+        [Range(0f, 3f)]
         [SerializeField] private float _level = 0.6f;
         [Tooltip("Sends a beat on every beat of the song (no tempo needed, it is the BPM of the playing song). Waves and flips react to it.")]
         [SerializeField] private bool _beat;
@@ -59,7 +59,8 @@ namespace Gavi.Audio
 
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public int SignalIndex { get => (int)_signal; set => _signal = (Signal)Mathf.Clamp(value, 0, SignalNames.Length - 1); }
-        public float Level { get => _level; set => _level = Mathf.Clamp01(value); }
+        public const float MaxLevel = 3f;
+        public float Level { get => _level; set => _level = Mathf.Clamp(value, 0f, MaxLevel); }
         public bool Beat { get => _beat; set => _beat = value; }
         public float BeatStrength { get => _beatStrength; set => _beatStrength = Mathf.Clamp01(value); }
         public bool BeatStrengthFromSong { get => _beatStrengthFromSong; set => _beatStrengthFromSong = value; }
@@ -111,7 +112,7 @@ namespace Gavi.Audio
         {
             if (_edited == null || band < 0 || band >= _edited.Length)
                 return;
-            _edited[band] = Mathf.Clamp01(_edited[band] + direction * EditRate * deltaTime);
+            _edited[band] = Mathf.Clamp(_edited[band] + direction * EditRate * deltaTime, 0f, MaxLevel);
         }
 
         private void Fill(float[] values)
@@ -136,7 +137,7 @@ namespace Gavi.Audio
                 float own = _editBands ? _edited[i] : _level * Share(i, count);
                 // the kick lifts the bands that carry the signal, it never takes anything away
                 float lift = own > 0f ? kick * KickShare(i, count) : 0f;
-                values[i] = Mathf.Clamp01(own + lift);
+                values[i] = Mathf.Clamp(own + lift, 0f, MaxLevel);
             }
         }
 

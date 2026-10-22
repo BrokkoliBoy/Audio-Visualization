@@ -113,6 +113,14 @@ namespace Gavi
         [Range(0, 1)]
         [SerializeField] private float _colorBandGlow;
         public float ColorBandGlow { get => _colorBandGlow; set => _colorBandGlow = Mathf.Clamp01(value); }
+        [Tooltip("Evens out the colors between noise patterns. A pattern that is high on average would show only the upper colors, a low one only the lower. 0 = colors follow the height as it is, 1 = every pattern uses about the same part of the gradient.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorNoiseBalance = 1f;
+        public float ColorNoiseBalance { get => _colorNoiseBalance; set => _colorNoiseBalance = Mathf.Clamp01(value); }
+        [Tooltip("Heights above the top of the gradient (loud bands push vertices over 1) keep a little color variation instead of all showing the last color. 0 = hard end as before, 1 = soft end: the top colors are reached later and the last one only approaches.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorHeadroom;
+        public float ColorHeadroom { get => _colorHeadroom; set => _colorHeadroom = Mathf.Clamp01(value); }
 
         [Header("--- Morph ---")]
         [Tooltip("Bends the whole mesh after the heights are calculated. Off = the flat terrain.")]
@@ -230,6 +238,13 @@ namespace Gavi
         private bool _morphed;
         // GetFpsEqualizer() for the time since the last mesh update, the same for every vertex
         private float _fpsEqualizer;
+        private float _noiseMean = ColorReferenceNoise;
+        private float _colorScale = 1f;
+        private bool _colorScaleKnown;
+        /// <summary>Average noise value of a typical pattern (over all patterns it is 0.52), the colors of other patterns are moved towards it.</summary>
+        private const float ColorReferenceNoise = 0.5f;
+        /// <summary>Share of the way per reference step (240 per second) the color scale moves to its goal, so a pattern change glides.</summary>
+        private const float ColorScaleSmoothing = 0.01f;
         // Time since the last mesh update. It is longer than a frame when the mesh is not updated every frame.
         private float _timeSinceMesh;
         private float _stepDelta;
@@ -502,6 +517,8 @@ namespace Gavi
                 _beatWave.CopyWaves(_waveFronts, _waveLevels);
             }
 
+            UpdateColorScale();
+
             var job = new TerrainVertexJob
             {
                 FaceCountX = _faceCountX,
@@ -553,6 +570,8 @@ namespace Gavi
                 FpsEqualizer = _fpsEqualizer,
 
                 ApplyColor = color,
+                ColorScale = _colorScale,
+                ColorHeadroom = _colorHeadroom,
                 ColorBandHue = _colorBandHue,
                 ColorBandBrightness = _colorBandBrightness,
                 ColorBandGlow = _colorBandGlow,
@@ -720,10 +739,40 @@ namespace Gavi
                 System.Threading.Tasks.Parallel.For(0, _noiseGridHeight, _noiseRowAction);
             }
             _noiseNext.CopyFrom(_noiseScratch);
+            _noiseMean = SampleMean(_noiseScratch);
             if (onlyDue)
                 _noisePrevious.CopyFrom(_noisePreviousScratch);
         }
 
+
+        /// <summary>Average of at most 2048 evenly spread points, enough to tell a high pattern from a low one.</summary>
+        private static float SampleMean(float[] values)
+        {
+            int step = Mathf.Max(1, values.Length / 2048);
+            float sum = 0f;
+            int count = 0;
+            for (int i = 0; i < values.Length; i += step, count++)
+                sum += values[i];
+            return count > 0 ? sum / count : ColorReferenceNoise;
+        }
+
+        /// <summary>
+        /// Factor for the place in the gradient. A pattern that is higher or lower than a typical one (noise lowers the terrain) is
+        /// scaled so its average height lands where a typical pattern's does. The balance slider blends it in, the result glides.
+        /// </summary>
+        private void UpdateColorScale()
+        {
+            float target = 1f;
+            if (_applyPerlinNoise && _colorNoiseBalance > 0f)
+            {
+                float mean = Mathf.Lerp(_noiseMean, 1f - _noiseMean, _invertEased);
+                float factor = Mathf.Max(0.05f, 1f - _perlinStrength * mean);
+                float reference = 1f - _perlinStrength * ColorReferenceNoise;
+                target = Mathf.Lerp(1f, Mathf.Clamp(reference / factor, 0.5f, 3f), _colorNoiseBalance);
+            }
+            _colorScale = _colorScaleKnown ? Mathf.Lerp(_colorScale, target, Utility.Utility.Smooth(ColorScaleSmoothing, _fpsEqualizer)) : target;
+            _colorScaleKnown = true;
+        }
         private void CalculateNoiseRow(int row)
         {
             // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.

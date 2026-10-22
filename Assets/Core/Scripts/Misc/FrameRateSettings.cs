@@ -12,6 +12,9 @@ namespace Gavi.Game
         private const string PrefsKey = "MaxFps";
         private const int UnknownMonitorHz = 144;
 
+        /// <summary>Limit without a saved value: the refresh rate in a build, 60 in the Editor to spare the computer while working.</summary>
+        private static int DefaultFps => Application.isEditor ? 60 : MonitorHz;
+
         /// <summary>Refresh rate of the monitor the window is on (240 for 239.996 Hz), a fallback if the system does not tell.</summary>
         public static int MonitorHz
         {
@@ -24,7 +27,7 @@ namespace Gavi.Game
 
         public static int MaxFps
         {
-            get => Mathf.Clamp(PlayerPrefs.GetInt(PrefsKey, MonitorHz), MinFps, MonitorHz);
+            get => Mathf.Clamp(PlayerPrefs.GetInt(PrefsKey, DefaultFps), MinFps, MonitorHz);
             set
             {
                 value = Mathf.Clamp(value, MinFps, MonitorHz);

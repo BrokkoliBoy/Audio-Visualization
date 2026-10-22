@@ -32,6 +32,14 @@ namespace Gavi
         [Tooltip("Multiplies the color of the whole gradient. 1 = unchanged.")]
         [SerializeField] private SliderG _sliderOverallIntensity;
         [SerializeField] private float _defaultOverallIntensity = 1f;
+        [Tooltip("Evens out the colors between noise patterns, see TerrainGenerator.ColorNoiseBalance. 0 = off.")]
+        [SerializeField] private SliderG _sliderPatternBalance;
+        [Tooltip("Soft end of the gradient for heights over 1, see TerrainGenerator.ColorHeadroom. 0 = hard end.")]
+        [SerializeField] private SliderG _sliderHeadroom;
+        [Tooltip("Flat color areas (two keys of one color) get darker towards their lower end, so the height stays readable inside them. 0 = flat.")]
+        [SerializeField] private SliderG _sliderPlateauSlope;
+        [Tooltip("Exposure steps the lower key of a flat area is darkened by at slope 1.")]
+        [SerializeField] private float _plateauSlopeStops = 1.5f;
 
         [Header("--- Bloom ---")]
         [Tooltip("Volume of the terrain view. Its profile is copied at runtime, so the profile asset stays unchanged.")]
@@ -81,6 +89,9 @@ namespace Gavi
         private float _deleteConfirmUntil;
 
         private float OverallIntensity => _sliderOverallIntensity != null ? _sliderOverallIntensity.Value : _defaultOverallIntensity;
+        private float Headroom => _sliderHeadroom != null ? _sliderHeadroom.Value : 0f;
+        private float PlateauSlope => _sliderPlateauSlope != null ? _sliderPlateauSlope.Value : 0f;
+        private float PatternBalance => _sliderPatternBalance != null ? _sliderPatternBalance.Value : 1f;
         private float BloomThreshold => _sliderBloomThreshold != null ? _sliderBloomThreshold.Value : TerrainColorPalette.DefaultBloomThreshold;
         private float BloomIntensity => _sliderBloomIntensity != null ? _sliderBloomIntensity.Value : TerrainColorPalette.DefaultBloomIntensity;
         private float BloomScatter => _sliderBloomScatter != null ? _sliderBloomScatter.Value : TerrainColorPalette.DefaultBloomScatter;
@@ -106,6 +117,9 @@ namespace Gavi
 
             _suppress = true;
             ListenToSlider(_sliderOverallIntensity, _defaultOverallIntensity, OnOverallIntensityChanged);
+            ListenToSlider(_sliderPatternBalance, 1f, OnPatternBalanceChanged);
+            ListenToSlider(_sliderHeadroom, 0f, OnPatternBalanceChanged);
+            ListenToSlider(_sliderPlateauSlope, 0.5f, OnPlateauSlopeChanged);
             ListenToSlider(_sliderBloomThreshold, TerrainColorPalette.DefaultBloomThreshold, OnBloomChanged);
             ListenToSlider(_sliderBloomIntensity, TerrainColorPalette.DefaultBloomIntensity, OnBloomChanged);
             ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
@@ -166,6 +180,9 @@ namespace Gavi
 
             profile.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
             profile.ColorOverallIntensity = OverallIntensity;
+            profile.ColorNoiseBalance = PatternBalance;
+            profile.ColorHeadroom = Headroom;
+            profile.ColorPlateauSlope = PlateauSlope;
             profile.BloomThreshold = BloomThreshold;
             profile.BloomIntensity = BloomIntensity;
             profile.BloomScatter = BloomScatter;
@@ -184,6 +201,17 @@ namespace Gavi
 
             // The lens dirt belongs to the profile whether or not the profile carries its own color values.
             SetDirtSliders(profile.DirtStrength, profile.DirtBeat);
+            if (_sliderPatternBalance != null)
+            {
+                bool wasSuppressed = _suppress;
+                _suppress = true;
+                _sliderPatternBalance.Value = profile.ColorNoiseBalance;
+                if (_sliderHeadroom != null)
+                    _sliderHeadroom.Value = profile.ColorHeadroom;
+                if (_sliderPlateauSlope != null)
+                    _sliderPlateauSlope.Value = profile.ColorPlateauSlope;
+                _suppress = wasSuppressed;
+            }
             ApplyDirt();
 
             string name = profile.ColorPaletteName;
@@ -496,6 +524,23 @@ namespace Gavi
             OnUIValueChanged();
         }
 
+        private void OnPlateauSlopeChanged(float value)
+        {
+            if (!_ready || _suppress)
+                return;
+
+            ApplyEntriesToGradient();
+            OnUIValueChanged();
+        }
+
+        private void OnPatternBalanceChanged(float value)
+        {
+            if (!_ready || _suppress)
+                return;
+
+            OnUIValueChanged();
+        }
+
         private void OnBloomChanged(float value)
         {
             if (!_ready || _suppress)
@@ -523,6 +568,9 @@ namespace Gavi
                     + Mathf.Log(ColorCompensation(entry), 2f);
                 if (i == 0)
                     intensity = Mathf.Min(intensity, _startKeyMaxIntensity);
+                // the lower key of a flat area (next key has the same color) is darker, so the area still shows the height
+                if (i > 0 && i + 1 < keys.Length && _keyColorIndex[i + 1] == c)
+                    intensity -= PlateauSlope * _plateauSlopeStops;
 
                 Color color = TerrainColorMapping.ToHdrColor(hue, saturation, intensity);
                 keys[i] = new GradientColorKey(new Color(color.r * overall, color.g * overall, color.b * overall, 1f), _originalColorKeys[i].time);

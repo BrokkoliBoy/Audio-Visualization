@@ -49,8 +49,8 @@ namespace Gavi
 
         [Header("- Dampening -")]
         public bool ApplyDampening = true;
-        public float DampenUp = 0.05f;
-        public float DampenDown = 0.05f;
+        public float DampenUp = 0.02f;
+        public float DampenDown = 0.02f;
 
         [Header("- Out of Bounds -")]
         public int OutOfBoundsOperation = 2;
@@ -81,6 +81,12 @@ namespace Gavi
         public float ColorBandHue = 0f;
         public float ColorBandBrightness = 0f;
         public float ColorBandGlow = 0f;
+        [Tooltip("Evens out the colors between noise patterns. 0 = off.")]
+        public float ColorNoiseBalance = 1f;
+        [Tooltip("Soft end of the gradient for heights over 1. 0 = hard end.")]
+        public float ColorHeadroom = 0f;
+        [Tooltip("Flat color areas get darker towards their lower end. 0 = flat.")]
+        public float ColorPlateauSlope = 0.5f;
 
         [Header("- Morph -")]
         public bool ApplyMorph = false;
@@ -168,6 +174,9 @@ namespace Gavi
             ColorBandHue = profile.ColorBandHue;
             ColorBandBrightness = profile.ColorBandBrightness;
             ColorBandGlow = profile.ColorBandGlow;
+            ColorNoiseBalance = profile.ColorNoiseBalance;
+            ColorHeadroom = profile.ColorHeadroom;
+            ColorPlateauSlope = profile.ColorPlateauSlope;
 
             // Morph
             ApplyMorph = profile.ApplyMorph;
@@ -239,6 +248,8 @@ namespace Gavi
             ColorBandHue = terrain.ColorBandHue;
             ColorBandBrightness = terrain.ColorBandBrightness;
             ColorBandGlow = terrain.ColorBandGlow;
+            ColorNoiseBalance = terrain.ColorNoiseBalance;
+            ColorHeadroom = terrain.ColorHeadroom;
 
             // Morph
             ApplyMorph = terrain.ApplyMorph;
@@ -318,6 +329,8 @@ namespace Gavi
             terrain.ColorBandHue = ColorBandHue;
             terrain.ColorBandBrightness = ColorBandBrightness;
             terrain.ColorBandGlow = ColorBandGlow;
+            terrain.ColorNoiseBalance = ColorNoiseBalance;
+            terrain.ColorHeadroom = ColorHeadroom;
 
             // Morph
             terrain.ApplyMorph = ApplyMorph;

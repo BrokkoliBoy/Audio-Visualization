@@ -90,6 +90,8 @@ namespace Gavi
 
         // --- color ---
         public bool ApplyColor;
+        public float ColorScale;
+        public float ColorHeadroom;
         public float ColorBandHue;
         public float ColorBandBrightness;
         public float ColorBandGlow;
@@ -345,7 +347,7 @@ namespace Gavi
             if (!ApplyColor)
                 return Color.magenta;
 
-            Color color = ReadGradient(Mathf.Lerp(y, band, ColorBandHue));
+            Color color = ReadGradient(Mathf.Lerp(SoftEnd(y * ColorScale), band, ColorBandHue));
             if (ColorBandBrightness > 0f)
                 color = Scale(color, Mathf.Lerp(1f, MinBandBrightness + (1f - MinBandBrightness) * Mathf.Clamp01(band), ColorBandBrightness));
             if (ColorBandGlow > 0f)
@@ -359,6 +361,26 @@ namespace Gavi
             }
             return color;
         }
+
+        /// <summary>
+        /// Position in the gradient for a height. Above the knee the position bends towards 1 so heights over 1 still differ a little
+        /// (1 at the height of 2) instead of all landing on the last color. ColorHeadroom blends from the hard end to this curve.
+        /// </summary>
+        private float SoftEnd(float time)
+        {
+            float hard = Mathf.Clamp01(time);
+            if (ColorHeadroom <= 0f || time <= SoftKnee)
+                return hard;
+
+            float x = (time - SoftKnee) / (SoftReach - SoftKnee) * SoftSharpness;
+            float e = Mathf.Exp(-2f * x);
+            float soft = SoftKnee + (1f - SoftKnee) * ((1f - e) / (1f + e));
+            return Mathf.Lerp(hard, soft, ColorHeadroom);
+        }
+
+        private const float SoftKnee = 0.6f;
+        private const float SoftReach = 1.5f;
+        private const float SoftSharpness = 1.66f;
 
         private Color ReadGradient(float time)
         {
