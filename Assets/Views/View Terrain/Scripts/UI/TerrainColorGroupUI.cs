@@ -893,8 +893,17 @@ namespace Gavi
 
             bool tint = (_toggleTintBackground == null || _toggleTintBackground.isOn) && _entries.Count > 0;
             float hue = _entries.Count > 0 ? _entries[0].Hue : 0f;
-            _sky.middle.Override(tint ? WithHue(_skyMiddle, hue) : _skyMiddle);
-            _sky.bottom.Override(tint ? WithHue(_skyBottom, hue) : _skyBottom);
+            _sky.middle.Override(tint ? WithHue(_skyMiddle, hue) : Neutral(_skyMiddle));
+            _sky.bottom.Override(tint ? WithHue(_skyBottom, hue) : Neutral(_skyBottom));
+        }
+
+        /// <summary>The same brightness without any hue: the background when it is not tinted.</summary>
+        private static Color Neutral(Color color)
+        {
+            Color.RGBToHSV(color, out _, out _, out float v);
+            Color gray = Color.HSVToRGB(0f, 0f, v, true);
+            gray.a = color.a;
+            return gray;
         }
 
         private static Color WithHue(Color color, float degrees)

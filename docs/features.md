@@ -12,11 +12,11 @@ Tabs open on hover (after a short 0.1 s delay, so sweeping across them does not 
 
 | Tab | Groups |
 |---|---|
-| Color | Overall glow, background tint, palette dropdown (save / delete own palettes), four gradient colors from low (base) to high with hue, saturation and glow, color from band |
-| Terrain | Terrain (face count, height, FPS hint), Performance, Noise pattern, Wave, Smoothing, Dampening, Mesh morph |
-| Glow | Bloom (threshold, strength, spread), lens dirt (also on the beat) |
-| Shapes | Audio shapes (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that map the spectrum onto the terrain |
-| Profiles | Save / load / delete profiles, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
+| Color | Brightness (overall), background tint (off = neutral gray), palette dropdown (save / delete own palettes), four gradient colors from base to high with hue, saturation and glow; Glow: bloom strength (0 to 1, default 0.6), lens dirt strength |
+| Terrain | Terrain (face count, height, FPS hint), Noise pattern, Mesh morph, Performance (Max FPS) |
+| Audio | Audio shapes (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that map the spectrum onto the terrain, Dampening, Beat wave (height, speed, mode, origin); Shapes are the last group |
+| Profiles | Save / load / delete profiles |
+| Expert | Settings you set once: color curve (floor glow, color shift, hold width, plateau tilt, tilt mode, hue balance, pattern balance, color headroom), color from band, relief light, bloom threshold / spread, dirt on the beat, noise interval and spread noise, beat wave width / fade / use noise, Smoothing, Test signal (signal, level, beat, beat strength, strength from song, freeze noise, edit bands) |
 
 ## Features
 

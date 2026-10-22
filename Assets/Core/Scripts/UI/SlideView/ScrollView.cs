@@ -74,6 +74,20 @@ namespace Gavi
                 Elements[i].transform.localPosition = new Vector3(0, _elementPositions[i] - element.Height * 0.5f, 0);
                 Elements[i].transform.position = new Vector3(_scrollViewTransform.position.x /*- _scrollViewTransform.sizeDelta.x * 0.25f*/, Elements[i].transform.position.y, Elements[i].transform.position.z);
             }
+            UpdateContentHeight();
+        }
+
+        /// <summary>The content is exactly as high as its elements, so there is no empty space to scroll into.</summary>
+        private void UpdateContentHeight()
+        {
+            float height = Elements.Count == 0 ? 0f : -_elementPositions[Elements.Count - 1] + Elements[Elements.Count - 1].Height;
+            _contentTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+            // Resizing moves the content, and the world positions set above are then off: put the elements back on their rows.
+            for (int i = 0; i < Elements.Count; i++)
+            {
+                Vector3 local = Elements[i].transform.localPosition;
+                Elements[i].transform.localPosition = new Vector3(local.x, _elementPositions[i] - Elements[i].Height * 0.5f, local.z);
+            }
         }
 
         public ScrollViewElement RemoveElement(ScrollViewElement element, bool destroyElement = true)
@@ -110,6 +124,7 @@ namespace Gavi
                 Elements[i].transform.localPosition = new Vector3(0, _elementPositions[i] - element.Height * 0.5f, 0);
                 Elements[i].transform.position = new Vector3(_scrollViewTransform.position.x/* + _scrollViewTransform.sizeDelta.x * 0.5f*/, Elements[i].transform.position.y, Elements[i].transform.position.z);
             }
+            UpdateContentHeight();
 
             if (destroyElement)
             {
