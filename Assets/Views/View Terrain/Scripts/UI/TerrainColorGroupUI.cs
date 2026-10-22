@@ -76,6 +76,12 @@ namespace Gavi
         [SerializeField] private SliderG _sliderCurveWidth;
         [Tooltip("Rounds the turning points of the zigzag and spike waves: 0 = sharp corners, 1 = fully round. The straight parts keep their slope.")]
         [SerializeField] private SliderG _sliderCurveRounding;
+        [Tooltip("Lets every wave differ from its neighbours (width, steepness, angle of the two sides, and for the triangle shapes the shape itself), by a fixed sequence so nothing flickers. 0 = all waves equal.")]
+        [SerializeField] private SliderG _sliderCurveVariation;
+        [Tooltip("Slope of the two long color areas in exposure steps per full height, so the height stays readable without waves. It follows the direction of the neighbouring colors, scales up for bright colors and every stretch of the curve keeps at least this slope (even if a color then misses its menu glow). 0 = flat areas with waves as before; above 0 the waves are off.")]
+        [SerializeField] private SliderG _sliderPlateauTilt;
+        [Tooltip("Evens out how bright the hues look at the same glow: yellow and green are dimmed, red and blue are lifted (up to one exposure step each way, the reference is orange). 0 = off.")]
+        [SerializeField] private SliderG _sliderHueBalance;
         /// <summary>Smallest distance between two key times, so no stretch collapses.</summary>
         private const float MinKeyGap = 0.01f;
 
@@ -120,6 +126,9 @@ namespace Gavi
         private float ColorHold => _sliderColorHold != null ? _sliderColorHold.Value : TerrainColorPalette.DefaultColorHold;
         private float CurveWidth => _sliderCurveWidth != null ? _sliderCurveWidth.Value : TerrainColorPalette.DefaultCurveWidth;
         private float CurveRounding => _sliderCurveRounding != null ? _sliderCurveRounding.Value : TerrainColorPalette.DefaultCurveRounding;
+        private float CurveVariation => _sliderCurveVariation != null ? _sliderCurveVariation.Value : TerrainColorPalette.DefaultCurveVariation;
+        private float PlateauTilt => _sliderPlateauTilt != null ? _sliderPlateauTilt.Value : TerrainColorPalette.DefaultPlateauTilt;
+        private float HueBalance => _sliderHueBalance != null ? _sliderHueBalance.Value : TerrainColorPalette.DefaultHueBalance;
         private bool IsSavedPalette => _baseName != null && FindPalette(_baseName) != null;
 
 
@@ -153,6 +162,9 @@ namespace Gavi
             ListenToSlider(_sliderColorHold, TerrainColorPalette.DefaultColorHold, OnCurveChanged);
             ListenToSlider(_sliderCurveWidth, TerrainColorPalette.DefaultCurveWidth, OnCurveChanged);
             ListenToSlider(_sliderCurveRounding, TerrainColorPalette.DefaultCurveRounding, OnCurveChanged);
+            ListenToSlider(_sliderCurveVariation, TerrainColorPalette.DefaultCurveVariation, OnCurveChanged);
+            ListenToSlider(_sliderPlateauTilt, TerrainColorPalette.DefaultPlateauTilt, OnCurveChanged);
+            ListenToSlider(_sliderHueBalance, TerrainColorPalette.DefaultHueBalance, OnCurveChanged);
             if (_dropdownCurveShape != null)
             {
                 _dropdownCurveShape.ClearOptions();
@@ -222,6 +234,9 @@ namespace Gavi
             profile.ColorHold = ColorHold;
             profile.CurveWidth = CurveWidth;
             profile.CurveRounding = CurveRounding;
+            profile.CurveVariation = CurveVariation;
+            profile.PlateauTilt = PlateauTilt;
+            profile.HueBalance = HueBalance;
             profile.ColorNoiseBalance = PatternBalance;
             profile.ColorHeadroom = Headroom;
             profile.BloomThreshold = BloomThreshold;
@@ -272,7 +287,7 @@ namespace Gavi
 
             _suppress = true;
             SetSliders(profile.ColorOverallIntensity, profile.BloomThreshold, profile.BloomIntensity, profile.BloomScatter);
-            SetCurveLook(profile.CurveShape, profile.CurveStrength, profile.CurveFloor, profile.ColorShift, profile.ColorHold, profile.CurveWidth, profile.CurveRounding);
+            SetCurveLook(profile.CurveShape, profile.CurveStrength, profile.CurveFloor, profile.ColorShift, profile.ColorHold, profile.CurveWidth, profile.CurveRounding, profile.CurveVariation, profile.PlateauTilt, profile.HueBalance);
             for (int c = 0; c < _entries.Count; c++)
                 _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
             _suppress = false;
@@ -302,7 +317,10 @@ namespace Gavi
                 && Mathf.Abs(palette.ColorShift - profile.ColorShift) < 0.001f
                 && Mathf.Abs(palette.ColorHold - profile.ColorHold) < 0.001f
                 && Mathf.Abs(palette.CurveWidth - profile.CurveWidth) < 0.001f
-                && Mathf.Abs(palette.CurveRounding - profile.CurveRounding) < 0.001f;
+                && Mathf.Abs(palette.CurveRounding - profile.CurveRounding) < 0.001f
+                && Mathf.Abs(palette.CurveVariation - profile.CurveVariation) < 0.001f
+                && Mathf.Abs(palette.PlateauTilt - profile.PlateauTilt) < 0.001f
+                && Mathf.Abs(palette.HueBalance - profile.HueBalance) < 0.001f;
         }
         #endregion
 
@@ -357,7 +375,7 @@ namespace Gavi
             _suppress = true;
             SetSliders(_defaultOverallIntensity, TerrainColorPalette.DefaultBloomThreshold, TerrainColorPalette.DefaultBloomIntensity, TerrainColorPalette.DefaultBloomScatter);
             SetCurveLook(TerrainColorPalette.DefaultCurveShape, TerrainColorPalette.DefaultCurveStrength, TerrainColorPalette.DefaultCurveFloor,
-                TerrainColorPalette.DefaultColorShift, TerrainColorPalette.DefaultColorHold, TerrainColorPalette.DefaultCurveWidth, TerrainColorPalette.DefaultCurveRounding);
+                TerrainColorPalette.DefaultColorShift, TerrainColorPalette.DefaultColorHold, TerrainColorPalette.DefaultCurveWidth, TerrainColorPalette.DefaultCurveRounding, TerrainColorPalette.DefaultCurveVariation, TerrainColorPalette.DefaultPlateauTilt, TerrainColorPalette.DefaultHueBalance);
             for (int c = 0; c < _entries.Count && c < _referenceHue.Length; c++)
                 _entries[c].SetValues(_referenceHue[c], _referenceSaturation[c], TerrainColorMapping.IntensityToMenu(_referenceIntensity[c]));
             _suppress = false;
@@ -420,7 +438,7 @@ namespace Gavi
         {
             _suppress = true;
             SetSliders(palette.OverallIntensity, palette.BloomThreshold, palette.BloomIntensity, palette.BloomScatter);
-            SetCurveLook(palette.CurveShape, palette.CurveStrength, palette.CurveFloor, palette.ColorShift, palette.ColorHold, palette.CurveWidth, palette.CurveRounding);
+            SetCurveLook(palette.CurveShape, palette.CurveStrength, palette.CurveFloor, palette.ColorShift, palette.ColorHold, palette.CurveWidth, palette.CurveRounding, palette.CurveVariation, palette.PlateauTilt, palette.HueBalance);
             for (int c = 0; c < _entries.Count && c < palette.Colors.Count; c++)
                 _entries[c].SetValues(palette.Colors[c].x, palette.Colors[c].y, palette.Colors[c].z);
             _suppress = false;
@@ -447,7 +465,7 @@ namespace Gavi
             _suppress = wasSuppressed;
         }
 
-        private void SetCurveLook(int shape, float strength, float floor, float shift, float hold, float width, float rounding)
+        private void SetCurveLook(int shape, float strength, float floor, float shift, float hold, float width, float rounding, float variation, float tilt, float balance)
         {
             bool wasSuppressed = _suppress;
             _suppress = true;
@@ -465,6 +483,12 @@ namespace Gavi
                 _sliderCurveWidth.Value = width;
             if (_sliderCurveRounding != null)
                 _sliderCurveRounding.Value = rounding;
+            if (_sliderCurveVariation != null)
+                _sliderCurveVariation.Value = variation;
+            if (_sliderPlateauTilt != null)
+                _sliderPlateauTilt.Value = tilt;
+            if (_sliderHueBalance != null)
+                _sliderHueBalance.Value = balance;
             _suppress = wasSuppressed;
         }
 
@@ -509,7 +533,10 @@ namespace Gavi
                 ColorShift = ColorShift,
                 ColorHold = ColorHold,
                 CurveWidth = CurveWidth,
-                CurveRounding = CurveRounding
+                CurveRounding = CurveRounding,
+                CurveVariation = CurveVariation,
+                PlateauTilt = PlateauTilt,
+                HueBalance = HueBalance
             };
             foreach (TerrainColorEntryUI entry in _entries)
                 palette.Colors.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
@@ -683,10 +710,12 @@ namespace Gavi
                 TerrainColorEntryUI entry = _entries[_keyColorIndex[i]];
                 float saturation = i == 0 ? Mathf.Clamp01(entry.Saturation + _saturationOffset[i]) : entry.Saturation;
                 unit[i] = TerrainColorMapping.ToHdrColor(entry.Hue, saturation, 0f);
-                glow[i] = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + Mathf.Log(ColorCompensation(entry), 2f);
+                glow[i] = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + Mathf.Log(ColorCompensation(entry), 2f) + HueOffset(entry);
                 if (i == 0)
                     glow[i] = Mathf.Min(glow[i] + _intensityOffset[i], TerrainColorMapping.MenuToIntensity(CurveFloor));
             }
+
+            ApplyTilt(time, glow, unit);
 
             int size = TerrainVertexJob.LutSize;
             if (_curveTable == null || _curveTable.Length != size)
@@ -701,8 +730,8 @@ namespace Gavi
                 float width = time[segment + 1] - time[segment];
                 float u = width > 0f ? Mathf.Clamp01((h - time[segment]) / width) : 0f;
                 float g = Mathf.Lerp(glow[segment], glow[segment + 1], u);
-                if (segment > 0)
-                    g += CurveWave(h, time[segment], width, glow[segment + 1] - glow[segment]);
+                if (segment > 0 && PlateauTilt <= 0f)
+                    g += CurveWave(h, time[segment], width, glow[segment + 1] - glow[segment], segment);
                 Color c = Color.Lerp(unit[segment], unit[segment + 1], u);
                 float factor = Mathf.Pow(2f, g) * overall;
                 _curveTable[t] = new Color(c.r * factor, c.g * factor, c.b * factor, 1f);
@@ -727,8 +756,151 @@ namespace Gavi
             return 1f - Mathf.Abs(2f * f - 1f);
         }
 
-        /// <summary>Wave in exposure steps added to a stretch of the glow line, 0 at both ends of the stretch.</summary>
-        private float CurveWave(float h, float start, float width, float rise)
+        /// <summary>
+        /// Exposure steps that even out how bright a hue looks at the same glow: the eye sees green and yellow much brighter than
+        /// red and blue. Relative to orange, half the log ratio of the luminances (like the saturation compensation), at most one
+        /// step each way, scaled by the Hue balance slider.
+        /// </summary>
+        private float HueOffset(TerrainColorEntryUI entry)
+        {
+            float balance = HueBalance;
+            if (balance <= 0f)
+                return 0f;
+            float luminance = Luminance(TerrainColorMapping.ToHdrColor(entry.Hue, 1f, 0f));
+            float reference = Luminance(TerrainColorMapping.ToHdrColor(30f, 1f, 0f));
+            return balance * Mathf.Clamp(0.5f * Mathf.Log(reference / Mathf.Max(luminance, 0.01f), 2f), -1f, 1f);
+        }
+
+        /// <summary>Largest factor the tilt of a bright color may be scaled up by.</summary>
+        private const float MaxTiltBoost = 4f;
+
+        /// <summary>
+        /// How much more tilt a color needs to show the same step on the screen: the brighter it is (luminance times exposure),
+        /// the more the tone mapping flattens a step. 1 for dark colors, up to MaxTiltBoost.
+        /// </summary>
+        private static float TiltBoost(Color unit, float glow)
+        {
+            float x = Luminance(unit) * Mathf.Pow(2f, glow);
+            float sensitivity = x < 0.001f ? 1f : x / (Mathf.Exp(x) - 1f);
+            return Mathf.Clamp(1f / Mathf.Max(sensitivity, 0.01f), 1f, MaxTiltBoost);
+        }
+
+        /// <summary>
+        /// Tilts the two long color areas (key pairs of one color) around their menu glow so the height stays readable, in the
+        /// direction of the neighbouring colors (at a valley or a peak: of the steeper neighbour), and then makes sure every
+        /// stretch between two areas keeps at least the same slope. If it does not, the areas are pushed apart, which can move
+        /// a color away from its menu glow: a readable slope counts more than the exact glow. Changes the glow in place.
+        /// </summary>
+        private void ApplyTilt(float[] time, float[] glow, Color[] unit)
+        {
+            float tilt = PlateauTilt;
+            if (tilt <= 0f)
+                return;
+
+            int n = glow.Length;
+            var first = new List<int>();
+            var last = new List<int>();
+            for (int i = 0; i < n;)
+            {
+                bool pair = i >= 1 && i < n - 2 && _keyColorIndex[i] == _keyColorIndex[i + 1];
+                first.Add(i);
+                last.Add(pair ? i + 1 : i);
+                i += pair ? 2 : 1;
+            }
+
+            int blocks = first.Count;
+            var center = new float[blocks];
+            var half = new float[blocks];
+            var boost = new float[blocks];
+            var offset = new float[blocks];
+            for (int b = 0; b < blocks; b++)
+            {
+                int s = first[b];
+                int e = last[b];
+                center[b] = glow[s];
+                boost[b] = TiltBoost(unit[s], glow[s]);
+                if (e == s)
+                    continue;
+                float slopeIn = (glow[s] - glow[s - 1]) / Mathf.Max(time[s] - time[s - 1], MinKeyGap);
+                float slopeOut = (glow[e + 1] - glow[e]) / Mathf.Max(time[e + 1] - time[e], MinKeyGap);
+                float direction;
+                if (slopeIn * slopeOut >= 0f)
+                    direction = slopeIn + slopeOut >= 0f ? 1f : -1f;
+                else
+                    direction = Mathf.Abs(slopeIn) > Mathf.Abs(slopeOut) ? Mathf.Sign(slopeIn) : Mathf.Sign(slopeOut);
+                half[b] = direction * tilt * boost[b] * (time[e] - time[s]) * 0.5f;
+            }
+
+            var gapDirection = new float[blocks - 1];
+            var gapMinimum = new float[blocks - 1];
+            for (int b = 0; b < blocks - 1; b++)
+            {
+                float difference = center[b + 1] - center[b];
+                gapDirection[b] = difference > 0f ? 1f : (difference < 0f ? -1f : (b > 0 ? gapDirection[b - 1] : 1f));
+                gapMinimum[b] = tilt * Mathf.Max(boost[b], boost[b + 1]) * Mathf.Max(time[first[b + 1]] - time[last[b]], 0f);
+            }
+
+            for (int pass = 0; pass < 40; pass++)
+            {
+                for (int b = 0; b < blocks - 1; b++)
+                {
+                    float gap = (center[b + 1] - half[b + 1] + offset[b + 1]) - (center[b] + half[b] + offset[b]);
+                    float deficit = gapMinimum[b] - gapDirection[b] * gap;
+                    if (deficit <= 0f)
+                        continue;
+                    offset[b + 1] += gapDirection[b] * deficit * 0.5f;
+                    offset[b] -= gapDirection[b] * deficit * 0.5f;
+                }
+                offset[0] = Mathf.Min(offset[0], 0f);
+            }
+
+            for (int b = 0; b < blocks; b++)
+            {
+                glow[first[b]] = center[b] - half[b] + offset[b];
+                glow[last[b]] = center[b] + half[b] + offset[b];
+            }
+        }
+
+        /// <summary>Random number 0..1 from three integers: the same input always gives the same value, so varied waves never flicker.</summary>
+        private static float Hash01(int a, int b, int c)
+        {
+            unchecked
+            {
+                uint x = (uint)(a * 374761393 + b * 668265263 + c * 1274126177);
+                x = (x ^ (x >> 13)) * 1274126177u;
+                x ^= x >> 16;
+                return (x & 0xFFFFFF) / 16777216f;
+            }
+        }
+
+        /// <summary>
+        /// One lobe 0..1..0 with the apex at c, only the apex is rounded (the ends join the next lobe in a straight line). The rounding
+        /// is a parabola touching both flanks, half-width rounding * the shorter flank; rounding 1 lowers a symmetric apex to 0.5.
+        /// </summary>
+        private static float RoundedLobe(float q, float c, float rounding)
+        {
+            float w = rounding * Mathf.Min(c, 1f - c);
+            if (w > 0f && Mathf.Abs(q - c) < w)
+            {
+                float t = ((q - c) / w + 1f) * 0.5f;
+                float u = 1f - t;
+                return u * u * (1f - w / c) + 2f * t * u + t * t * (1f - w / (1f - c));
+            }
+            return q < c ? q / c : (1f - q) / (1f - c);
+        }
+
+        /// <summary>Moves the peak of a 0..1 triangle from 0.5 to c, so the two sides get different slopes.</summary>
+        private static float Skew(float x, float c)
+        {
+            return x < c ? 0.5f * x / c : 0.5f + 0.5f * (x - c) / (1f - c);
+        }
+
+        /// <summary>
+        /// Wave in exposure steps added to a stretch of the glow line, 0 at both ends of the stretch and between two waves.
+        /// With variation above 0 every wave of the stretch gets its own width, steepness, peak position and (for the triangle
+        /// shapes) its own shape, drawn from a fixed sequence.
+        /// </summary>
+        private float CurveWave(float h, float start, float width, float rise, int segment)
         {
             CurveShape shape = Shape;
             float steepness = CurveStrength;
@@ -736,28 +908,65 @@ namespace Gavi
                 return 0f;
             if (Mathf.Abs(rise / width) >= steepness * 0.5f)
                 return 0f;
+            if (h >= start + width)
+                return 0f;
 
             int count = Mathf.Max(1, Mathf.RoundToInt(width / CurveWidth));
-            float period = width / count;
-            float u = (h - start) / width * count;
-            float f = u - Mathf.Floor(u);
-            if (h >= start + width)
-                f = 0f;
+            float variation = CurveVariation;
+            float rounding = CurveRounding;
+            float f;
+            float period;
+            int wave = 0;
+            if (variation <= 0f || count == 1)
+            {
+                period = width / count;
+                float u = (h - start) / width * count;
+                f = u - Mathf.Floor(u);
+            }
+            else
+            {
+                float total = 0f;
+                for (int i = 0; i < count; i++)
+                    total += 1f + variation * 0.6f * (Hash01(segment, i, 0) * 2f - 1f);
+                float position = (h - start) / width * total;
+                float weight = 1f;
+                for (wave = 0; wave < count; wave++)
+                {
+                    weight = 1f + variation * 0.6f * (Hash01(segment, wave, 0) * 2f - 1f);
+                    if (position < weight || wave == count - 1)
+                        break;
+                    position -= weight;
+                }
+                f = Mathf.Clamp01(position / weight);
+                period = width * weight / total;
+            }
 
+            float steep = 1f;
+            float peak = 0.5f;
+            if (variation > 0f)
+            {
+                steep += variation * 0.5f * (Hash01(segment, wave, 1) * 2f - 1f);
+                peak += variation * 0.3f * (Hash01(segment, wave, 2) * 2f - 1f);
+                if (shape <= CurveShape.SpikesDown && shape >= CurveShape.ZigZag && Hash01(segment, wave, 3) < variation * 0.8f)
+                    shape = (CurveShape)((int)CurveShape.ZigZag + Mathf.Min(2, (int)(Hash01(segment, wave, 4) * 3f)));
+            }
+
+            float inset = rounding * 0.25f;
             switch (shape)
             {
                 case CurveShape.SpikesUp:
-                    return steepness * period * 0.5f * (RoundedTriangle(f, CurveRounding) - CurveRounding * 0.25f);
+                    return steepness * steep * period * 0.5f * (RoundedTriangle(Skew(f, peak), rounding) - inset);
                 case CurveShape.SpikesDown:
-                    return -steepness * period * 0.5f * (RoundedTriangle(f, CurveRounding) - CurveRounding * 0.25f);
+                    return -steepness * steep * period * 0.5f * (RoundedTriangle(Skew(f, peak), rounding) - inset);
                 case CurveShape.ZigZag:
-                    // The same triangle, moved by a quarter period so it swings around 0.
-                    float zig = RoundedTriangle(f + 0.25f - Mathf.Floor(f + 0.25f), CurveRounding) * 2f - 1f;
-                    return steepness * period * 0.25f * zig;
+                    // Two lobes of one half period each, the first one up and the second one down, joined in a straight line at 0.
+                    float lobe = f * 2f - Mathf.Floor(f * 2f);
+                    float sign = f < 0.5f ? 1f : -1f;
+                    return sign * steepness * steep * period * 0.25f * RoundedLobe(lobe, peak, rounding);
                 case CurveShape.SawUp:
-                    return steepness * period * f;
+                    return steepness * steep * period * f;
                 default:
-                    return -steepness * period * f;
+                    return -steepness * steep * period * f;
             }
         }
         #endregion

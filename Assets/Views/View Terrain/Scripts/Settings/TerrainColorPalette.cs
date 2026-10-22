@@ -41,6 +41,9 @@ namespace Gavi
         public const float DefaultColorHold = 1f;
         public const float DefaultCurveWidth = 0.1f;
         public const float DefaultCurveRounding = 0.2f;
+        public const float DefaultCurveVariation = 0f;
+        public const float DefaultPlateauTilt = 0f;
+        public const float DefaultHueBalance = 0f;
 
         [Tooltip("Color curve: shape of the waves (TerrainColorGroupUI.CurveShape), their steepness, the glow of the lowest vertices on the menu glow scale (0.3 = exposure -4.5).")]
         public int CurveShape = DefaultCurveShape;
@@ -51,6 +54,9 @@ namespace Gavi
         public float ColorHold = DefaultColorHold;
         public float CurveWidth = DefaultCurveWidth;
         public float CurveRounding = DefaultCurveRounding;
+        public float CurveVariation = DefaultCurveVariation;
+        public float PlateauTilt = DefaultPlateauTilt;
+        public float HueBalance = DefaultHueBalance;
 
         public TerrainColorPalette Clone()
         {
@@ -69,7 +75,10 @@ namespace Gavi
                 ColorShift = ColorShift,
                 ColorHold = ColorHold,
                 CurveWidth = CurveWidth,
-                CurveRounding = CurveRounding
+                CurveRounding = CurveRounding,
+                CurveVariation = CurveVariation,
+                PlateauTilt = PlateauTilt,
+                HueBalance = HueBalance
             };
         }
     }

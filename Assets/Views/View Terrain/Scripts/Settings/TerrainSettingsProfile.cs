@@ -79,6 +79,9 @@ namespace Gavi
         public float ColorHold = TerrainColorPalette.DefaultColorHold;
         public float CurveWidth = TerrainColorPalette.DefaultCurveWidth;
         public float CurveRounding = TerrainColorPalette.DefaultCurveRounding;
+        public float CurveVariation = TerrainColorPalette.DefaultCurveVariation;
+        public float PlateauTilt = TerrainColorPalette.DefaultPlateauTilt;
+        public float HueBalance = TerrainColorPalette.DefaultHueBalance;
         public float BloomThreshold = TerrainColorPalette.DefaultBloomThreshold;
         public float BloomIntensity = TerrainColorPalette.DefaultBloomIntensity;
         public float BloomScatter = TerrainColorPalette.DefaultBloomScatter;
@@ -179,6 +182,9 @@ namespace Gavi
             ColorHold = profile.ColorHold;
             CurveWidth = profile.CurveWidth;
             CurveRounding = profile.CurveRounding;
+            CurveVariation = profile.CurveVariation;
+            PlateauTilt = profile.PlateauTilt;
+            HueBalance = profile.HueBalance;
             BloomThreshold = profile.BloomThreshold;
             BloomIntensity = profile.BloomIntensity;
             BloomScatter = profile.BloomScatter;
