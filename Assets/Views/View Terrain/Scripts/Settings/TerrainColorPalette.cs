@@ -34,6 +34,24 @@ namespace Gavi
         public float BloomIntensity = DefaultBloomIntensity;
         public float BloomScatter = DefaultBloomScatter;
 
+        public const int DefaultCurveShape = 1;
+        public const float DefaultCurveStrength = 10f;
+        public const float DefaultCurveFloor = 0.3f;
+        public const float DefaultColorShift = 0f;
+        public const float DefaultColorHold = 1f;
+        public const float DefaultCurveWidth = 0.1f;
+        public const float DefaultCurveRounding = 0.2f;
+
+        [Tooltip("Color curve: shape of the waves (TerrainColorGroupUI.CurveShape), their steepness, the glow of the lowest vertices on the menu glow scale (0.3 = exposure -4.5).")]
+        public int CurveShape = DefaultCurveShape;
+        public float CurveStrength = DefaultCurveStrength;
+        public float CurveFloor = DefaultCurveFloor;
+        [Tooltip("Color curve: -1..1 moves the colors down (+) or up (-) the height, hold = width of the two long color areas (1 = as in the scene gradient).")]
+        public float ColorShift = DefaultColorShift;
+        public float ColorHold = DefaultColorHold;
+        public float CurveWidth = DefaultCurveWidth;
+        public float CurveRounding = DefaultCurveRounding;
+
         public TerrainColorPalette Clone()
         {
             return new TerrainColorPalette
@@ -44,7 +62,14 @@ namespace Gavi
                 OverallIntensity = OverallIntensity,
                 BloomThreshold = BloomThreshold,
                 BloomIntensity = BloomIntensity,
-                BloomScatter = BloomScatter
+                BloomScatter = BloomScatter,
+                CurveShape = CurveShape,
+                CurveStrength = CurveStrength,
+                CurveFloor = CurveFloor,
+                ColorShift = ColorShift,
+                ColorHold = ColorHold,
+                CurveWidth = CurveWidth,
+                CurveRounding = CurveRounding
             };
         }
     }

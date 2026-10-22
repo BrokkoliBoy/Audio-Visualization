@@ -33,18 +33,6 @@ namespace Gavi
         {
             _currentProfile.CopyFromTerrainSettings();
             _currentProfile.ApplyProfileToUI();
-            foreach (TerrainGroupUI group in _groups)
-                if (group is TerrainColorGroupUI colorGroup)
-                    _colorGroup = colorGroup;
-        }
-
-        private TerrainColorGroupUI _colorGroup;
-
-        private void Update()
-        {
-            // The color group is switched off while another menu tab is open, so its own Update does not run then.
-            if (_colorGroup != null)
-                _colorGroup.PollColorCurve();
         }
         #endregion
 

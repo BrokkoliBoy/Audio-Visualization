@@ -71,6 +71,14 @@ namespace Gavi
         [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity. Empty means the palette of ColorPaletteName.")]
         public List<Vector3> ColorValues = new List<Vector3>();
         public float ColorOverallIntensity = 1f;
+        [Tooltip("Color curve, see TerrainColorPalette.")]
+        public int CurveShape = TerrainColorPalette.DefaultCurveShape;
+        public float CurveStrength = TerrainColorPalette.DefaultCurveStrength;
+        public float CurveFloor = TerrainColorPalette.DefaultCurveFloor;
+        public float ColorShift = TerrainColorPalette.DefaultColorShift;
+        public float ColorHold = TerrainColorPalette.DefaultColorHold;
+        public float CurveWidth = TerrainColorPalette.DefaultCurveWidth;
+        public float CurveRounding = TerrainColorPalette.DefaultCurveRounding;
         public float BloomThreshold = TerrainColorPalette.DefaultBloomThreshold;
         public float BloomIntensity = TerrainColorPalette.DefaultBloomIntensity;
         public float BloomScatter = TerrainColorPalette.DefaultBloomScatter;
@@ -164,6 +172,13 @@ namespace Gavi
             ColorPaletteName = profile.ColorPaletteName;
             ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
             ColorOverallIntensity = profile.ColorOverallIntensity;
+            CurveShape = profile.CurveShape;
+            CurveStrength = profile.CurveStrength;
+            CurveFloor = profile.CurveFloor;
+            ColorShift = profile.ColorShift;
+            ColorHold = profile.ColorHold;
+            CurveWidth = profile.CurveWidth;
+            CurveRounding = profile.CurveRounding;
             BloomThreshold = profile.BloomThreshold;
             BloomIntensity = profile.BloomIntensity;
             BloomScatter = profile.BloomScatter;

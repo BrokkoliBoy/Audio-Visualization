@@ -58,23 +58,28 @@ namespace Gavi
         [SerializeField] private int[] _keyColorIndex = { 0, 0, 1, 2, 3 };
         [Tooltip("For every color: the key that carries the color exactly. The other keys of the color are offsets of it.")]
         [SerializeField] private int[] _referenceKey = { 1, 2, 3, 4 };
-        [Tooltip("The first key of the gradient (the lowest vertices) never gets brighter than this exposure value, whatever the base color is set to. The gradient then rises to the chosen brightness.")]
-        [SerializeField] private float _startKeyMaxIntensity = -4.5f;
 
         public enum CurveShape { Plateau, ZigZag, SpikesUp, SpikesDown, SawUp, SawDown }
 
         [Header("--- Color curve ---")]
-        [Tooltip("How flat stretches (two keys of one color, or neighbours with nearly the same glow) are filled. Plateau = left flat.")]
-        [SerializeField] private CurveShape _curveShape = CurveShape.ZigZag;
+        [Tooltip("How flat stretches (two keys of one color, or neighbours with nearly the same glow) are filled. Plateau = left flat. Index of CurveShape.")]
+        [SerializeField] private TMP_Dropdown _dropdownCurveShape;
         [Tooltip("Slope of the waves in exposure steps per full height of the gradient. A stretch counts as flat when its own slope is under half of this.")]
-        [SerializeField, Min(0f)] private float _curveSteepness = 10f;
+        [SerializeField] private SliderG _sliderCurveStrength;
+        [Tooltip("Glow of the lowest vertices on the menu glow scale (the cap of the first key).")]
+        [SerializeField] private SliderG _sliderCurveFloor;
+        [Tooltip("Moves the colors along the height: + lower (the hot colors take more area), - higher.")]
+        [SerializeField] private SliderG _sliderColorShift;
+        [Tooltip("Width of the two long color areas (the keys that hold one color). 1 = as in the scene gradient.")]
+        [SerializeField] private SliderG _sliderColorHold;
         [Tooltip("Width of one wave as a share of the gradient height. Narrow stretches get fewer waves, at least one.")]
-        [SerializeField, Range(0.02f, 0.4f)] private float _curveWidth = 0.1f;
+        [SerializeField] private SliderG _sliderCurveWidth;
+        [Tooltip("Rounds the turning points of the zigzag and spike waves: 0 = sharp corners, 1 = fully round. The straight parts keep their slope.")]
+        [SerializeField] private SliderG _sliderCurveRounding;
+        /// <summary>Smallest distance between two key times, so no stretch collapses.</summary>
+        private const float MinKeyGap = 0.01f;
 
         private Color[] _curveTable;
-        private CurveShape _appliedShape;
-        private float _appliedSteepness;
-        private float _appliedWidth;
 
         /// <summary>The gradient of the scene is only the template: key times and the start key. The table comes from ApplyColorCurve.</summary>
         private Gradient _gradient;
@@ -107,6 +112,14 @@ namespace Gavi
         private float BloomScatter => _sliderBloomScatter != null ? _sliderBloomScatter.Value : TerrainColorPalette.DefaultBloomScatter;
         private float DirtStrength => _sliderDirtStrength != null ? _sliderDirtStrength.Value : TerrainLensDirt.DefaultStrength;
         private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
+        private CurveShape Shape => _dropdownCurveShape != null ? (CurveShape)_dropdownCurveShape.value : (CurveShape)TerrainColorPalette.DefaultCurveShape;
+        private float CurveStrength => _sliderCurveStrength != null ? _sliderCurveStrength.Value : TerrainColorPalette.DefaultCurveStrength;
+        /// <summary>The first key of the gradient (the lowest vertices) never gets brighter than this glow (menu scale), whatever the base color is set to.</summary>
+        private float CurveFloor => _sliderCurveFloor != null ? _sliderCurveFloor.Value : TerrainColorPalette.DefaultCurveFloor;
+        private float ColorShift => _sliderColorShift != null ? _sliderColorShift.Value : TerrainColorPalette.DefaultColorShift;
+        private float ColorHold => _sliderColorHold != null ? _sliderColorHold.Value : TerrainColorPalette.DefaultColorHold;
+        private float CurveWidth => _sliderCurveWidth != null ? _sliderCurveWidth.Value : TerrainColorPalette.DefaultCurveWidth;
+        private float CurveRounding => _sliderCurveRounding != null ? _sliderCurveRounding.Value : TerrainColorPalette.DefaultCurveRounding;
         private bool IsSavedPalette => _baseName != null && FindPalette(_baseName) != null;
 
 
@@ -134,6 +147,19 @@ namespace Gavi
             ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
             ListenToSlider(_sliderDirtStrength, TerrainLensDirt.DefaultStrength, OnDirtChanged);
             ListenToSlider(_sliderDirtBeat, TerrainLensDirt.DefaultBeat, OnDirtChanged);
+            ListenToSlider(_sliderCurveStrength, TerrainColorPalette.DefaultCurveStrength, OnCurveChanged);
+            ListenToSlider(_sliderCurveFloor, TerrainColorPalette.DefaultCurveFloor, OnCurveChanged);
+            ListenToSlider(_sliderColorShift, TerrainColorPalette.DefaultColorShift, OnCurveChanged);
+            ListenToSlider(_sliderColorHold, TerrainColorPalette.DefaultColorHold, OnCurveChanged);
+            ListenToSlider(_sliderCurveWidth, TerrainColorPalette.DefaultCurveWidth, OnCurveChanged);
+            ListenToSlider(_sliderCurveRounding, TerrainColorPalette.DefaultCurveRounding, OnCurveChanged);
+            if (_dropdownCurveShape != null)
+            {
+                _dropdownCurveShape.ClearOptions();
+                _dropdownCurveShape.AddOptions(new List<string>(System.Enum.GetNames(typeof(CurveShape))));
+                _dropdownCurveShape.SetValueWithoutNotify(TerrainColorPalette.DefaultCurveShape);
+                _dropdownCurveShape.onValueChanged.AddListener(_ => OnCurveChanged(0f));
+            }
             _suppress = false;
             ApplyDirt();
 
@@ -189,6 +215,13 @@ namespace Gavi
 
             profile.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
             profile.ColorOverallIntensity = OverallIntensity;
+            profile.CurveShape = (int)Shape;
+            profile.CurveStrength = CurveStrength;
+            profile.CurveFloor = CurveFloor;
+            profile.ColorShift = ColorShift;
+            profile.ColorHold = ColorHold;
+            profile.CurveWidth = CurveWidth;
+            profile.CurveRounding = CurveRounding;
             profile.ColorNoiseBalance = PatternBalance;
             profile.ColorHeadroom = Headroom;
             profile.BloomThreshold = BloomThreshold;
@@ -239,6 +272,7 @@ namespace Gavi
 
             _suppress = true;
             SetSliders(profile.ColorOverallIntensity, profile.BloomThreshold, profile.BloomIntensity, profile.BloomScatter);
+            SetCurveLook(profile.CurveShape, profile.CurveStrength, profile.CurveFloor, profile.ColorShift, profile.ColorHold, profile.CurveWidth, profile.CurveRounding);
             for (int c = 0; c < _entries.Count; c++)
                 _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
             _suppress = false;
@@ -261,7 +295,14 @@ namespace Gavi
             return Mathf.Abs(palette.OverallIntensity - profile.ColorOverallIntensity) < 0.001f
                 && Mathf.Abs(palette.BloomThreshold - profile.BloomThreshold) < 0.001f
                 && Mathf.Abs(palette.BloomIntensity - profile.BloomIntensity) < 0.001f
-                && Mathf.Abs(palette.BloomScatter - profile.BloomScatter) < 0.001f;
+                && Mathf.Abs(palette.BloomScatter - profile.BloomScatter) < 0.001f
+                && palette.CurveShape == profile.CurveShape
+                && Mathf.Abs(palette.CurveStrength - profile.CurveStrength) < 0.001f
+                && Mathf.Abs(palette.CurveFloor - profile.CurveFloor) < 0.001f
+                && Mathf.Abs(palette.ColorShift - profile.ColorShift) < 0.001f
+                && Mathf.Abs(palette.ColorHold - profile.ColorHold) < 0.001f
+                && Mathf.Abs(palette.CurveWidth - profile.CurveWidth) < 0.001f
+                && Mathf.Abs(palette.CurveRounding - profile.CurveRounding) < 0.001f;
         }
         #endregion
 
@@ -315,6 +356,8 @@ namespace Gavi
         {
             _suppress = true;
             SetSliders(_defaultOverallIntensity, TerrainColorPalette.DefaultBloomThreshold, TerrainColorPalette.DefaultBloomIntensity, TerrainColorPalette.DefaultBloomScatter);
+            SetCurveLook(TerrainColorPalette.DefaultCurveShape, TerrainColorPalette.DefaultCurveStrength, TerrainColorPalette.DefaultCurveFloor,
+                TerrainColorPalette.DefaultColorShift, TerrainColorPalette.DefaultColorHold, TerrainColorPalette.DefaultCurveWidth, TerrainColorPalette.DefaultCurveRounding);
             for (int c = 0; c < _entries.Count && c < _referenceHue.Length; c++)
                 _entries[c].SetValues(_referenceHue[c], _referenceSaturation[c], TerrainColorMapping.IntensityToMenu(_referenceIntensity[c]));
             _suppress = false;
@@ -377,6 +420,7 @@ namespace Gavi
         {
             _suppress = true;
             SetSliders(palette.OverallIntensity, palette.BloomThreshold, palette.BloomIntensity, palette.BloomScatter);
+            SetCurveLook(palette.CurveShape, palette.CurveStrength, palette.CurveFloor, palette.ColorShift, palette.ColorHold, palette.CurveWidth, palette.CurveRounding);
             for (int c = 0; c < _entries.Count && c < palette.Colors.Count; c++)
                 _entries[c].SetValues(palette.Colors[c].x, palette.Colors[c].y, palette.Colors[c].z);
             _suppress = false;
@@ -400,6 +444,27 @@ namespace Gavi
                 _sliderBloomIntensity.Value = bloomIntensity;
             if (_sliderBloomScatter != null)
                 _sliderBloomScatter.Value = bloomScatter;
+            _suppress = wasSuppressed;
+        }
+
+        private void SetCurveLook(int shape, float strength, float floor, float shift, float hold, float width, float rounding)
+        {
+            bool wasSuppressed = _suppress;
+            _suppress = true;
+            if (_dropdownCurveShape != null)
+                _dropdownCurveShape.SetValueWithoutNotify(Mathf.Clamp(shape, 0, System.Enum.GetValues(typeof(CurveShape)).Length - 1));
+            if (_sliderCurveStrength != null)
+                _sliderCurveStrength.Value = strength;
+            if (_sliderCurveFloor != null)
+                _sliderCurveFloor.Value = floor;
+            if (_sliderColorShift != null)
+                _sliderColorShift.Value = shift;
+            if (_sliderColorHold != null)
+                _sliderColorHold.Value = hold;
+            if (_sliderCurveWidth != null)
+                _sliderCurveWidth.Value = width;
+            if (_sliderCurveRounding != null)
+                _sliderCurveRounding.Value = rounding;
             _suppress = wasSuppressed;
         }
 
@@ -437,7 +502,14 @@ namespace Gavi
                 OverallIntensity = OverallIntensity,
                 BloomThreshold = BloomThreshold,
                 BloomIntensity = BloomIntensity,
-                BloomScatter = BloomScatter
+                BloomScatter = BloomScatter,
+                CurveShape = (int)Shape,
+                CurveStrength = CurveStrength,
+                CurveFloor = CurveFloor,
+                ColorShift = ColorShift,
+                ColorHold = ColorHold,
+                CurveWidth = CurveWidth,
+                CurveRounding = CurveRounding
             };
             foreach (TerrainColorEntryUI entry in _entries)
                 palette.Colors.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
@@ -554,14 +626,42 @@ namespace Gavi
         }
 
         #region Color curve
-        /// <summary>Called every frame by the TerrainSettingsManager (this group is switched off while another menu tab is open): picks up changes made in the Inspector.</summary>
-        public void PollColorCurve()
+        private void OnCurveChanged(float value)
         {
-            if (!_ready)
+            if (!_ready || _suppress)
                 return;
-            if (_curveShape != _appliedShape || !Mathf.Approximately(_curveSteepness, _appliedSteepness)
-                || !Mathf.Approximately(_curveWidth, _appliedWidth))
-                ApplyColorCurve();
+
+            MarkModified();
+            ApplyColorCurve();
+            OnUIValueChanged();
+        }
+
+        /// <summary>
+        /// Key times with the shift and the hold width applied. The shift bends the times as time^(2^shift), so the ends stay
+        /// where they are. The hold width scales the distance of the two keys of a color around their middle, as far as the
+        /// neighbours allow.
+        /// </summary>
+        private float[] BuildKeyTimes()
+        {
+            int keyCount = _originalColorKeys.Length;
+            var time = new float[keyCount];
+            float exponent = Mathf.Pow(2f, ColorShift);
+            for (int i = 0; i < keyCount; i++)
+                time[i] = Mathf.Pow(_originalColorKeys[i].time, exponent);
+
+            float hold = ColorHold;
+            for (int i = 1; i < keyCount - 2; i++)
+            {
+                if (_keyColorIndex[i] != _keyColorIndex[i + 1])
+                    continue;
+                float middle = (time[i] + time[i + 1]) * 0.5f;
+                float half = (time[i + 1] - time[i]) * 0.5f * hold;
+                time[i] = Mathf.Max(middle - half, time[i - 1] + MinKeyGap);
+                time[i + 1] = Mathf.Min(middle + half, time[i + 2] - MinKeyGap);
+                time[i + 1] = Mathf.Max(time[i + 1], time[i] + MinKeyGap);
+                i++;
+            }
+            return time;
         }
 
         /// <summary>
@@ -571,25 +671,21 @@ namespace Gavi
         /// </summary>
         private void ApplyColorCurve()
         {
-            _appliedShape = _curveShape;
-            _appliedSteepness = _curveSteepness;
-            _appliedWidth = _curveWidth;
             if (_terrain == null)
                 return;
 
             int keyCount = _originalColorKeys.Length;
-            var time = new float[keyCount];
+            float[] time = BuildKeyTimes();
             var glow = new float[keyCount];
             var unit = new Color[keyCount];
             for (int i = 0; i < keyCount; i++)
             {
                 TerrainColorEntryUI entry = _entries[_keyColorIndex[i]];
                 float saturation = i == 0 ? Mathf.Clamp01(entry.Saturation + _saturationOffset[i]) : entry.Saturation;
-                time[i] = _originalColorKeys[i].time;
                 unit[i] = TerrainColorMapping.ToHdrColor(entry.Hue, saturation, 0f);
                 glow[i] = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + Mathf.Log(ColorCompensation(entry), 2f);
                 if (i == 0)
-                    glow[i] = Mathf.Min(glow[i] + _intensityOffset[i], _startKeyMaxIntensity);
+                    glow[i] = Mathf.Min(glow[i] + _intensityOffset[i], TerrainColorMapping.MenuToIntensity(CurveFloor));
             }
 
             int size = TerrainVertexJob.LutSize;
@@ -614,34 +710,54 @@ namespace Gavi
             _terrain.SetColorTable(_curveTable);
         }
 
+        /// <summary>
+        /// Triangle over one period (f 0..1, valley at 0 and 1, peak at 0.5, slope 2). The two turning points are rounded with a
+        /// parabola of half-width rounding * 0.25 periods, the straight parts keep their slope. With rounding above 0 the
+        /// valley lies at rounding * 0.25 and the peak at 1 minus that.
+        /// </summary>
+        private static float RoundedTriangle(float f, float rounding)
+        {
+            float a = rounding * 0.25f;
+            float fromPeak = Mathf.Abs(f - 0.5f);
+            float fromValley = Mathf.Min(f, 1f - f);
+            if (a > 0f && fromPeak < a)
+                return 1f - a - fromPeak * fromPeak / a;
+            if (a > 0f && fromValley < a)
+                return a + fromValley * fromValley / a;
+            return 1f - Mathf.Abs(2f * f - 1f);
+        }
+
         /// <summary>Wave in exposure steps added to a stretch of the glow line, 0 at both ends of the stretch.</summary>
         private float CurveWave(float h, float start, float width, float rise)
         {
-            if (_curveShape == CurveShape.Plateau || _curveSteepness <= 0f || width <= 0f)
+            CurveShape shape = Shape;
+            float steepness = CurveStrength;
+            if (shape == CurveShape.Plateau || steepness <= 0f || width <= 0f)
                 return 0f;
-            if (Mathf.Abs(rise / width) >= _curveSteepness * 0.5f)
+            if (Mathf.Abs(rise / width) >= steepness * 0.5f)
                 return 0f;
 
-            int count = Mathf.Max(1, Mathf.RoundToInt(width / _curveWidth));
+            int count = Mathf.Max(1, Mathf.RoundToInt(width / CurveWidth));
             float period = width / count;
             float u = (h - start) / width * count;
             float f = u - Mathf.Floor(u);
             if (h >= start + width)
                 f = 0f;
 
-            switch (_curveShape)
+            switch (shape)
             {
                 case CurveShape.SpikesUp:
-                    return _curveSteepness * period * 0.5f * (1f - Mathf.Abs(2f * f - 1f));
+                    return steepness * period * 0.5f * (RoundedTriangle(f, CurveRounding) - CurveRounding * 0.25f);
                 case CurveShape.SpikesDown:
-                    return -_curveSteepness * period * 0.5f * (1f - Mathf.Abs(2f * f - 1f));
+                    return -steepness * period * 0.5f * (RoundedTriangle(f, CurveRounding) - CurveRounding * 0.25f);
                 case CurveShape.ZigZag:
-                    float zig = f < 0.25f ? 4f * f : (f < 0.75f ? 2f - 4f * f : 4f * f - 4f);
-                    return _curveSteepness * period * 0.25f * zig;
+                    // The same triangle, moved by a quarter period so it swings around 0.
+                    float zig = RoundedTriangle(f + 0.25f - Mathf.Floor(f + 0.25f), CurveRounding) * 2f - 1f;
+                    return steepness * period * 0.25f * zig;
                 case CurveShape.SawUp:
-                    return _curveSteepness * period * f;
+                    return steepness * period * f;
                 default:
-                    return -_curveSteepness * period * f;
+                    return -steepness * period * f;
             }
         }
         #endregion
