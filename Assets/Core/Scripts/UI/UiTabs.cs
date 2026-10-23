@@ -17,6 +17,8 @@ namespace Gavi
             public Button Button;
             public Image Indicator;
             public List<GameObject> Pages = new List<GameObject>();
+            [Tooltip("Coming into this tab does not open its first window.")]
+            public bool KeepFolded;
         }
 
         [SerializeField] private List<Tab> _tabs = new List<Tab>();
@@ -75,7 +77,7 @@ namespace Gavi
                 foreach (GameObject page in _tabs[i].Pages)
                     if (page != null)
                         page.SetActive(active);
-                if (active && _started)
+                if (active && _started && !_tabs[i].KeepFolded)
                     OpenFirstGroup(_tabs[i]);
                 if (_tabs[i].Indicator != null)
                     _tabs[i].Indicator.color = active ? _indicatorActiveColor : _indicatorInactiveColor;

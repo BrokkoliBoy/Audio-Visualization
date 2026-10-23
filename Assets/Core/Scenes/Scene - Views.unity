@@ -5379,6 +5379,7 @@ GameObject:
   - component: {fileID: 59136731}
   - component: {fileID: 59136733}
   - component: {fileID: 59136732}
+  - component: {fileID: 59136734}
   m_Layer: 0
   m_Name: Toggle - Broaden Inner Bands
   m_TagString: Untagged
@@ -5468,6 +5469,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &59136734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 59136730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &59300202
 GameObject:
   m_ObjectHideFlags: 0
@@ -14570,6 +14587,7 @@ GameObject:
   - component: {fileID: 169835651}
   - component: {fileID: 169835650}
   - component: {fileID: 169835652}
+  - component: {fileID: 169835653}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -14682,6 +14700,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &169835653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169835648}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &169839868
 GameObject:
   m_ObjectHideFlags: 0
@@ -14693,6 +14727,7 @@ GameObject:
   - component: {fileID: 169839870}
   - component: {fileID: 169839869}
   - component: {fileID: 169839871}
+  - component: {fileID: 169839872}
   m_Layer: 0
   m_Name: Toggle - Invert
   m_TagString: Untagged
@@ -14782,6 +14817,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &169839872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169839868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &172911105
 GameObject:
   m_ObjectHideFlags: 0
@@ -18487,6 +18538,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &221264119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221264116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &222185944
 GameObject:
   m_ObjectHideFlags: 0
@@ -20754,6 +20821,7 @@ GameObject:
   - component: {fileID: 250030387}
   - component: {fileID: 250030388}
   - component: {fileID: 250030389}
+  - component: {fileID: 250030390}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -20845,6 +20913,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &250030390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250030386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &250640060
 GameObject:
   m_ObjectHideFlags: 0
@@ -31542,6 +31626,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 656831207}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 656831209}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &408298328 stripped
 RectTransform:
@@ -38984,6 +39071,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 501237461}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 501237463}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &501237449 stripped
 RectTransform:
@@ -39092,6 +39182,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &501237463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501237450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &501631651
 GameObject:
   m_ObjectHideFlags: 0
@@ -39103,6 +39209,7 @@ GameObject:
   - component: {fileID: 501631652}
   - component: {fileID: 501631653}
   - component: {fileID: 501631654}
+  - component: {fileID: 501631655}
   m_Layer: 0
   m_Name: Toggle - Freeze Noise
   m_TagString: Untagged
@@ -39192,6 +39299,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &501631655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501631651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &505898591
 GameObject:
   m_ObjectHideFlags: 0
@@ -42649,6 +42772,7 @@ GameObject:
   - component: {fileID: 555501745}
   - component: {fileID: 555501744}
   - component: {fileID: 555501746}
+  - component: {fileID: 555501747}
   m_Layer: 0
   m_Name: Toggle - Beat Zoom
   m_TagString: Untagged
@@ -42738,6 +42862,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &555501747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 555501743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &557466734
 GameObject:
   m_ObjectHideFlags: 0
@@ -44921,6 +45061,7 @@ GameObject:
   - component: {fileID: 587888382}
   - component: {fileID: 587888384}
   - component: {fileID: 587888383}
+  - component: {fileID: 587888385}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -45011,6 +45152,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &587888385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587888381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &589197148
 GameObject:
   m_ObjectHideFlags: 0
@@ -45762,6 +45919,7 @@ GameObject:
   - component: {fileID: 594106432}
   - component: {fileID: 594106434}
   - component: {fileID: 594106433}
+  - component: {fileID: 594106435}
   m_Layer: 0
   m_Name: Toggle - Broaden Inner Bands
   m_TagString: Untagged
@@ -45851,6 +46009,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &594106435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594106431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &594338390
 GameObject:
   m_ObjectHideFlags: 0
@@ -46550,6 +46724,7 @@ GameObject:
   - component: {fileID: 600501750}
   - component: {fileID: 600501752}
   - component: {fileID: 600501751}
+  - component: {fileID: 600501753}
   m_Layer: 0
   m_Name: Toggle - Invert
   m_TagString: Untagged
@@ -46639,6 +46814,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &600501753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600501749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &601602555 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2988277142838908864, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
@@ -46670,6 +46861,7 @@ GameObject:
   - component: {fileID: 601871108}
   - component: {fileID: 601871107}
   - component: {fileID: 601871109}
+  - component: {fileID: 601871110}
   m_Layer: 0
   m_Name: Toggle - Invert All
   m_TagString: Untagged
@@ -46759,6 +46951,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &601871110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601871106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1001 &602490733
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -46871,6 +47079,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &602506538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602506533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &605105916
 GameObject:
   m_ObjectHideFlags: 0
@@ -50466,6 +50690,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &656831209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 656831204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &657483034
 GameObject:
   m_ObjectHideFlags: 0
@@ -51212,6 +51452,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 663364162}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 663364164}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &663364157 stripped
 RectTransform:
@@ -51333,6 +51576,22 @@ MonoBehaviour:
   _openOnHover: 1
   _slideTime: 0.15
   _pinnedHighlight: 0.008
+--- !u!114 &663364164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 663364159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &664913000
 GameObject:
   m_ObjectHideFlags: 0
@@ -53107,6 +53366,7 @@ GameObject:
   - component: {fileID: 683219932}
   - component: {fileID: 683219931}
   - component: {fileID: 683219933}
+  - component: {fileID: 683219934}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -53197,6 +53457,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &683219934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 683219930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &683528068
 GameObject:
   m_ObjectHideFlags: 0
@@ -53892,6 +54168,7 @@ GameObject:
   - component: {fileID: 692858700}
   - component: {fileID: 692858699}
   - component: {fileID: 692858701}
+  - component: {fileID: 692858702}
   m_Layer: 0
   m_Name: Toggle - Use Noise
   m_TagString: Untagged
@@ -53981,6 +54258,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &692858702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692858698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &693248519
 GameObject:
   m_ObjectHideFlags: 0
@@ -54330,6 +54623,7 @@ GameObject:
   - component: {fileID: 696325535}
   - component: {fileID: 696325537}
   - component: {fileID: 696325536}
+  - component: {fileID: 696325538}
   m_Layer: 0
   m_Name: Toggle - Invert
   m_TagString: Untagged
@@ -54419,6 +54713,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &696325538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 696325534}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &698118234
 GameObject:
   m_ObjectHideFlags: 0
@@ -54588,6 +54898,7 @@ GameObject:
   - component: {fileID: 700429349}
   - component: {fileID: 700429348}
   - component: {fileID: 700429350}
+  - component: {fileID: 700429351}
   m_Layer: 0
   m_Name: Toggle - Invert
   m_TagString: Untagged
@@ -54677,6 +54988,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &700429351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700429347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &700441375
 GameObject:
   m_ObjectHideFlags: 0
@@ -56964,6 +57291,7 @@ GameObject:
   - component: {fileID: 730585449}
   - component: {fileID: 730585451}
   - component: {fileID: 730585450}
+  - component: {fileID: 730585452}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -57054,6 +57382,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &730585452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730585448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &732660882
 GameObject:
   m_ObjectHideFlags: 0
@@ -69086,6 +69430,7 @@ GameObject:
   - component: {fileID: 937159441}
   - component: {fileID: 937159443}
   - component: {fileID: 937159442}
+  - component: {fileID: 937159444}
   m_Layer: 0
   m_Name: Toggle - Invert
   m_TagString: Untagged
@@ -69175,6 +69520,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &937159444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 937159440}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &937694553
 GameObject:
   m_ObjectHideFlags: 0
@@ -69683,6 +70044,7 @@ GameObject:
   - component: {fileID: 941950054}
   - component: {fileID: 941950053}
   - component: {fileID: 941950052}
+  - component: {fileID: 941950055}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -69796,6 +70158,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &941950055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941950050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &943698204
 GameObject:
   m_ObjectHideFlags: 0
@@ -72761,6 +73139,7 @@ GameObject:
   - component: {fileID: 995957448}
   - component: {fileID: 995957451}
   - component: {fileID: 995957452}
+  - component: {fileID: 995957453}
   m_Layer: 0
   m_Name: Toggle - Dirt
   m_TagString: Untagged
@@ -72901,6 +73280,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &995957453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995957446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &997310258
 GameObject:
   m_ObjectHideFlags: 0
@@ -82131,6 +82526,7 @@ GameObject:
   - component: {fileID: 1122721171}
   - component: {fileID: 1122721170}
   - component: {fileID: 1122721172}
+  - component: {fileID: 1122721173}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -82222,6 +82618,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1122721173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1122721169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1124707996
 GameObject:
   m_ObjectHideFlags: 0
@@ -89373,6 +89785,7 @@ GameObject:
   - component: {fileID: 1196261064}
   - component: {fileID: 1196261066}
   - component: {fileID: 1196261067}
+  - component: {fileID: 1196261068}
   m_Layer: 0
   m_Name: Toggle - Tint Background
   m_TagString: Untagged
@@ -89484,6 +89897,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1196261068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196261063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!224 &1196282715 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1060613190864689012, guid: 172dce546933b064ca0cdd8be353546c, type: 3}
@@ -98399,6 +98828,7 @@ GameObject:
   - component: {fileID: 1302905017}
   - component: {fileID: 1302905018}
   - component: {fileID: 1302905019}
+  - component: {fileID: 1302905020}
   m_Layer: 0
   m_Name: Toggle - Beat From Song
   m_TagString: Untagged
@@ -98488,6 +98918,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1302905020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1302905016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1303485885
 GameObject:
   m_ObjectHideFlags: 0
@@ -98639,6 +99085,7 @@ GameObject:
   - component: {fileID: 1306028473}
   - component: {fileID: 1306028472}
   - component: {fileID: 1306028471}
+  - component: {fileID: 1306028474}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -98752,6 +99199,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1306028474
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1306028469}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1307052833
 GameObject:
   m_ObjectHideFlags: 0
@@ -106120,9 +106583,17 @@ PrefabInstance:
       value: Delete palette
       objectReference: {fileID: 0}
     - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_RaycastTarget
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 654302924243522848, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
     - target: {fileID: 6831171938954346557, guid: f7ef1cc82d32255479f7d11da90b6bfc, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -109706,6 +110177,7 @@ MonoBehaviour:
     - {fileID: 1266077404}
     - {fileID: 1282116948}
     - {fileID: 661746047}
+    KeepFolded: 0
   - Button: {fileID: 1320406450}
     Indicator: {fileID: 587359693}
     Pages:
@@ -109715,6 +110187,7 @@ MonoBehaviour:
     - {fileID: 479429701}
     - {fileID: 1775281535}
     - {fileID: 1857983952}
+    KeepFolded: 0
   - Button: {fileID: 518529152}
     Indicator: {fileID: 1671081702}
     Pages:
@@ -109723,6 +110196,7 @@ MonoBehaviour:
     - {fileID: 1496325569}
     - {fileID: 327879233}
     - {fileID: 1436083048}
+    KeepFolded: 0
   - Button: {fileID: 1580184123}
     Indicator: {fileID: 12858574}
     Pages:
@@ -109733,6 +110207,7 @@ MonoBehaviour:
     - {fileID: 1732297950}
     - {fileID: 668529184}
     - {fileID: 182472103}
+    KeepFolded: 1
   _startIndex: 0
   _indicatorActiveColor: {r: 0.14, g: 0.52, b: 0.57, a: 1}
   _indicatorInactiveColor: {r: 1, g: 1, b: 1, a: 0.12}
@@ -111487,6 +111962,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1467997809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467997806}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1468093046
 GameObject:
   m_ObjectHideFlags: 0
@@ -111534,6 +112025,7 @@ GameObject:
   - component: {fileID: 1468654647}
   - component: {fileID: 1468654648}
   - component: {fileID: 1468654649}
+  - component: {fileID: 1468654650}
   m_Layer: 0
   m_Name: Toggle - Invert Pattern
   m_TagString: Untagged
@@ -111623,6 +112115,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1468654650
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1468654646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1469924795
 GameObject:
   m_ObjectHideFlags: 0
@@ -113135,6 +113643,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2092322914}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2092322915}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &1477571397 stripped
 RectTransform:
@@ -120953,6 +121464,7 @@ GameObject:
   - component: {fileID: 1592989944}
   - component: {fileID: 1592989945}
   - component: {fileID: 1592989946}
+  - component: {fileID: 1592989947}
   m_Layer: 0
   m_Name: Toggle - Camera Sway
   m_TagString: Untagged
@@ -121042,6 +121554,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1592989947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1592989943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1596142493
 GameObject:
   m_ObjectHideFlags: 0
@@ -122473,6 +123001,7 @@ GameObject:
   - component: {fileID: 1623263840}
   - component: {fileID: 1623263841}
   - component: {fileID: 1623263842}
+  - component: {fileID: 1623263843}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -122563,6 +123092,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1623263843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623263839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1623712164
 GameObject:
   m_ObjectHideFlags: 0
@@ -123623,6 +124168,7 @@ GameObject:
   - component: {fileID: 1632884571}
   - component: {fileID: 1632884572}
   - component: {fileID: 1632884573}
+  - component: {fileID: 1632884574}
   m_Layer: 0
   m_Name: Toggle - Noise Spread
   m_TagString: Untagged
@@ -123712,6 +124258,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1632884574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632884570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1634543953
 GameObject:
   m_ObjectHideFlags: 0
@@ -123776,6 +124338,7 @@ GameObject:
   - component: {fileID: 1635096318}
   - component: {fileID: 1635096320}
   - component: {fileID: 1635096319}
+  - component: {fileID: 1635096321}
   m_Layer: 0
   m_Name: Toggle - Broaden Inner Bands
   m_TagString: Untagged
@@ -123865,6 +124428,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &1635096321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1635096317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1635751083
 GameObject:
   m_ObjectHideFlags: 0
@@ -125296,6 +125875,7 @@ GameObject:
   - component: {fileID: 1657217468}
   - component: {fileID: 1657217470}
   - component: {fileID: 1657217469}
+  - component: {fileID: 1657217471}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -125386,6 +125966,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1657217471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1657217467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1658548574
 GameObject:
   m_ObjectHideFlags: 0
@@ -130522,6 +131118,7 @@ GameObject:
   - component: {fileID: 1738463556}
   - component: {fileID: 1738463557}
   - component: {fileID: 1738463558}
+  - component: {fileID: 1738463559}
   m_Layer: 0
   m_Name: Toggle - Edit Bands
   m_TagString: Untagged
@@ -130611,6 +131208,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1738463559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1738463555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1738638138
 GameObject:
   m_ObjectHideFlags: 0
@@ -132996,6 +133609,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1467997808}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1467997809}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &1760981962 stripped
 RectTransform:
@@ -135950,10 +136566,26 @@ PrefabInstance:
       propertyPath: m_Text
       value: My Palette
       objectReference: {fileID: 0}
+    - target: {fileID: 6785993992666450901, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -8.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785993992666450901, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.9000015
+      objectReference: {fileID: 0}
     - target: {fileID: 6785993993106645954, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6785993993106645954, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 6785993993106645954, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
     - target: {fileID: 6785993993461344209, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_SizeDelta.x
       value: 54
@@ -135966,13 +136598,41 @@ PrefabInstance:
       propertyPath: m_text
       value: "My Palette\u200B"
       objectReference: {fileID: 0}
+    - target: {fileID: 6785993993516176667, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 6785993993516176667, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontMaterial
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785993993516176667, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
     - target: {fileID: 6785993993583632268, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_text
       value: 'Save as:'
       objectReference: {fileID: 0}
     - target: {fileID: 6785993993583632268, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 6785993993583632268, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontMaterial
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785993993583632268, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_RaycastTarget
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785993993583632268, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
+    - target: {fileID: 6785993993583632271, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 55
       objectReference: {fileID: 0}
     - target: {fileID: 6785993993941755780, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_Pivot.x
@@ -136063,9 +136723,17 @@ PrefabInstance:
       value: Save
       objectReference: {fileID: 0}
     - target: {fileID: 6785993994184850097, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 0aae1c7654e5fd54aac5a98f0d4290b3, type: 2}
+    - target: {fileID: 6785993994184850097, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
       propertyPath: m_RaycastTarget
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6785993994184850097, guid: 29aafc13401c4d44bb87ebd3f2b8d36a, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f44a38f28117f44fbc9e74d69eff12f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -141071,6 +141739,7 @@ GameObject:
   - component: {fileID: 1871981675}
   - component: {fileID: 1871981674}
   - component: {fileID: 1871981673}
+  - component: {fileID: 1871981676}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -141184,6 +141853,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1871981676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871981671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1874122353
 GameObject:
   m_ObjectHideFlags: 0
@@ -150689,6 +151374,7 @@ GameObject:
   - component: {fileID: 1994480206}
   - component: {fileID: 1994480205}
   - component: {fileID: 1994480207}
+  - component: {fileID: 1994480208}
   m_Layer: 0
   m_Name: Toggle - HDR
   m_TagString: Untagged
@@ -150799,6 +151485,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &1994480208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994480203}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &1994491599
 GameObject:
   m_ObjectHideFlags: 0
@@ -151872,6 +152574,7 @@ GameObject:
   - component: {fileID: 2007500842}
   - component: {fileID: 2007500843}
   - component: {fileID: 2007500844}
+  - component: {fileID: 2007500845}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -151962,6 +152665,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &2007500845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007500841}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &2007796146
 GameObject:
   m_ObjectHideFlags: 0
@@ -158244,6 +158963,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &2092322915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2092322911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &2094207278
 GameObject:
   m_ObjectHideFlags: 0
@@ -159555,6 +160290,7 @@ GameObject:
   - component: {fileID: 2110229302}
   - component: {fileID: 2110229301}
   - component: {fileID: 2110229303}
+  - component: {fileID: 2110229304}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -159645,6 +160381,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49c29e2d0d2b485428b42dc04affcfc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.ToggleWheel
+--- !u!114 &2110229304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2110229300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &2114749362
 GameObject:
   m_ObjectHideFlags: 0
@@ -159761,6 +160513,7 @@ GameObject:
   - component: {fileID: 2115784285}
   - component: {fileID: 2115784284}
   - component: {fileID: 2115784283}
+  - component: {fileID: 2115784286}
   m_Layer: 0
   m_Name: Toggle - Header
   m_TagString: Untagged
@@ -159874,6 +160627,22 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &2115784286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115784281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b58ac438883b249911959e3c4c929b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiToggleDip
+  _maxDwell: 0.3
+  _minDepth: 0.3
+  _cooldown: 0.2
+  _swipeWindow: 0.6
 --- !u!1 &2116286608
 GameObject:
   m_ObjectHideFlags: 0
@@ -162664,6 +163433,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 221264118}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 221264119}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!224 &2139172098 stripped
 RectTransform:
@@ -163719,6 +164491,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
       insertIndex: -1
       addedObject: {fileID: 602506536}
+    - targetCorrespondingSourceObject: {fileID: 2988277143151553491, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 602506538}
   m_SourcePrefab: {fileID: 100100000, guid: f5bebb7a98528164b9b992d17ec86075, type: 3}
 --- !u!1001 &3594616030830517004
 PrefabInstance:
