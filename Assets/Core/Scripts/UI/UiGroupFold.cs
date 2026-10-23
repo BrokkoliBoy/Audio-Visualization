@@ -63,6 +63,8 @@ namespace Gavi
             if (_layout == null)
                 _layout = gameObject.AddComponent<LayoutElement>();
             _ownLayout = GetComponent<LayoutGroup>() != null;
+            if (_ownLayout)
+                KeepChildHeights();
             _openMin = _layout.minHeight;
             _openPreferred = _layout.preferredHeight;
             _mask = gameObject.AddComponent<RectMask2D>();
@@ -70,6 +72,18 @@ namespace Gavi
             _dropdowns = GetComponentsInChildren<TMP_Dropdown>(true);
             if (_button != null)
                 _button.onClick.AddListener(OnClick);
+        }
+
+        // A layout group that gets less height than its children want squeezes every child that is allowed to be smaller than its
+        // preferred height. While the group slides that would shrink the header and push its text up, so children keep their height.
+        private void KeepChildHeights()
+        {
+            foreach (Transform child in transform)
+            {
+                LayoutElement element = child.GetComponent<LayoutElement>();
+                if (element != null && !element.ignoreLayout && element.minHeight < element.preferredHeight)
+                    element.minHeight = element.preferredHeight;
+            }
         }
 
         private void Start()
