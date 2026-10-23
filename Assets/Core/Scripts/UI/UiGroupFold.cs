@@ -15,7 +15,7 @@ namespace Gavi
     {
         [Tooltip("The button in the header. A click pins the group open or folds it.")]
         [SerializeField] private Button _button;
-        [Tooltip("Small arrow in the header. Points right while folded, down while pinned open, in between while opened by hovering.")]
+        [Tooltip("Small arrow in the header. Hidden while folded, appears turning half way while opened by hovering and points down while pinned open.")]
         [SerializeField] private RectTransform _arrow;
         [Tooltip("Children that stay visible while folded: the header and the background.")]
         [SerializeField] private List<GameObject> _keepVisible = new List<GameObject>();
@@ -38,6 +38,8 @@ namespace Gavi
         private bool _started;
         private bool _pinnedSet;
         private float _arrowAngle;
+        private Image _arrowImage;
+        private float _arrowAlpha = 1f;
         private bool _pinned;
         private bool _hover;
         private bool _hoverSuppressed;
@@ -70,6 +72,12 @@ namespace Gavi
                 KeepChildHeights();
             _openMin = _layout.minHeight;
             _openPreferred = _layout.preferredHeight;
+            if (_arrow != null)
+            {
+                _arrowImage = _arrow.GetComponent<Image>();
+                if (_arrowImage != null)
+                    _arrowAlpha = _arrowImage.color.a;
+            }
             _mask = gameObject.AddComponent<RectMask2D>();
             _mask.enabled = false;
             if (_button != null)
@@ -328,8 +336,16 @@ namespace Gavi
 
         private void ApplyArrow()
         {
-            if (_arrow != null)
-                _arrow.localRotation = Quaternion.Euler(0f, 0f, _arrowAngle);
+            if (_arrow == null)
+                return;
+            _arrow.localRotation = Quaternion.Euler(0f, 0f, _arrowAngle);
+            // the arrow only shows once the group is on its way open, so a folded menu is not a wall of arrows
+            if (_arrowImage != null)
+            {
+                Color color = _arrowImage.color;
+                color.a = _arrowAlpha * Mathf.Clamp01(-_arrowAngle / 45f);
+                _arrowImage.color = color;
+            }
         }
 
         private void Apply()
@@ -468,8 +484,8 @@ namespace Gavi
                 RestoreOpenLayout();
                 return;
             }
-            if (_openMin >= 0f)
-                _layout.minHeight = _foldedHeight;
+            // the minimum is set on every slide step, a slide cut short must not leave its height behind
+            _layout.minHeight = _openMin >= 0f ? _foldedHeight : _openMin;
             _layout.preferredHeight = _foldedHeight;
         }
 
