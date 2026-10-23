@@ -20,8 +20,8 @@ public class TerrainShape
     public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ, MirrorX, MirrorZ, Rays, Spiral, Cross, Star, Rings }
     public static readonly string[] ShapeNames =
     {
-        "Circle", "Square", "Diamond", "Stripes Vertical", "Stripes Horizontal",
-        "Mirrored Vertical", "Mirrored Horizontal", "Rays", "Spiral", "Cross", "Star", "Rings"
+        "Circle", "Square", "Diamond", "Vertical stripes", "Horizontal stripes",
+        "Mirrored vertical", "Mirrored horizontal", "Rays", "Spiral", "Cross", "Star", "Rings"
     };
 
     public float Strength { get => _strength; set => _strength = value; }

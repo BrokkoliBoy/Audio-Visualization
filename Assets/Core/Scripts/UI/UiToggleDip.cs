@@ -1,4 +1,5 @@
 using UnityEngine;
+using Side = Gavi.UiDipDetector.Side;
 using UnityEngine.UI;
 
 namespace Gavi
@@ -23,7 +24,6 @@ namespace Gavi
         [Tooltip("Two swipes straight through the box in opposite directions within this time (s) switch it.")]
         [SerializeField] private float _swipeWindow = 0.6f;
 
-        private enum Side { None, Left, Right, Bottom, Top }
 
         private Toggle _toggle;
         private RectTransform _box;
@@ -81,7 +81,7 @@ namespace Gavi
                 if (_hasLast && !rect.Contains(_last) && Time.unscaledTime >= _blockedUntil)
                 {
                     _inside = true;
-                    _entrySide = SideOf(rect, _last);
+                    _entrySide = UiDipDetector.SideOf(rect, _last);
                     _entryTime = Time.unscaledTime;
                     _depth = 0f;
                     _valueAtEntry = _toggle.isOn;
@@ -90,7 +90,7 @@ namespace Gavi
             }
             else if (inside && _inside)
             {
-                _depth = Mathf.Max(_depth, Depth(rect, point, _entrySide));
+                _depth = Mathf.Max(_depth, UiDipDetector.Depth(rect, point, _entrySide));
                 // a click, or anything that changed the box meanwhile, takes over
                 if (Input.GetMouseButton(0) || _toggle.isOn != _valueAtEntry)
                     _spoiled = true;
@@ -99,7 +99,7 @@ namespace Gavi
             {
                 _inside = false;
                 float dwell = Time.unscaledTime - _entryTime;
-                Side exitSide = SideOf(rect, point);
+                Side exitSide = UiDipDetector.SideOf(rect, point);
                 bool clean = !_spoiled && !Input.GetMouseButton(0) && _toggle.isOn == _valueAtEntry;
                 bool dip = clean && dwell <= _maxDipTime && exitSide == _entrySide && _depth >= _minDepth;
                 // a swipe straight through the box; two of them in opposite directions in a row switch it, without hitting the turn
@@ -123,29 +123,6 @@ namespace Gavi
 
             _last = point;
             _hasLast = true;
-        }
-
-        // The side of the rect the point lies on (the dominant direction when it lies at a corner).
-        private static Side SideOf(Rect rect, Vector2 point)
-        {
-            float dx = point.x < rect.xMin ? rect.xMin - point.x : point.x > rect.xMax ? point.x - rect.xMax : 0f;
-            float dy = point.y < rect.yMin ? rect.yMin - point.y : point.y > rect.yMax ? point.y - rect.yMax : 0f;
-            if (dx >= dy)
-                return point.x < rect.center.x ? Side.Left : Side.Right;
-            return point.y < rect.center.y ? Side.Bottom : Side.Top;
-        }
-
-        // How far the point reaches into the rect from the given side, 0..1 of the rect size in that direction.
-        private static float Depth(Rect rect, Vector2 point, Side side)
-        {
-            switch (side)
-            {
-                case Side.Left: return (point.x - rect.xMin) / rect.width;
-                case Side.Right: return (rect.xMax - point.x) / rect.width;
-                case Side.Bottom: return (point.y - rect.yMin) / rect.height;
-                case Side.Top: return (rect.yMax - point.y) / rect.height;
-            }
-            return 0f;
         }
     }
 }

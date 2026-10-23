@@ -38,11 +38,15 @@ namespace Gavi
         [SerializeField] private Color _labelActiveColor = new Color(0.9f, 0.97f, 1f, 1f);
         [SerializeField] private Color _labelInactiveColor = new Color(0.62f, 0.84f, 0.88f, 0.45f);
 
+        [Tooltip("A tab is not picked by resting the pointer on it, only by a click or a quick dip of the pointer into it (in and out on the same side), so moving through the menu does not switch layers by accident.")]
+        [SerializeField] private bool _selectByDip;
+
         [Tooltip("Hovering a tab does not pick its layer while the window slides and for this long (s) afterwards.")]
         [SerializeField] private float _hoverSettleTime = 0.3f;
 
         private int _current;
         private int _hoverIndex = -1;
+        private UiDipDetector[][] _dips;
         private bool _wired;
         private float _markFade = 1f;
         private bool _toggleArmed;
@@ -94,6 +98,8 @@ namespace Gavi
                     if (button == null)
                         continue;
                     button.onClick.AddListener(() => Select(index));
+                    if (_selectByDip)
+                        continue;
                     EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
                     if (trigger == null)
                         trigger = button.gameObject.AddComponent<EventTrigger>();
@@ -159,11 +165,48 @@ namespace Gavi
                 return;
             }
 
+            if (_selectByDip)
+            {
+                UpdateDips(current, target);
+                return;
+            }
+
             if (_hoverIndex < 0 || _hoverIndex == _current || target < 0.5f)
                 return;
             if (current != null && current.IsSlidingWithin(_hoverSettleTime))
                 return;
             Select(_hoverIndex);
+        }
+
+        // The tabs of the shown group pick their layer by a dip. Nothing counts while the window slides or is folded.
+        private void UpdateDips(UiGroupFold current, float open)
+        {
+            if (_current < 0 || _current >= _entries.Count)
+                return;
+            Button[] buttons = _entries[_current].Buttons;
+            if (buttons == null)
+                return;
+            if (_dips == null)
+                _dips = new UiDipDetector[_entries.Count][];
+            if (_dips[_current] == null || _dips[_current].Length != buttons.Length)
+            {
+                _dips[_current] = new UiDipDetector[buttons.Length];
+                for (int i = 0; i < buttons.Length; i++)
+                    _dips[_current][i] = new UiDipDetector();
+            }
+
+            bool usable = open >= 0.5f && !UiPointer.IsLocked && UiPointer.IsInsideWindow && !UiPointer.IsAnyDropdownExpanded()
+                && (current == null || !current.IsSlidingWithin(_hoverSettleTime));
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] == null)
+                    continue;
+                if (_dips[_current][i].Update((RectTransform)buttons[i].transform, usable) && i != _current)
+                {
+                    Select(i);
+                    return;
+                }
+            }
         }
 
         private void OnGroupLeft(int index)
@@ -263,6 +306,12 @@ namespace Gavi
 
         private void Apply(int previous)
         {
+            // a dip in progress belongs to the old group
+            if (_dips != null)
+                foreach (UiDipDetector[] group in _dips)
+                    if (group != null)
+                        foreach (UiDipDetector dip in group)
+                            dip.Reset();
             // the window keeps its fold state when another layer takes its place
             if (previous >= 0 && previous < _entries.Count && _current < _entries.Count)
             {
