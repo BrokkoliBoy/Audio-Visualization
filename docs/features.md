@@ -4,7 +4,7 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-23 (mouse wheel on sliders and tick boxes, foldable menu groups, pause keeps the picture, Color tab layout, slider previews (brightness, bloom, dirt, dampening), height follows zoom slider, smoothing moved to the Terrain tab, Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black, tabs open on hover, color keys share one hue, new gradient key layout, pattern balance, soft top end, color curve and glow scale)
+Last updated: 2026-10-23 (mouse wheel on sliders and tick boxes, foldable menu groups, pause keeps the picture, Color tab layout, slider previews on the color sliders, brightness and bloom (gradient track in the rounded slider shape, end color exactly where the handle stops; tint, dirt, dampening use plain sliders), height follows zoom slider, smoothing moved to the Terrain tab, Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black, tabs open on hover, color keys share one hue, new gradient key layout, pattern balance, soft top end, color curve and glow scale)
 
 ## Menu tabs
 
@@ -14,7 +14,7 @@ Tabs open on hover at once; a click still works.
 |---|---|
 | Color | Six groups: Palette (dropdown, save / delete own palettes), Base, Low, Mid and High (one group each with hue, saturation and glow; the swatch in the header shows the color even when folded), Glow (Brightness: overall, track shows the base color dark to bright; header switch for the whole bloom, bloom strength (0 to 1, default 0.6), lens dirt strength (own switch in its heading; both saved with the profile, the background tint does not depend on them), background tint (off = neutral gray)) |
 | Terrain | Everything that shapes the terrain, top to bottom: Terrain (detail, height, FPS hint), Noise pattern, Dampening (with smoothing), Noise pattern, Audio shape (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that maps the spectrum onto the terrain, up to three layers in one window with tabs, Beat wave (seven rows in two groups), Mesh morph (eight rows in three groups; it is the last group) |
-| General | Profiles (save / load / delete), Reset (terrain back to the Default profile, camera back to start), Camera (sway, zoom on beat; remembered), Frame rate (Max FPS and the mesh update time), Test signal (signal, level, beat strength, strength from song, freeze noise, edit bands; hotkey T) |
+| General | Profiles (save / load / delete), Camera (sway, zoom on beat; remembered; the two Reset buttons: terrain back to the Default profile, camera back to start), Performance (Max FPS, Detail, Noise every, update time), Test signal (signal, level, beat strength, strength from song, freeze noise, edit bands; hotkey T) |
 
 ## Features
 

@@ -79,6 +79,16 @@ namespace Gavi
                 }
                 _texture.SetPixels(_pixels);
                 _texture.Apply(false);
+
+                // The handle centre only travels between half a handle from each end, so the gradient is stretched to
+                // match: the end colours then sit exactly where the handle stops.
+                float width = _gradientImage.rectTransform.rect.width;
+                float half = _handle != null ? _handle.rectTransform.rect.width * 0.5f : 0f;
+                if (width > half * 2f + 1f)
+                {
+                    float travel = width - half * 2f;
+                    _gradientImage.uvRect = new Rect(-half / travel, 0f, width / travel, 1f);
+                }
             }
 
             if (_handle != null)
