@@ -23,6 +23,9 @@ namespace Gavi
         [SerializeField] private Button _buttonRejectRemove;
         [SerializeField] private TMP_InputField _inputFieldNewProfile;
         [SerializeField] private Button _buttonNewProfile;
+        [SerializeField] private Button _buttonResetTerrain;
+
+        private const string DefaultProfileName = "Default";
 
         private readonly List<TerrainSettingsProfile> _profiles = new List<TerrainSettingsProfile>();
 
@@ -39,7 +42,9 @@ namespace Gavi
             _buttonConfirmRemove.onClick.AddListener(OnPressedConfirmRemove);
             _buttonRejectRemove.onClick.AddListener(OnPressedRejectRemove);
             _buttonNewProfile.onClick.AddListener(OnPressedNewProfile);
-            
+            if (_buttonResetTerrain != null)
+                _buttonResetTerrain.onClick.AddListener(OnPressedResetTerrain);
+
             if (Instance != null)
                 Debugger.LogInstanceError(GetType());
             Instance = this;
@@ -105,6 +110,14 @@ namespace Gavi
         {
             CurrentProfile.CopyFromProfile(ActiveProfile);
             //CurrentProfile.ApplyProfileToTerrain();
+            CurrentProfile.ApplyProfileToUI();
+        }
+
+        /// <summary>Back to the Default profile (the code defaults if there is none). The profile list and the selection stay as they are.</summary>
+        private void OnPressedResetTerrain()
+        {
+            TerrainSettingsProfile target = _profiles.Find(p => p.Name == DefaultProfileName) ?? new TerrainSettingsProfile();
+            CurrentProfile.CopyFromProfile(target);
             CurrentProfile.ApplyProfileToUI();
         }
 

@@ -13,9 +13,9 @@ Tabs open on hover (after a short 0.1 s delay, so sweeping across them does not 
 | Tab | Groups |
 |---|---|
 | Color | Palette dropdown (save / delete own palettes), Brightness (overall, track shows the base color dark to bright), four gradient colors from base to high with hue, saturation and glow; Glow: header switch for the whole bloom, bloom strength (0 to 1, default 0.6), lens dirt strength (own switch in its heading; both saved with the profile, the background tint does not depend on them), background tint (off = neutral gray) |
-| Terrain | Everything that shapes the terrain, top to bottom: Terrain (detail, height, FPS hint), Noise pattern, Mesh morph, Dampening, Smoothing, Beat wave (height, speed, mode, origin), Audio shapes (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that map the spectrum onto the terrain; Shapes are the last group |
-| General | Profiles (save / load / delete), Frame rate (Max FPS and the mesh update time), Test signal (signal, level, beat strength, strength from song, freeze noise, edit bands; hotkey T) |
-| Expert | Settings you set once: color curve (floor glow, color shift, hold width, plateau tilt, tilt mode, hue balance, pattern balance, color headroom), color from band, relief light, bloom threshold / spread, dirt on the beat, noise interval and spread noise, beat wave width / fade / use noise, height follows zoom |
+| Terrain | Everything that shapes the terrain, top to bottom: Terrain (detail, height, FPS hint), Noise pattern, Mesh morph, Dampening, Beat wave (height, speed, mode, origin), Audio shapes (circle, square, diamond, stripes, mirrored stripes, rays, spiral, cross, star, rings) that map the spectrum onto the terrain; Shapes are the last group |
+| General | Profiles (save / load / delete), Reset (terrain back to the Default profile, camera back to start), Camera (sway, zoom on beat; remembered), Frame rate (Max FPS and the mesh update time), Test signal (signal, level, beat strength, strength from song, freeze noise, edit bands; hotkey T) |
+| Expert | Smoothing (on / off), Settings you set once: color curve (floor glow, color shift, hold width, plateau tilt, tilt mode, hue balance, pattern balance, color headroom), color from band, relief light, bloom threshold / spread, dirt on the beat, noise interval and spread noise, beat wave width / fade / use noise, height follows zoom |
 
 ## Features
 
@@ -47,7 +47,8 @@ Tabs open on hover (after a short 0.1 s delay, so sweeping across them does not 
 | Mesh morph | done | Bends the whole mesh after the heights (shape dropdown with previous / next buttons): Dome, Planet, Twist, Tube, Pringle, Flag (a wave runs through the mesh). Amount slider. The tube rolls up with the amount and is closed at 1 (the radius shrinks, the width stays). Planet and tube are lifted on the screen by 20 % of its height, from amount 0.15 on and fully at 0.6, so the camera keeps looking at the middle (TerrainGenerator.MorphLiftTarget). Removed: Bowl, Halfpipe and the "On beat" slider (did not work well); old profiles with a removed shape show the dome. Smoothing is in the Audio tab, Max FPS in the Expert tab |
 | Background tint | done | The middle and bottom of the sky take the hue of the base color, brightness and saturation come from the sky colors in the volume profile. Toggle "Tint background" at the end of the Glow group (Color tab) |
 | Profiles | done | All terrain settings except the test signal |
-| Camera control | done | Mouse (left drag on the background or middle drag orbits, left drag on the terrain turns it around its middle, right drag moves, wheel zooms; both left and right belong to the band editor while it is on) and keyboard (WASD, Q / E, C resets camera and terrain turn, the reset glides), beat zoom, camera menu |
+| Camera control | done | Mouse (left drag on the background or middle drag orbits, left drag on the terrain turns it around its middle, right drag moves, wheel zooms; both left and right belong to the band editor while it is on) and keyboard (WASD, Q / E, C resets camera and terrain turn, the reset glides), beat zoom, camera menu (controls overview) and camera switches in the General tab |
+| Dropdown mouse wheel | done | The wheel steps through the options of a dropdown while the pointer is on it (forward = previous, back = next), without opening it |
 
 ## Planned / ideas
 

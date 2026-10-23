@@ -5,11 +5,11 @@ using Gavi.Modifiables;
 namespace Gavi
 {
     /// <summary>
-    /// Small popup next to the player bar for the mouse and keyboard camera control: an overview of the controls,
-    /// a reset button and switches for the camera sway and the beat zoom.
+    /// Small popup next to the player bar with an overview of the mouse and keyboard camera control.
     /// Opens while the pointer is on the Camera button or the popup, or when pinned with a click on the Camera button.
     /// Only one of the popups and the Terrain settings panel is open at a time.
-    /// The switches are remembered between sessions.
+    /// The reset button and the switches for the camera sway and the beat zoom sit in the Camera group of the
+    /// General tab (this class wires them up, so they work while that tab is closed). The switches are remembered between sessions.
     /// </summary>
     public class CameraMenuUI : MonoBehaviour
     {
