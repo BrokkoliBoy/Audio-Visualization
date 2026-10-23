@@ -46,9 +46,11 @@ namespace Gavi
         {
             base.ShowProfile(profile);
             _toggleApplyMorph.isOn = profile.ApplyMorph;
-            // a profile of a removed shape shows the first one, which is also what the terrain draws
+            // a profile of a removed shape shows the dome, which is also what the terrain draws
             int index = System.Array.IndexOf(TerrainGenerator.MorphOrder, (TerrainGenerator.MorphShape)profile.MorphShape);
-            _dropdownShape.SetValueWithoutNotify(Mathf.Max(0, index));
+            if (index < 0)
+                index = System.Array.IndexOf(TerrainGenerator.MorphOrder, TerrainGenerator.MorphShape.Dome);
+            _dropdownShape.SetValueWithoutNotify(index);
             _dropdownShape.RefreshShownValue();
             _sliderAmount.Value = profile.MorphAmount;
         }

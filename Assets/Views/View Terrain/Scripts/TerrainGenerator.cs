@@ -150,14 +150,41 @@ namespace Gavi
         /// <summary>The numbers are what profiles store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
         public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7 }
         /// <summary>The shapes in the order of the menu.</summary>
-        public static readonly MorphShape[] MorphOrder = { MorphShape.Dome, MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Pringle, MorphShape.Flag };
-        public static readonly string[] MorphNames = { "Dome", "Planet", "Twist", "Tube", "Pringle", "Flag" };
+        public static readonly MorphShape[] MorphOrder = { MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Dome, MorphShape.Pringle, MorphShape.Flag };
+        public static readonly string[] MorphNames = { "Planet", "Twist", "Tube", "Dome", "Pringle", "Flag" };
         /// <summary>The <see cref="MorphShape"/> as number. A number of a removed shape gives the dome.</summary>
         public int Morph { get => (int)_morphShape; set => _morphShape = System.Array.IndexOf(MorphOrder, (MorphShape)value) >= 0 ? (MorphShape)value : MorphShape.Dome; }
         [Tooltip("How far the mesh is bent. 0 = flat, 1 = fully bent.")]
         [Range(0, 1)]
         [SerializeField] private float _morphAmount = 0.5f;
         public float MorphAmount { get => _morphAmount; set => _morphAmount = Mathf.Clamp01(value); }
+
+        [Header("--- Morph motion ---")]
+        [Tooltip("How much the amount rises on every beat (added to the amount). 0 = off.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _motionBeat;
+        [Tooltip("Beats the amount takes to rise to the peak after a beat.")]
+        [SerializeField] private float _motionAttack = DefaultMotionAttack;
+        [Tooltip("Beats the amount takes to fall back after the peak.")]
+        [SerializeField] private float _motionRelease = DefaultMotionRelease;
+        [Tooltip("0 = the amount glides, 1 = it swings over the peak like on a spring.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _motionBounce;
+        [Tooltip("The amount swings around its value by this much, slowly and in time with the beats. 0 = off.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _motionWaveDepth;
+        [Tooltip("Beats of one full swing of the wave.")]
+        [SerializeField] private float _motionWaveBeats = DefaultMotionWaveBeats;
+
+        public const float DefaultMotionAttack = 0.5f;
+        public const float DefaultMotionRelease = 1.5f;
+        public const float DefaultMotionWaveBeats = 8f;
+        public float MotionBeat { get => _motionBeat; set => _motionBeat = Mathf.Clamp01(value); }
+        public float MotionAttack { get => _motionAttack; set => _motionAttack = Mathf.Clamp(value, 0.1f, 4f); }
+        public float MotionRelease { get => _motionRelease; set => _motionRelease = Mathf.Clamp(value, 0.1f, 8f); }
+        public float MotionBounce { get => _motionBounce; set => _motionBounce = Mathf.Clamp01(value); }
+        public float MotionWaveDepth { get => _motionWaveDepth; set => _motionWaveDepth = Mathf.Clamp01(value); }
+        public float MotionWaveBeats { get => _motionWaveBeats; set => _motionWaveBeats = Mathf.Clamp(value, 1f, 128f); }
 
         [Header("--- Audio ---")]
         [Tooltip("When true, the mesh will apply height to the vertices according to audio sample data.")]
@@ -1061,7 +1088,7 @@ namespace Gavi
         /// <summary>True when the ray hits the terrain. With a mesh morph on, the box around the terrain counts, because the drawn surface is bent.</summary>
         public bool TryHitTerrain(Ray ray)
         {
-            bool bent = _applyMorph && _morphAmount > 0.0005f;
+            bool bent = _applyMorph && _shownAmount > 0.0005f;
             if (!TryRaycast(ray, !bent, out Vector3 hit))
                 return false;
             if (bent || !_hideOutOfBounds)
@@ -1154,19 +1181,87 @@ namespace Gavi
         #endregion
 
         #region Morph
+        // Morph motion: the amount that is drawn is the amount of the slider plus the beat breath plus the slow wave.
+        private float _shownAmount = 0.5f;
+        private float _breath, _breathVelocity, _breathHold, _wavePhase;
+        private int _breathBeatCount;
+        /// <summary>A critically damped spring is settled (to about 1 %) after this many of its time constants.</summary>
+        private const float SpringSettle = 5f;
+        /// <summary>Damping ratio of the spring at full bounce (1 = no overshoot).</summary>
+        private const float SpringMinDamping = 0.25f;
+        private const float SpringMaxStep = 1f / 240f;
+
+        /// <summary>
+        /// Moves the beat breath and the wave and sets the amount that is drawn. A beat holds the target of the breath at 1 for the
+        /// attack time, then it falls back for the release time. The breath follows its target like on a spring, so it never jumps.
+        /// </summary>
+        private void UpdateMorphMotion()
+        {
+            float delta = Frozen ? 0f : _stepDelta;
+            float interval = _beatWave != null ? Mathf.Max(0.1f, _beatWave.BeatInterval) : 0.5f;
+
+            int beats = _beatWave != null ? _beatWave.BeatCount : 0;
+            if (beats > _breathBeatCount)
+                _breathHold = _motionAttack * interval;
+            _breathBeatCount = beats;
+
+            if (_motionBeat <= 0.0005f)
+            {
+                _breath = 0f;
+                _breathVelocity = 0f;
+                _breathHold = 0f;
+            }
+            else if (delta > 0f)
+            {
+                float target = _breathHold > 0f ? 1f : 0f;
+                _breathHold = Mathf.Max(0f, _breathHold - delta);
+                float seconds = Mathf.Max(0.05f, (target > _breath ? _motionAttack : _motionRelease) * interval);
+                float omega = SpringSettle / seconds;
+                float damping = Mathf.Lerp(1f, SpringMinDamping, _motionBounce);
+                int steps = Mathf.CeilToInt(delta / SpringMaxStep);
+                float step = delta / steps;
+                for (int i = 0; i < steps; i++)
+                {
+                    _breathVelocity += (omega * omega * (target - _breath) - 2f * damping * omega * _breathVelocity) * step;
+                    _breath += _breathVelocity * step;
+                }
+            }
+
+            float wave = 0f;
+            if (_motionWaveDepth > 0.0005f)
+            {
+                _wavePhase = (_wavePhase + delta / (_motionWaveBeats * interval)) % 1f;
+                wave = _motionWaveDepth * Mathf.Sin(_wavePhase * 2f * Mathf.PI);
+            }
+
+            _shownAmount = Mathf.Clamp01(_morphAmount + _motionBeat * _breath + wave);
+        }
+
         /// <summary>Starts the job that bends the vertices by the morph. False (and no job) when the terrain stays flat.</summary>
         private bool ScheduleMorph(ref JobHandle handle)
         {
-            float amount = _morphAmount;
-            if (!_applyMorph || amount <= 0.0005f)
+            UpdateMorphMotion();
+            float amount = _shownAmount;
+            // at amount 0 the job keeps running until the lift has glided back down, so it does not vanish at once
+            if (!_applyMorph || (amount <= 0.0005f && _morphLift < MorphLiftRest))
             {
                 _morphLift = 0f;
+                // the lift starts in place the next time the morph is on (no shape is nothing the morph can have)
+                _liftShape = (MorphShape)0;
                 return false;
             }
 
             EnsureArray(ref _drawnVertices, _vertices.Length);
             float half = _terrainSizeX * 0.5f;
-            _morphLift = Mathf.Lerp(_morphLift, MorphLiftTarget(), 1f - Mathf.Exp(-MorphLiftSmoothing * Time.unscaledDeltaTime));
+            float liftTarget = MorphLiftTarget();
+            // a new shape starts with its lift in place, only changes of the amount glide
+            if (_morphShape != _liftShape)
+            {
+                _liftShape = _morphShape;
+                _morphLift = liftTarget;
+            }
+            else
+                _morphLift = Mathf.Lerp(_morphLift, liftTarget, 1f - Mathf.Exp(-MorphLiftSmoothing * Time.unscaledDeltaTime));
             var job = new TerrainMorphJob
             {
                 Shape = (int)_morphShape,
@@ -1189,7 +1284,10 @@ namespace Gavi
         private const float MorphLiftStartAmount = 0.15f;
         private const float MorphLiftEndAmount = 0.6f;
         private const float MorphLiftSmoothing = 6f;
+        /// <summary>Below this lift (local units) the morph is switched off at amount 0.</summary>
+        private const float MorphLiftRest = 0.002f;
         private float _morphLift;
+        private MorphShape _liftShape;
 
         /// <summary>How far the bent mesh is lifted, in local units of the terrain.</summary>
         private float MorphLiftTarget()
@@ -1199,7 +1297,7 @@ namespace Gavi
             if ((_morphShape != MorphShape.Planet && _morphShape != MorphShape.Tube) || terrain == null || view == null)
                 return 0f;
 
-            float ramp = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(MorphLiftStartAmount, MorphLiftEndAmount, _morphAmount));
+            float ramp = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(MorphLiftStartAmount, MorphLiftEndAmount, _shownAmount));
             float visibleHeight = view.orthographic
                 ? 2f * view.orthographicSize
                 : 2f * Mathf.Max(0.01f, Vector3.Dot(terrain.TransformPoint(LocalCenter) - view.transform.position, view.transform.forward)) * Mathf.Tan(0.5f * Mathf.Deg2Rad * view.fieldOfView);

@@ -103,6 +103,13 @@ namespace Gavi
         [Tooltip("TerrainGenerator.MorphShape: 1 = Dome, 2 = Planet, 3 = Tube, 5 = Pringle, 6 = Flag, 7 = Twist. Other numbers (removed shapes) give the dome.")]
         public int MorphShape = (int)TerrainGenerator.MorphShape.Dome;
         public float MorphAmount = 0.5f;
+        [Header("- Morph motion -")]
+        public float MotionBeat = 0f;
+        public float MotionAttack = TerrainGenerator.DefaultMotionAttack;
+        public float MotionRelease = TerrainGenerator.DefaultMotionRelease;
+        public float MotionBounce = 0f;
+        public float MotionWaveDepth = 0f;
+        public float MotionWaveBeats = TerrainGenerator.DefaultMotionWaveBeats;
 
         [Header("- Performance -")]
         [Tooltip("The noise is calculated again every this many mesh updates, 1 = every update.")]
@@ -200,6 +207,12 @@ namespace Gavi
             ApplyMorph = profile.ApplyMorph;
             MorphShape = profile.MorphShape;
             MorphAmount = profile.MorphAmount;
+            MotionBeat = profile.MotionBeat;
+            MotionAttack = profile.MotionAttack;
+            MotionRelease = profile.MotionRelease;
+            MotionBounce = profile.MotionBounce;
+            MotionWaveDepth = profile.MotionWaveDepth;
+            MotionWaveBeats = profile.MotionWaveBeats;
 
             // Performance
             NoiseInterval = profile.NoiseInterval;
@@ -273,6 +286,12 @@ namespace Gavi
             ApplyMorph = terrain.ApplyMorph;
             MorphShape = terrain.Morph;
             MorphAmount = terrain.MorphAmount;
+            MotionBeat = terrain.MotionBeat;
+            MotionAttack = terrain.MotionAttack;
+            MotionRelease = terrain.MotionRelease;
+            MotionBounce = terrain.MotionBounce;
+            MotionWaveDepth = terrain.MotionWaveDepth;
+            MotionWaveBeats = terrain.MotionWaveBeats;
 
             // Performance
             NoiseInterval = terrain.NoiseInterval;
@@ -355,6 +374,12 @@ namespace Gavi
             terrain.ApplyMorph = ApplyMorph;
             terrain.Morph = MorphShape;
             terrain.MorphAmount = MorphAmount;
+            terrain.MotionBeat = MotionBeat;
+            terrain.MotionAttack = MotionAttack;
+            terrain.MotionRelease = MotionRelease;
+            terrain.MotionBounce = MotionBounce;
+            terrain.MotionWaveDepth = MotionWaveDepth;
+            terrain.MotionWaveBeats = MotionWaveBeats;
 
             // Performance
             terrain.NoiseInterval = NoiseInterval;
