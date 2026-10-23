@@ -41,6 +41,7 @@ namespace Gavi
         private bool _pinned;
         private bool _hover;
         private bool _hoverSuppressed;
+        private bool _takenOver;
         private bool _hoverReady;
         private float _enterTime;
         private float _enterDelay;
@@ -55,8 +56,9 @@ namespace Gavi
         private bool _slideOpen;
         private float _slideFrom;
         private float _slideTo;
-        private float _slideT;
+        private float _slideStart;
         private float _slideHeight;
+        private float _slideEndTime = float.NegativeInfinity;
 
         private void Awake()
         {
@@ -121,12 +123,34 @@ namespace Gavi
             }
         }
 
+        /// <summary>
+        /// Takes over the fold state of a group that shares its window with this one (see UiGroupSwitch), before this group is
+        /// switched on. The state is applied without sliding.
+        /// </summary>
+        public void TakeOver(UiGroupFold from)
+        {
+            _pinned = from._pinned;
+            _pinnedSet = true;
+            _hover = from._hover;
+            _hoverReady = from._hoverReady;
+            _hoverSuppressed = from._hoverSuppressed;
+            _enterTime = from._enterTime;
+            _enterDelay = from._enterDelay;
+            _takenOver = true;
+            _applied = false;
+            _dirty = true;
+        }
+
         private void OnEnable()
         {
-            // The pointer state is stale after the group was switched off (closed tab).
-            _hover = false;
-            _hoverReady = false;
-            _hoverSuppressed = false;
+            // The pointer state is stale after the group was switched off (closed tab), unless it was handed over on purpose.
+            if (!_takenOver)
+            {
+                _hover = false;
+                _hoverReady = false;
+                _hoverSuppressed = false;
+            }
+            _takenOver = false;
             _leaving = false;
             _exitPending = false;
             _dirty = true;
@@ -181,6 +205,8 @@ namespace Gavi
             }
             _hover = true;
             _dirty = true;
+            if (_hoverReady)
+                ApplyPending();
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -213,11 +239,24 @@ namespace Gavi
                 if (other != null && other.isActiveAndEnabled && other != this && other._open && !other._pinned)
                 {
                     if (close)
+                    {
                         other.EndHover();
+                        other.ApplyPending();
+                    }
                     any = true;
                 }
             }
             return any;
+        }
+
+        // Starts a pending change now. A window that closes because another one opens must start in the same moment as the other,
+        // both read the same clock, so the two slides stay in step.
+        private void ApplyPending()
+        {
+            if (!_dirty || !_started)
+                return;
+            _dirty = false;
+            Apply();
         }
 
         private void EndHover()
@@ -331,7 +370,7 @@ namespace Gavi
             _slideTo = open ? MeasureOpen() : MeasureFolded();
             _slideFrom = from;
             _slideHeight = from;
-            _slideT = 0f;
+            _slideStart = Time.unscaledTime;
             _slideOpen = open;
             _sliding = true;
             // the content is cut at the group's edge while it slides
@@ -341,16 +380,22 @@ namespace Gavi
 
         private void StepSlide()
         {
-            _slideT += Time.unscaledDeltaTime / _slideTime;
-            float t = Mathf.Clamp01(_slideT);
+            float t = Mathf.Clamp01((Time.unscaledTime - _slideStart) / _slideTime);
             _slideHeight = Mathf.Lerp(_slideFrom, _slideTo, Mathf.SmoothStep(0f, 1f, t));
             SetLayoutHeight(_slideHeight);
             if (t >= 1f)
                 EndSlide();
         }
 
+        /// <summary>Whether the window slides or finished sliding less than the given time ago.</summary>
+        public bool IsSlidingWithin(float settleTime)
+        {
+            return _sliding || Time.unscaledTime - _slideEndTime < settleTime;
+        }
+
         private void EndSlide()
         {
+            _slideEndTime = Time.unscaledTime;
             SetInstant(_slideOpen);
         }
 

@@ -7,18 +7,22 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>
-    /// A row of small tabs that shows one of several menu groups at a time, so they share one window. Hovering a tab shows its group
-    /// at once, a click does the same. The groups are not part of any tab page list: this switch turns them on when it is shown and
-    /// off when it is hidden (e.g. when its menu tab is closed).
+    /// Lets several menu groups share one window: only one group is shown at a time and a row of small tabs inside each group picks
+    /// it. Hovering a tab shows its group at once, a click does the same. The new group takes over the fold state of the old one,
+    /// so the window stays as it is (open, pinned or opened by hovering). The groups are not part of any tab page list: this switch
+    /// turns them on when it is shown and off when it is hidden (e.g. when its menu tab is closed).
     /// </summary>
     public class UiGroupSwitch : MonoBehaviour
     {
         [Serializable]
         public class Entry
         {
-            public Button Button;
-            public Image Indicator;
+            [Tooltip("The group of this layer.")]
             public GameObject Group;
+            [Tooltip("The tab buttons inside this group, one per layer in the same order as the entries.")]
+            public Button[] Buttons;
+            [Tooltip("The small bars of those buttons that show the selected layer.")]
+            public Image[] Indicators;
         }
 
         [SerializeField] private List<Entry> _entries = new List<Entry>();
@@ -26,7 +30,11 @@ namespace Gavi
         [SerializeField] private Color _indicatorActiveColor = new Color(0.1f, 0.83f, 0.88f, 1f);
         [SerializeField] private Color _indicatorInactiveColor = new Color(1f, 1f, 1f, 0.12f);
 
+        [Tooltip("Hovering a tab does not pick its layer while the window slides and for this long (s) afterwards.")]
+        [SerializeField] private float _hoverSettleTime = 0.3f;
+
         private int _current;
+        private int _hoverIndex = -1;
         private bool _wired;
 
         private void Awake()
@@ -36,25 +44,48 @@ namespace Gavi
 
         private void Start()
         {
-            for (int i = 0; i < _entries.Count; i++)
+            foreach (Entry entry in _entries)
             {
-                int index = i;
-                if (_entries[i].Button == null)
+                if (entry.Buttons == null)
                     continue;
-                _entries[i].Button.onClick.AddListener(() => Select(index));
-                EventTrigger trigger = _entries[i].Button.gameObject.GetComponent<EventTrigger>();
-                if (trigger == null)
-                    trigger = _entries[i].Button.gameObject.AddComponent<EventTrigger>();
-                EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                enter.callback.AddListener(_ => Select(index));
-                trigger.triggers.Add(enter);
+                for (int i = 0; i < entry.Buttons.Length; i++)
+                {
+                    int index = i;
+                    Button button = entry.Buttons[i];
+                    if (button == null)
+                        continue;
+                    button.onClick.AddListener(() => Select(index));
+                    EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
+                    if (trigger == null)
+                        trigger = button.gameObject.AddComponent<EventTrigger>();
+                    EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+                    enter.callback.AddListener(_ => _hoverIndex = index);
+                    trigger.triggers.Add(enter);
+                    EventTrigger.Entry exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+                    exit.callback.AddListener(_ => { if (_hoverIndex == index) _hoverIndex = -1; });
+                    trigger.triggers.Add(exit);
+                }
             }
             _wired = true;
         }
 
         private void OnEnable()
         {
-            Apply();
+            _hoverIndex = -1;
+            Apply(-1);
+        }
+
+        // A tab under the pointer is picked by hovering, but not while the window slides: the new layer would take over the fold
+        // state at once and cut the slide short. The tab is picked as soon as the window has settled.
+        private void Update()
+        {
+            if (_hoverIndex < 0 || _hoverIndex == _current)
+                return;
+            UiGroupFold fold = _current < _entries.Count && _entries[_current].Group != null
+                ? _entries[_current].Group.GetComponent<UiGroupFold>() : null;
+            if (fold != null && fold.IsSlidingWithin(_hoverSettleTime))
+                return;
+            Select(_hoverIndex);
         }
 
         private void OnDisable()
@@ -68,20 +99,33 @@ namespace Gavi
         {
             if (index == _current && _wired)
                 return;
+            int previous = _current;
             _current = index;
             if (isActiveAndEnabled)
-                Apply();
+                Apply(previous);
         }
 
-        private void Apply()
+        private void Apply(int previous)
         {
+            // the window keeps its fold state when another layer takes its place
+            if (previous >= 0 && previous < _entries.Count && _current < _entries.Count)
+            {
+                UiGroupFold from = _entries[previous].Group != null ? _entries[previous].Group.GetComponent<UiGroupFold>() : null;
+                UiGroupFold to = _entries[_current].Group != null ? _entries[_current].Group.GetComponent<UiGroupFold>() : null;
+                if (from != null && to != null && from != to)
+                    to.TakeOver(from);
+            }
             for (int i = 0; i < _entries.Count; i++)
             {
                 bool active = i == _current;
                 if (_entries[i].Group != null && _entries[i].Group.activeSelf != active)
                     _entries[i].Group.SetActive(active);
-                if (_entries[i].Indicator != null)
-                    _entries[i].Indicator.color = active ? _indicatorActiveColor : _indicatorInactiveColor;
+                Image[] indicators = _entries[i].Indicators;
+                if (indicators == null)
+                    continue;
+                for (int k = 0; k < indicators.Length; k++)
+                    if (indicators[k] != null)
+                        indicators[k].color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
             }
         }
     }
