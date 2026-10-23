@@ -24,11 +24,7 @@ namespace Gavi
         [SerializeField] private Color _indicatorActiveColor = new Color(0.1f, 0.83f, 0.88f, 1f);
         [SerializeField] private Color _indicatorInactiveColor = new Color(1f, 1f, 1f, 0.12f);
 
-        [Tooltip("Hovering a tab selects it after this delay, so sweeping the mouse across other tabs does not switch them. Clicking still works instantly.")]
-        [SerializeField] private float _hoverDelay = 0.1f;
-
-        private int _hoverIndex = -1;
-        private float _hoverTime;
+        // hovering a tab selects it at once
 
         private void Start()
         {
@@ -43,21 +39,9 @@ namespace Gavi
                 EventTrigger trigger = _tabs[i].Button.gameObject.GetComponent<EventTrigger>();
                 if (trigger == null)
                     trigger = _tabs[i].Button.gameObject.AddComponent<EventTrigger>();
-                AddTrigger(trigger, EventTriggerType.PointerEnter, () => { _hoverIndex = index; _hoverTime = Time.unscaledTime; });
-                AddTrigger(trigger, EventTriggerType.PointerExit, () => { if (_hoverIndex == index) _hoverIndex = -1; });
+                AddTrigger(trigger, EventTriggerType.PointerEnter, () => { if (index != _current) Select(index); });
             }
             Select(_startIndex);
-        }
-
-        private void Update()
-        {
-            if (_hoverIndex < 0 || Time.unscaledTime - _hoverTime < _hoverDelay)
-                return;
-
-            int index = _hoverIndex;
-            _hoverIndex = -1;
-            if (index != _current)
-                Select(index);
         }
 
         private static void AddTrigger(EventTrigger trigger, EventTriggerType type, Action action)

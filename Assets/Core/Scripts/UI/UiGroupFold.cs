@@ -33,7 +33,6 @@ namespace Gavi
         private bool _ownLayout;
         private float _openMin;
         private float _openPreferred;
-        private TMP_Dropdown[] _dropdowns;
         private readonly List<GameObject> _hidden = new List<GameObject>();
 
         private bool _started;
@@ -71,7 +70,6 @@ namespace Gavi
             _openPreferred = _layout.preferredHeight;
             _mask = gameObject.AddComponent<RectMask2D>();
             _mask.enabled = false;
-            _dropdowns = GetComponentsInChildren<TMP_Dropdown>(true);
             if (_button != null)
                 _button.onClick.AddListener(OnClick);
         }
@@ -235,7 +233,8 @@ namespace Gavi
         {
             if (Input.GetMouseButton(0))
                 return true;
-            foreach (TMP_Dropdown dropdown in _dropdowns)
+            // looked up now: dropdowns can be added later (e.g. the shape list)
+            foreach (TMP_Dropdown dropdown in GetComponentsInChildren<TMP_Dropdown>())
                 if (dropdown != null && dropdown.IsExpanded)
                     return true;
             return false;
