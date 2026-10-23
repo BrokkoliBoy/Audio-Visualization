@@ -238,7 +238,7 @@ namespace Gavi
             if (entry == null || entry.Indicators == null || entry.Indicators.Length < 4)
                 return;
             float show = _orbitShow * _markFade;
-            Color accent = _indicatorActiveColor;
+            Color accent = ActiveColor;
             float trail = Mathf.Min(gap, 0.5f) * 0.5f;
             float arrive = Mathf.SmoothStep(0f, 1f, 1f - Mathf.Clamp01(gap / 0.6f));
             int targetSocket = (_orbitTarget & 1) == 0 ? 2 : 3;
@@ -301,6 +301,27 @@ namespace Gavi
                     entry.Group.SetActive(false);
         }
 
+        /// <summary>The groups of all layers, shown or not.</summary>
+        public IEnumerable<GameObject> Groups
+        {
+            get
+            {
+                foreach (Entry entry in _entries)
+                    if (entry.Group != null)
+                        yield return entry.Group;
+            }
+        }
+
+        // The marks of the selected layer take the accent color of the window they belong to.
+        private Color ActiveColor
+        {
+            get
+            {
+                GameObject group = _current >= 0 && _current < _entries.Count ? _entries[_current].Group : null;
+                return UiAccent.TryGetAccent(group, out Color accent) ? accent : _indicatorActiveColor;
+            }
+        }
+
         /// <summary>The fold of the group that is shown right now.</summary>
         public UiGroupFold CurrentFold => _current >= 0 && _current < _entries.Count && _entries[_current].Group != null ? _entries[_current].Group.GetComponent<UiGroupFold>() : null;
 
@@ -349,6 +370,7 @@ namespace Gavi
         private void ApplyIndicatorColors()
         {
             UpdateLayerAlpha();
+            Color activeColor = ActiveColor;
             foreach (Entry entry in _entries)
             {
                 if (_toggleMode)
@@ -390,7 +412,7 @@ namespace Gavi
                 {
                     if (entry.Indicators[k] == null)
                         continue;
-                    Color color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
+                    Color color = k == _current ? activeColor : _indicatorInactiveColor;
                     color.a *= _markFade * LayerAlpha(k);
                     entry.Indicators[k].color = color;
                 }

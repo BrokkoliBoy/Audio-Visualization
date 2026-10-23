@@ -43,8 +43,39 @@ namespace Gavi
                     trigger = _tabs[i].Button.gameObject.AddComponent<EventTrigger>();
                 AddTrigger(trigger, EventTriggerType.PointerEnter, () => { if (index != _current) Select(index); });
             }
+            ApplyAccents();
             Select(_startIndex);
             _started = true;
+        }
+
+        // Every window hands its accent color to its controls, and the bar under a tab shows the accents of the windows on its pages.
+        private void ApplyAccents()
+        {
+            foreach (Tab tab in _tabs)
+            {
+                List<Color> colors = new List<Color>();
+                foreach (GameObject page in tab.Pages)
+                {
+                    if (page == null)
+                        continue;
+                    UiGroupSwitch groupSwitch = page.GetComponent<UiGroupSwitch>();
+                    List<GameObject> groups = new List<GameObject>();
+                    if (groupSwitch != null)
+                        groups.AddRange(groupSwitch.Groups);
+                    else
+                        groups.Add(page);
+                    foreach (GameObject group in groups)
+                    {
+                        UiAccent.TintGroup(group);
+                        if (groupSwitch != null && group != groups[0])
+                            continue;
+                        if (UiAccent.TryGetAccent(group, out Color accent))
+                            colors.Add(accent);
+                    }
+                }
+                if (tab.Indicator != null && colors.Count > 0)
+                    tab.Indicator.sprite = UiAccent.GradientSprite(colors);
+            }
         }
 
         private static void AddTrigger(EventTrigger trigger, EventTriggerType type, Action action)
@@ -80,7 +111,11 @@ namespace Gavi
                 if (active && _started && !_tabs[i].KeepFolded)
                     OpenFirstGroup(_tabs[i]);
                 if (_tabs[i].Indicator != null)
-                    _tabs[i].Indicator.color = active ? _indicatorActiveColor : _indicatorInactiveColor;
+                {
+                    bool gradient = _tabs[i].Indicator.sprite != null;
+                    Color inactive = gradient ? new Color(1f, 1f, 1f, 0.3f) : _indicatorInactiveColor;
+                    _tabs[i].Indicator.color = active ? (gradient ? Color.white : _indicatorActiveColor) : inactive;
+                }
             }
         }
     }
