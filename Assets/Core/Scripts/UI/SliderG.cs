@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
 namespace Gavi
 {
-    public class SliderG : MonoBehaviour
+    public class SliderG : MonoBehaviour, IScrollHandler
     {
         [SerializeField] private float _minValue = 0;
         [SerializeField] private float _maxValue = 1;
@@ -40,6 +41,10 @@ namespace Gavi
         [SerializeField] private bool _useDisplayRange;
         [SerializeField] private float _displayMin = 1f;
         [SerializeField] private float _displayMax = 10f;
+
+        [Header("--- Mouse wheel ---")]
+        [Tooltip("Step of one wheel notch, in the unit of the text: the display range if it is used, otherwise the value. 0 = automatic (1 for whole numbers, otherwise about 1/50 of the range).")]
+        [SerializeField] private float _wheelStep;
 
         [Header("--- References ---")]
         [SerializeField] private Slider _slider;
@@ -117,6 +122,54 @@ namespace Gavi
                 _lastInt = Mathf.RoundToInt(value);
             }
         }
+
+        #region Mouse wheel
+        /// <summary>Wheel forward = higher value, wheel back = lower value, in steps of the wheel step.</summary>
+        public void OnScroll(PointerEventData eventData)
+        {
+            if (!_slider.interactable)
+                return;
+            float wheel = eventData.scrollDelta.y;
+            if (Mathf.Abs(wheel) < 0.001f)
+                return;
+
+            int direction = wheel > 0f ? 1 : -1;
+            if (_useDisplayRange)
+            {
+                float span = Mathf.Abs(_displayMax - _displayMin);
+                if (span < 0.00001f)
+                    return;
+                float shown = Mathf.Lerp(_displayMin, _displayMax, _slider.value);
+                float next = SteppedValue(shown, WheelStep(span, false), direction);
+                _slider.value = Mathf.Clamp01(Mathf.InverseLerp(_displayMin, _displayMax, next));
+            }
+            else
+            {
+                Value = SteppedValue(PositionToValue(_slider.value), WheelStep(Range, _isInteger), direction);
+            }
+            eventData.Use();
+        }
+
+        private float WheelStep(float range, bool whole)
+        {
+            if (_wheelStep > 0f)
+                return _wheelStep;
+            if (whole)
+                return 1f;
+            // about 1/50 of the range, rounded to one digit
+            float raw = range / 50f;
+            float magnitude = Mathf.Pow(10f, Mathf.Floor(Mathf.Log10(raw)));
+            return Mathf.Round(raw / magnitude) * magnitude;
+        }
+
+        /// <summary>The next multiple of the step above or below the value (a value between two multiples goes to the closer one in that direction).</summary>
+        private static float SteppedValue(float value, float step, int direction)
+        {
+            float units = value / step;
+            float snapped = direction > 0 ? Mathf.Floor(units + 0.001f) + 1f : Mathf.Ceil(units - 0.001f) - 1f;
+            return snapped * step;
+        }
+        #endregion
 
         #region Mapping
         /// <summary>Slider position (0-1) to value. Linear, or with a snap plateau and slow zone around the snap value.</summary>

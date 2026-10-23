@@ -6,7 +6,7 @@ namespace Gavi
 {
     /// <summary>
     /// Lets the mouse wheel step through the options of a dropdown while the pointer is on it, without opening it.
-    /// Wheel forward = previous option, wheel back = next option. Does nothing while the list is open (it scrolls itself).
+    /// Wheel forward = previous option, wheel back = next option, wrapping around at both ends. Does nothing while the list is open (it scrolls itself).
     /// </summary>
     [RequireComponent(typeof(TMP_Dropdown))]
     public class DropdownWheel : MonoBehaviour, IScrollHandler
@@ -24,7 +24,8 @@ namespace Gavi
             if (Mathf.Abs(wheel) < 0.001f)
                 return;
 
-            int next = Mathf.Clamp(_dropdown.value + (wheel > 0f ? -1 : 1), 0, _dropdown.options.Count - 1);
+            int count = _dropdown.options.Count;
+            int next = (_dropdown.value + (wheel > 0f ? -1 : 1) + count) % count;
             if (next != _dropdown.value)
                 _dropdown.value = next;
             eventData.Use();

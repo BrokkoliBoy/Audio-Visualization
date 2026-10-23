@@ -4,7 +4,7 @@ What the Terrain view can do today and what is planned. The terrain is a mesh wh
 a noise pattern, the audio spectrum and a few beat effects. Everything below is reachable in the slide-in menu
 (Tab) unless noted.
 
-Last updated: 2026-10-23 (pause keeps the picture, Color tab layout, slider previews (brightness, bloom, dirt, dampening), height follows zoom slider, smoothing moved to the Terrain tab, Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black, tabs open on hover, color keys share one hue, new gradient key layout, pattern balance, soft top end, color curve and glow scale)
+Last updated: 2026-10-23 (mouse wheel on sliders and tick boxes, foldable menu groups, pause keeps the picture, Color tab layout, slider previews (brightness, bloom, dirt, dampening), height follows zoom slider, smoothing moved to the Terrain tab, Burst jobs, performance settings, seven new audio shapes, spread noise, face count up to 1000, Max FPS, fade in from black, tabs open on hover, color keys share one hue, new gradient key layout, pattern balance, soft top end, color curve and glow scale)
 
 ## Menu tabs
 
@@ -50,7 +50,9 @@ Tabs open on hover (after a short 0.1 s delay, so sweeping across them does not 
 | Background tint | done | The middle and bottom of the sky take the hue of the base color, brightness and saturation come from the sky colors in the volume profile. Toggle "Tint background" at the end of the Glow group (Color tab) |
 | Profiles | done | All terrain settings except the test signal |
 | Camera control | done | Mouse (left drag on the background or middle drag orbits, left drag on the terrain turns it around its middle, right drag moves, wheel zooms; both left and right belong to the band editor while it is on) and keyboard (WASD, Q / E, C resets camera and terrain turn, the reset glides), beat zoom, camera menu (controls overview) and camera switches in the General tab |
-| Dropdown mouse wheel | done | The wheel steps through the options of a dropdown while the pointer is on it (forward = previous, back = next), without opening it |
+| Dropdown mouse wheel | done | The wheel steps through the options of a dropdown while the pointer is on it (forward = previous, back = next, wrapping around at both ends), without opening it |
+| Slider and toggle mouse wheel | done | The wheel changes a slider while the pointer is on it (forward = higher) in steps that fit the slider: automatic about 1/50 of the range (whole numbers step by 1), set per slider with "Wheel Step" (e.g. hue 1, intensity 0.1, bloom 0.01, dirt 0.02, depth 0.02, detail, height, zoom and speed 0.1). Wheel on a tick box switches it (forward = on, back = off) |
+| Foldable groups | done | Every menu group has a fold button on the left half of its header (+ / -), the right half is still the tick box. A folded group shows only its header and opens while the pointer is on it, closing again when the pointer leaves (not while a mouse button is held or a dropdown list is open). A click on the button pins the group open, another click folds it. Groups start open |
 
 ## Planned / ideas
 
