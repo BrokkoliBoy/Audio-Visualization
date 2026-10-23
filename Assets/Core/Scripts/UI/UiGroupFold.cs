@@ -24,12 +24,10 @@ namespace Gavi
         [SerializeField] private bool _startFolded;
         [Tooltip("A folded group opens while the pointer is on it.")]
         [SerializeField] private bool _openOnHover = true;
-        [Tooltip("Seconds a hover-opened group stays open after the pointer left it, so the pointer can move on to the next group in one go.")]
-        [SerializeField] private float _closeDelay = 0.3f;
         [Tooltip("Seconds the group takes to slide open or shut. 0 = instant.")]
         [SerializeField] private float _slideTime = 0.15f;
         [Tooltip("Opacity of the header highlight that stays while the group is pinned open and the pointer is elsewhere. Hovering it is brighter still.")]
-        [SerializeField] private float _pinnedHighlight = 0.02f;
+        [SerializeField] private float _pinnedHighlight = 0.008f;
 
         private LayoutElement _layout;
         private bool _ownLayout;
@@ -46,12 +44,11 @@ namespace Gavi
         private bool _pinned;
         private bool _hover;
         private bool _hoverSuppressed;
+        private bool _stayOpen;
         private bool _takenOver;
         private bool _hoverReady;
         private float _enterTime;
         private float _enterDelay;
-        private bool _leaving;
-        private float _leaveTime;
         private bool _exitPending;
         private bool _applied;
         private bool _open;
@@ -125,7 +122,7 @@ namespace Gavi
             _hover = false;
             _hoverReady = false;
             _hoverSuppressed = false;
-            _leaving = false;
+            _stayOpen = false;
             _exitPending = false;
             if (!_started)
                 return;
@@ -154,6 +151,7 @@ namespace Gavi
             _enterTime = from._enterTime;
             _enterDelay = from._enterDelay;
             _takenOver = true;
+            _stayOpen = from._stayOpen;
             _handoverHeight = from._sliding ? from._slideHeight : ((RectTransform)from.transform).rect.height;
             _applied = false;
             _dirty = true;
@@ -169,7 +167,6 @@ namespace Gavi
                 _hoverSuppressed = false;
             }
             _takenOver = false;
-            _leaving = false;
             _exitPending = false;
             _dirty = true;
             // a group changed while its tab was off shows the new state in the very frame the tab opens
@@ -185,12 +182,10 @@ namespace Gavi
 
         private void Update()
         {
-            if (_leaving && Time.unscaledTime - _leaveTime >= _closeDelay)
-                EndHover();
             if (_exitPending && !HoldsOpen())
             {
                 _exitPending = false;
-                EndHover();
+                LeaveHover();
             }
             // a pointer that only passes over the group must not open it (and shift the layout under the pointer)
             if (_hover && !_hoverReady && Time.unscaledTime - _enterTime >= _enterDelay)
@@ -213,7 +208,6 @@ namespace Gavi
         public void OnPointerEnter(PointerEventData eventData)
         {
             _exitPending = false;
-            _leaving = false;
             if (!_hover)
             {
                 // coming from a group opened by hovering has its own delay, so one can switch straight through the groups
@@ -237,13 +231,7 @@ namespace Gavi
                 _exitPending = true;
                 return;
             }
-            if (_open && !_pinned)
-            {
-                _leaving = true;
-                _leaveTime = Time.unscaledTime;
-                return;
-            }
-            EndHover();
+            LeaveHover();
         }
 
         // Whether another group of the tab is open by hovering, closing those if asked. The group that opens takes over from them at once.
@@ -279,9 +267,20 @@ namespace Gavi
             Apply();
         }
 
+        // The pointer left the group: a group that was opened by hovering stays open until another group takes over, so the
+        // menu can be left and come back with the last window still there.
+        private void LeaveHover()
+        {
+            _stayOpen = _open && !_pinned;
+            _hover = false;
+            _hoverReady = false;
+            _hoverSuppressed = false;
+            _dirty = true;
+        }
+
         private void EndHover()
         {
-            _leaving = false;
+            _stayOpen = false;
             _hover = false;
             _hoverReady = false;
             _hoverSuppressed = false;
@@ -325,6 +324,7 @@ namespace Gavi
             {
                 // fold right away although the pointer is still on the group
                 _hoverSuppressed = true;
+                _stayOpen = false;
                 _hoverReady = false;
             }
             _pinned = pin;
@@ -389,7 +389,7 @@ namespace Gavi
 
         private void Apply()
         {
-            bool open = _pinned || (_openOnHover && _hover && _hoverReady && !_hoverSuppressed);
+            bool open = _pinned || _stayOpen || (_openOnHover && _hover && _hoverReady && !_hoverSuppressed);
             if (_applied && open == _open)
                 return;
             bool slide = (_applied || _handoverHeight >= 0f) && _slideTime > 0f && isActiveAndEnabled;
@@ -449,6 +449,9 @@ namespace Gavi
             if (t >= 1f)
                 EndSlide();
         }
+
+        /// <summary>Whether the group is open (pinned or by hovering), also while it is still sliding open.</summary>
+        public bool IsOpen => _open;
 
         /// <summary>Whether the window slides or finished sliding less than the given time ago.</summary>
         public bool IsSlidingWithin(float settleTime)

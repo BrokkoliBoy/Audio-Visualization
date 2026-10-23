@@ -26,8 +26,20 @@ namespace Gavi
         [SerializeField] private RectTransform _dockedMenuArea;
         [Tooltip("How far the docked trigger area reaches to the left, as a fraction of the menu width beyond the menu (0.2 = 20 % wider than the menu).")]
         [SerializeField] private float _dockedExtraWidth = 0.2f;
+        [Tooltip("Width of a strip at the right screen edge, over the whole height, where the menu always comes (canvas reference pixels).")]
+        [SerializeField] private float _dockedEdgeStrip = 80f;
         [Tooltip("Margin of the docked trigger area above and below the menu, as a fraction of the screen height.")]
         [SerializeField] private float _dockedExtraHeight = 0.08f;
+        [Header("--- Intent (optional) ---")]
+        [Tooltip("Opens the menu already when the pointer moves towards it with some speed, wherever it is on the screen.")]
+        [SerializeField] private bool _openByIntent;
+        [Tooltip("Minimum pointer speed for that, in screen heights per second.")]
+        [SerializeField] private float _intentSpeed = 0.6f;
+        [Tooltip("The pointer is followed this many seconds ahead; the menu opens when that point is in the trigger area.")]
+        [SerializeField] private float _intentLookAhead = 0.4f;
+        [Tooltip("The menu stays open this long (s) after the last movement towards it, so a pointer that slows down on the way still finds it.")]
+        [SerializeField] private float _intentHold = 0.9f;
+
         [Tooltip("The menu stays open while any of these is visible (e.g. a popup that belongs to it).")]
         [SerializeField] private List<CanvasGroup> _keepOpenWhileVisible = new List<CanvasGroup>();
 
@@ -50,6 +62,9 @@ namespace Gavi
 
         private bool _dismissed;
         private float _startUntil;
+        private float _intentUntil;
+        private Vector2 _lastPosition;
+        private Vector2 _velocity;
 
 
         #region Mono
@@ -63,6 +78,7 @@ namespace Gavi
         private void Update()
         {
             bool near = IsPointerNear(IsRevealed);
+            bool intent = UpdateIntent();
 
             // After a dismiss the menu stays closed until the pointer has left once.
             if (_dismissed)
@@ -72,7 +88,7 @@ namespace Gavi
                 near = false;
             }
 
-            bool want = !_dismissed && (Pinned || near || Time.unscaledTime < _startUntil || IsKeptOpenByOthers());
+            bool want = !_dismissed && (Pinned || near || intent || Time.unscaledTime < _startUntil || IsKeptOpenByOthers());
 
             if (IsRevealed && !want && !_dismissed && IsStickyActive())
                 want = true;
@@ -125,31 +141,93 @@ namespace Gavi
         #region Helpers
         private bool IsPointerNear(bool includeStayRegions)
         {
+            return UiPointer.IsInsideWindow && IsPointNear(UiPointer.Position, includeStayRegions);
+        }
+
+        private bool IsPointNear(Vector2 point, bool includeStayRegions)
+        {
             for (int i = 0; i < _triggerRegions.Count; i++)
-                if (UiPointer.IsNear(_triggerRegions[i], _triggerPadding, includeStayRegions ? _openExtension : Vector4.zero))
+                if (IsInside(_triggerRegions[i], _triggerPadding, includeStayRegions ? _openExtension : Vector4.zero, point))
                     return true;
 
-            if (IsPointerInDockedArea())
+            if (IsPointInDockedArea(point))
                 return true;
 
             if (includeStayRegions)
                 for (int i = 0; i < _stayRegions.Count; i++)
-                    if (UiPointer.IsNear(_stayRegions[i], _stayPadding, _openExtension))
+                    if (IsInside(_stayRegions[i], _stayPadding, _openExtension, point))
                         return true;
 
             return false;
         }
 
+        private static bool IsInside(RectTransform rectTransform, Vector4 padding, Vector4 extension, Vector2 point)
+        {
+            if (rectTransform == null || !rectTransform.gameObject.activeInHierarchy)
+                return false;
+            return UiPointer.GetScreenRect(rectTransform, padding, extension).Contains(point);
+        }
+
         // The menu slides in from the right edge. Its own rect is used for the height only; the width is measured from the screen edge,
         // so the area is the same while the menu is slid out.
-        private bool IsPointerInDockedArea()
+        private static float ScaleOf(RectTransform rectTransform)
         {
-            if (_dockedMenuArea == null || !_dockedMenuArea.gameObject.activeInHierarchy || !UiPointer.IsInsideWindow)
+            Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
+            return canvas != null ? canvas.rootCanvas.scaleFactor : 1f;
+        }
+
+        private bool IsPointInDockedArea(Vector2 point)
+        {
+            if (_dockedMenuArea == null || !_dockedMenuArea.gameObject.activeInHierarchy)
                 return false;
             Rect menu = UiPointer.GetScreenRect(_dockedMenuArea, Vector4.zero);
             float margin = Screen.height * _dockedExtraHeight;
             Rect area = Rect.MinMaxRect(Screen.width - menu.width * (1f + _dockedExtraWidth), menu.yMin - margin, Screen.width, menu.yMax + margin);
-            return area.Contains(UiPointer.Position);
+            if (point.x >= Screen.width - _dockedEdgeStrip * ScaleOf(_dockedMenuArea))
+                return true;
+            return area.Contains(point);
+        }
+
+        // The pointer path of the next moments: a few points along its current direction.
+        private bool PathReachesMenu(Vector2 position)
+        {
+            for (int step = 1; step <= 3; step++)
+                if (IsPointNear(position + _velocity * (_intentLookAhead * step / 3f), false))
+                    return true;
+            return false;
+        }
+
+        // Opens the menu when the pointer moves fast enough towards it: the pointer is followed a short time ahead and the menu
+        // comes as soon as that point lies in the trigger area. It then stays for a moment; any fast movement somewhere else
+        // takes the intent back, and a pointer that really arrives is handled by the normal rules.
+        private bool UpdateIntent()
+        {
+            Vector2 position = UiPointer.Position;
+            float dt = Time.unscaledDeltaTime;
+            if (!_openByIntent || dt <= 0f || !UiPointer.IsInsideWindow || UiPointer.IsLocked)
+            {
+                _lastPosition = position;
+                _velocity = Vector2.zero;
+                return false;
+            }
+
+            Vector2 instant = (position - _lastPosition) / dt;
+            _lastPosition = position;
+            _velocity = Vector2.Lerp(_velocity, instant, 1f - Mathf.Exp(-20f * dt));
+
+            // dragging a slider or the like is no intent
+            if (Input.GetMouseButton(0))
+                return Time.unscaledTime < _intentUntil;
+
+            float minSpeed = _intentSpeed * Screen.height;
+            if (_velocity.magnitude >= minSpeed)
+            {
+                if (PathReachesMenu(position))
+                    _intentUntil = Time.unscaledTime + _intentHold;
+                else
+                    _intentUntil = 0f;
+            }
+            return Time.unscaledTime < _intentUntil;
         }
 
         private bool IsKeptOpenByOthers()

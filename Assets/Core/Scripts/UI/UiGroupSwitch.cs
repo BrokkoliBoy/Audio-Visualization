@@ -36,6 +36,7 @@ namespace Gavi
         private int _current;
         private int _hoverIndex = -1;
         private bool _wired;
+        private float _markFade = 1f;
 
         private void Awake()
         {
@@ -76,14 +77,19 @@ namespace Gavi
         }
 
         // A tab under the pointer is picked by hovering, but not while the window slides: the new layer would take over the fold
-        // state at once and cut the slide short. The tab is picked as soon as the window has settled.
+        // state at once and cut the slide short. The tab is picked as soon as the window has settled. A folded window shows no tab
+        // marks, so there is nothing to pick either.
         private void Update()
         {
-            if (_hoverIndex < 0 || _hoverIndex == _current)
-                return;
-            UiGroupFold fold = _current < _entries.Count && _entries[_current].Group != null
+            UiGroupFold current = _current >= 0 && _current < _entries.Count && _entries[_current].Group != null
                 ? _entries[_current].Group.GetComponent<UiGroupFold>() : null;
-            if (fold != null && fold.IsSlidingWithin(_hoverSettleTime))
+            float target = current == null || current.IsOpen ? 1f : 0f;
+            _markFade = Mathf.Lerp(_markFade, target, 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+            ApplyIndicatorColors();
+
+            if (_hoverIndex < 0 || _hoverIndex == _current || target < 0.5f)
+                return;
+            if (current != null && current.IsSlidingWithin(_hoverSettleTime))
                 return;
             Select(_hoverIndex);
         }
@@ -120,12 +126,25 @@ namespace Gavi
                 bool active = i == _current;
                 if (_entries[i].Group != null && _entries[i].Group.activeSelf != active)
                     _entries[i].Group.SetActive(active);
-                Image[] indicators = _entries[i].Indicators;
-                if (indicators == null)
+            }
+            ApplyIndicatorColors();
+        }
+
+        // The small marks of the tabs show the selected one. They fade out while the window is folded.
+        private void ApplyIndicatorColors()
+        {
+            foreach (Entry entry in _entries)
+            {
+                if (entry.Indicators == null)
                     continue;
-                for (int k = 0; k < indicators.Length; k++)
-                    if (indicators[k] != null)
-                        indicators[k].color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
+                for (int k = 0; k < entry.Indicators.Length; k++)
+                {
+                    if (entry.Indicators[k] == null)
+                        continue;
+                    Color color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
+                    color.a *= _markFade;
+                    entry.Indicators[k].color = color;
+                }
             }
         }
     }
