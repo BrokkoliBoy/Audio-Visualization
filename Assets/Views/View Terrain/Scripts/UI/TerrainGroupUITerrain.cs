@@ -8,7 +8,7 @@ namespace Gavi
 {
     public class TerrainGroupUITerrain : TerrainGroupUI
     {
-        [Tooltip("Number of faces along both axes of the terrain.")]
+        [Tooltip("Detail of the terrain: the number of faces along both axes (1 = 20, 7 = 500, 10 = 1000). The upper end is compressed, 500 faces are enough for most patterns.")]
         [FormerlySerializedAs("_sliderFaceCountX")]
         [SerializeField] private SliderG _sliderFaceCount;
         [SerializeField] private SliderG _sliderTerrainHeight;

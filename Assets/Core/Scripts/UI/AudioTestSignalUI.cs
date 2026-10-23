@@ -16,7 +16,6 @@ namespace Gavi
         [SerializeField] private Toggle _toggleEnabled;
         [SerializeField] private TMP_Dropdown _dropdownSignal;
         [SerializeField] private SliderG _sliderLevel;
-        [SerializeField] private Toggle _toggleBeat;
         [SerializeField] private SliderG _sliderBeatStrength;
         [SerializeField] private Toggle _toggleBeatFromSong;
         [SerializeField] private Toggle _toggleFreezeNoise;
@@ -30,11 +29,17 @@ namespace Gavi
             _toggleEnabled.onValueChanged.AddListener(isOn => _signal.Enabled = isOn);
             _dropdownSignal.onValueChanged.AddListener(index => _signal.SignalIndex = index);
             _sliderLevel.OnValueChangedFloat.AddListener(value => _signal.Level = value);
-            _toggleBeat.onValueChanged.AddListener(isOn => _signal.Beat = isOn);
             _sliderBeatStrength.OnValueChangedFloat.AddListener(value => _signal.BeatStrength = value);
             _toggleBeatFromSong.onValueChanged.AddListener(isOn => _signal.BeatStrengthFromSong = isOn);
             _toggleFreezeNoise.onValueChanged.AddListener(isOn => _signal.FreezeNoise = isOn);
             _toggleEditBands.onValueChanged.AddListener(isOn => _signal.EditBands = isOn);
+        }
+
+        private void Update()
+        {
+            // the hotkey switches the signal too, the toggle follows it
+            if (_toggleEnabled.isOn != _signal.Enabled)
+                _toggleEnabled.SetIsOnWithoutNotify(_signal.Enabled);
         }
 
         private void Start()
@@ -44,7 +49,6 @@ namespace Gavi
             _dropdownSignal.SetValueWithoutNotify(_signal.SignalIndex);
             _dropdownSignal.RefreshShownValue();
             _sliderLevel.Value = _signal.Level;
-            _toggleBeat.SetIsOnWithoutNotify(_signal.Beat);
             _sliderBeatStrength.Value = _signal.BeatStrength;
             _toggleBeatFromSong.SetIsOnWithoutNotify(_signal.BeatStrengthFromSong);
             _toggleFreezeNoise.SetIsOnWithoutNotify(_signal.FreezeNoise);

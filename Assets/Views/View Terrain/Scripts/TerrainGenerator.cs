@@ -77,6 +77,7 @@ namespace Gavi
         private float _invertAmount;
         private float _invertEased;
         private bool _invertStateKnown;
+        private bool _invertMoving;
         private TerrainNoise.Pattern _invertPattern;
         private int _lastBeatCount;
         private bool _beatFlipped;
@@ -145,18 +146,18 @@ namespace Gavi
         [Tooltip("Bends the whole mesh after the heights are calculated. Off = the flat terrain.")]
         [SerializeField] private bool _applyMorph;
         public bool ApplyMorph { get => _applyMorph; set => _applyMorph = value; }
-        [SerializeField] private MorphShape _morphShape = MorphShape.Bowl;
-        public enum MorphShape { Bowl, Dome, Planet, Tube, Halfpipe, Saddle, Flag, Twist }
-        public static readonly string[] MorphNames = { "Bowl", "Dome", "Planet", "Tube", "Halfpipe", "Saddle", "Flag", "Twist" };
-        public int Morph { get => (int)_morphShape; set => _morphShape = (MorphShape)Mathf.Clamp(value, 0, MorphNames.Length - 1); }
+        [SerializeField] private MorphShape _morphShape = MorphShape.Dome;
+        /// <summary>The numbers are what profiles store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
+        public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7 }
+        /// <summary>The shapes in the order of the menu.</summary>
+        public static readonly MorphShape[] MorphOrder = { MorphShape.Dome, MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Pringle, MorphShape.Flag };
+        public static readonly string[] MorphNames = { "Dome", "Planet", "Twist", "Tube", "Pringle", "Flag" };
+        /// <summary>The <see cref="MorphShape"/> as number. A number of a removed shape gives the dome.</summary>
+        public int Morph { get => (int)_morphShape; set => _morphShape = System.Array.IndexOf(MorphOrder, (MorphShape)value) >= 0 ? (MorphShape)value : MorphShape.Dome; }
         [Tooltip("How far the mesh is bent. 0 = flat, 1 = fully bent.")]
         [Range(0, 1)]
         [SerializeField] private float _morphAmount = 0.5f;
         public float MorphAmount { get => _morphAmount; set => _morphAmount = Mathf.Clamp01(value); }
-        [Tooltip("0 = the bend stays, 1 = the mesh is only bent on the beat and relaxes in between.")]
-        [Range(0, 1)]
-        [SerializeField] private float _morphBeat;
-        public float MorphBeat { get => _morphBeat; set => _morphBeat = Mathf.Clamp01(value); }
 
         [Header("--- Audio ---")]
         [Tooltip("When true, the mesh will apply height to the vertices according to audio sample data.")]
@@ -336,9 +337,18 @@ namespace Gavi
 
 
         #region Mesh Update
+        /// <summary>
+        /// True while the song is paused: the terrain time stands still (noise, waves, beats, morph animation) and the picture
+        /// stays as it is. The test signal stands in for the song, so it never counts as paused.
+        /// </summary>
+        public bool Frozen => !AudioTestSignal.IsActive && AudioSampler.Instance != null && AudioSampler.Instance.AudioPlayer.IsPaused;
+
+        // Seconds of terrain time, stops while frozen.
+        private float _clock;
+
         private void ApplyPerlinSpeed()
         {
-            if (AudioTestSignal.IsActive && AudioTestSignal.Instance.FreezeNoise)
+            if (Frozen || (AudioTestSignal.IsActive && AudioTestSignal.Instance.FreezeNoise))
                 return;
             _perlinOffsetX += _perlinOffsetSpeed.x * Time.deltaTime;
             _perlinOffsetY += _perlinOffsetSpeed.y * Time.deltaTime;
@@ -360,6 +370,8 @@ namespace Gavi
 
             _stepDelta = _timeSinceMesh > 0f ? _timeSinceMesh : Time.deltaTime;
             _timeSinceMesh = 0f;
+            if (!Frozen)
+                _clock += _stepDelta;
 
             CreateShape();
             ApplyMesh();
@@ -376,7 +388,7 @@ namespace Gavi
             {
                 if (_beatWave.NeedsBassEdge)
                     _beatWave.SetBassEdge(GetBassEdgeDistance());
-                _beatWave.Tick(_stepDelta);
+                _beatWave.Tick(_stepDelta, Frozen);
             }
             UpdateInvert();
 
@@ -498,12 +510,20 @@ namespace Gavi
             //    _meshCollider.sharedMesh = _mesh;
         }
 
+        private bool _refreshRequested;
+
+        /// <summary>Settings changed. While paused the next update shows them on the frozen moment, otherwise nothing would move.</summary>
+        public void RequestRefresh() => _refreshRequested = true;
+
         /// <summary>Sets up the job that calculates height and color of every vertex and starts it.</summary>
         private JobHandle ScheduleVertexJob(int vertexCount)
         {
             int shapeCount = _audioShapeSettings.Count;
             bool audio = _applyAudio && _samplesContainer != null && shapeCount > 0 && _bandCount > 0;
-            bool paused = AudioSampler.Instance != null && AudioSampler.Instance.AudioPlayer.IsPaused;
+            bool paused = Frozen;
+            // A flowing invert is followed every frame, otherwise it would show up as one jump at the next menu change.
+            bool refresh = _refreshRequested || _invertMoving;
+            _refreshRequested = false;
             bool smoothing = audio && _applyAudioSmoothing && _audioSmoothingCurve != null;
             bool color = _applyColorByHeight && _colorHeightGradient != null;
 
@@ -588,8 +608,9 @@ namespace Gavi
 
                 Dampen = _applyDampening,
                 // Paused: no more dampening steps, so the picture stays exactly where it is.
-                DampenDown = paused ? 0f : _dampenLerpFactorDown,
-                DampenUp = paused ? 0f : _dampenLerpFactorUp,
+                // A menu change snaps the picture once to the frozen moment with the new settings.
+                DampenDown = paused ? (refresh ? 1f : 0f) : _dampenLerpFactorDown,
+                DampenUp = paused ? (refresh ? 1f : 0f) : _dampenLerpFactorUp,
                 FpsEqualizer = _fpsEqualizer,
 
                 ApplyColor = color,
@@ -863,6 +884,7 @@ namespace Gavi
                 _invertEased = target;
                 _invertPattern = _noisePattern;
                 _invertStateKnown = true;
+                _invertMoving = false;
                 return;
             }
 
@@ -871,6 +893,7 @@ namespace Gavi
             // an eased flow: the amount moves linearly, the pattern follows it smoothed
             _invertAmount = Mathf.MoveTowards(_invertAmount, target, _stepDelta / seconds);
             _invertEased = _invertAmount * _invertAmount * (3f - 2f * _invertAmount);
+            _invertMoving = !Mathf.Approximately(_invertAmount, target);
         }
 
         /// <summary>Distance from the middle (in half terrain widths) where the bass bands end, found on the first active audio shape.</summary>
@@ -1135,26 +1158,54 @@ namespace Gavi
         private bool ScheduleMorph(ref JobHandle handle)
         {
             float amount = _morphAmount;
-            if (_applyMorph && _morphBeat > 0f && _beatWave != null)
-                amount *= 1f - _morphBeat * (1f - _beatWave.BeatEnvelope);
             if (!_applyMorph || amount <= 0.0005f)
+            {
+                _morphLift = 0f;
                 return false;
+            }
 
             EnsureArray(ref _drawnVertices, _vertices.Length);
             float half = _terrainSizeX * 0.5f;
+            _morphLift = Mathf.Lerp(_morphLift, MorphLiftTarget(), 1f - Mathf.Exp(-MorphLiftSmoothing * Time.unscaledDeltaTime));
             var job = new TerrainMorphJob
             {
                 Shape = (int)_morphShape,
                 Amount = amount,
+                Lift = _morphLift,
                 Half = half,
                 CenterX = _terrainSizeX * 0.5f,
                 CenterZ = _terrainSizeZ * 0.5f,
-                Seconds = Time.time,
+                Seconds = _clock,
                 Flat = _vertices,
                 Bent = _drawnVertices,
             };
             handle = job.Schedule(_vertices.Length, 4096, handle);
             return true;
+        }
+
+        // Planet and tube hang down from the top, so the camera would look at their tip. They are lifted by a share of the screen
+        // height instead (the camera stays where it is), once the amount passed the start and fully at the end of the ramp.
+        private const float MorphLiftScreenShare = 0.2f;
+        private const float MorphLiftStartAmount = 0.15f;
+        private const float MorphLiftEndAmount = 0.6f;
+        private const float MorphLiftSmoothing = 6f;
+        private float _morphLift;
+
+        /// <summary>How far the bent mesh is lifted, in local units of the terrain.</summary>
+        private float MorphLiftTarget()
+        {
+            Transform terrain = TerrainTransform;
+            Camera view = Camera.main;
+            if ((_morphShape != MorphShape.Planet && _morphShape != MorphShape.Tube) || terrain == null || view == null)
+                return 0f;
+
+            float ramp = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(MorphLiftStartAmount, MorphLiftEndAmount, _morphAmount));
+            float visibleHeight = view.orthographic
+                ? 2f * view.orthographicSize
+                : 2f * Mathf.Max(0.01f, Vector3.Dot(terrain.TransformPoint(LocalCenter) - view.transform.position, view.transform.forward)) * Mathf.Tan(0.5f * Mathf.Deg2Rad * view.fieldOfView);
+            // the local up of the terrain is only partly up on the screen when the camera looks down at it
+            float upOnScreen = Mathf.Max(0.3f, Vector3.Dot(terrain.up, view.transform.up));
+            return ramp * MorphLiftScreenShare * visibleHeight / (upOnScreen * Mathf.Max(0.0001f, terrain.lossyScale.y));
         }
         #endregion
 

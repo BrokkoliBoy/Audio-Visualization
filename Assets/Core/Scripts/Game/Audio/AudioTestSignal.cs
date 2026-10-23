@@ -4,8 +4,8 @@ namespace Gavi.Audio
 {
     /// <summary>
     /// A calm, predictable stand-in for the audio. While it is on, the spectrum shows fixed band levels, so the effects of
-    /// the terrain can be judged without a moving song. Beats and the beat strength follow the tempo and the beat of the
-    /// song that is playing, but they can be used separately: beats alone drive waves and flips on a still terrain,
+    /// the terrain can be judged without a moving song. It stands in for the song, so a pause does not stop it. Beats always come
+    /// on the beat of the song that is playing (120 BPM without one) and drive waves and flips on a still terrain,
     /// the beat strength also lifts the bands on every beat. With the band editor on, single band levels can be
     /// raised and lowered with the mouse (see <see cref="Gavi.TerrainBandPicker"/>).
     /// </summary>
@@ -26,15 +26,15 @@ namespace Gavi.Audio
         [Tooltip("Level of the bands (0-3). Above 1 the bands overdrive like loud songs do.")]
         [Range(0f, 3f)]
         [SerializeField] private float _level = 0.6f;
-        [Tooltip("Sends a beat on every beat of the song (no tempo needed, it is the BPM of the playing song). Waves and flips react to it.")]
-        [SerializeField] private bool _beat;
         [Tooltip("How far the bands jump up on every beat (added on top of the level). The bass jumps the most, the outer bands much less. 0 = the bands stay calm.")]
         [Range(0f, 1f)]
         [SerializeField] private float _beatStrength;
         [Tooltip("Takes the strength of every beat from the bass of the song that is playing instead of the slider. Without a playing song the slider counts.")]
         [SerializeField] private bool _beatStrengthFromSong;
         [Tooltip("The noise pattern stands still while the test signal is on.")]
-        [SerializeField] private bool _freezeNoise = true;
+        [SerializeField] private bool _freezeNoise;
+        [Tooltip("Hotkey that switches the test signal on and off.")]
+        [SerializeField] private KeyCode _keyCodeToggle = KeyCode.T;
         [Tooltip("The left mouse button raises the band under the cursor, the right one lowers it. Starts from the signal as it is.")]
         [SerializeField] private bool _editBands;
 
@@ -61,7 +61,6 @@ namespace Gavi.Audio
         public int SignalIndex { get => (int)_signal; set => _signal = (Signal)Mathf.Clamp(value, 0, SignalNames.Length - 1); }
         public const float MaxLevel = 3f;
         public float Level { get => _level; set => _level = Mathf.Clamp(value, 0f, MaxLevel); }
-        public bool Beat { get => _beat; set => _beat = value; }
         public float BeatStrength { get => _beatStrength; set => _beatStrength = Mathf.Clamp01(value); }
         public bool BeatStrengthFromSong { get => _beatStrengthFromSong; set => _beatStrengthFromSong = value; }
         public bool FreezeNoise { get => _freezeNoise; set => _freezeNoise = value; }
@@ -86,12 +85,18 @@ namespace Gavi.Audio
             }
         }
 
-        /// <summary>1 right at a beat, falling back to 0. Always 0 without the beat option.</summary>
-        public float Pulse => _beat ? Envelope() : 0f;
+        /// <summary>1 right at a beat, falling back to 0.</summary>
+        public float Pulse => Envelope();
 
         private void Awake()
         {
             Instance = this;
+        }
+
+        private void Update()
+        {
+            if (!UiPointer.IsTyping && Input.GetKeyDown(_keyCodeToggle))
+                _enabled = !_enabled;
         }
 
         private void OnDestroy()

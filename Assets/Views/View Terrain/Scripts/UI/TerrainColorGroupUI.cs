@@ -47,6 +47,8 @@ namespace Gavi
         [Tooltip("Optional. Track of the bloom strength slider: the Base color, bleaching out with more bloom.")]
         [SerializeField] private UiSliderGradient _gradientBloomIntensity;
         [SerializeField] private SliderG _sliderBloomScatter;
+        [Tooltip("Optional. Header toggle of the glow group: the whole bloom on or off (part of the profile).")]
+        [SerializeField] private Toggle _toggleBloom;
 
         [Header("--- Background ---")]
         [Tooltip("The sky of the bloom volume takes the hue of the base color (the first one). Brightness and saturation come from the sky colors in the volume.")]
@@ -54,6 +56,8 @@ namespace Gavi
 
         [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
+        [Tooltip("Optional. Toggle in the lens dirt heading: the whole lens dirt on or off. The tinted background is not affected.")]
+        [SerializeField] private Toggle _toggleDirt;
         [SerializeField] private SliderG _sliderDirtStrength;
         [Tooltip("Optional. Track of the dirt strength slider: from a clean dark lens to a dirty, lit one.")]
         [SerializeField] private UiSliderGradient _gradientDirtStrength;
@@ -121,6 +125,8 @@ namespace Gavi
         private float BloomThreshold => _sliderBloomThreshold != null ? _sliderBloomThreshold.Value : TerrainColorPalette.DefaultBloomThreshold;
         private float BloomIntensity => _sliderBloomIntensity != null ? _sliderBloomIntensity.Value : TerrainColorPalette.DefaultBloomIntensity;
         private float BloomScatter => _sliderBloomScatter != null ? _sliderBloomScatter.Value : TerrainColorPalette.DefaultBloomScatter;
+        private bool BloomOn => _toggleBloom == null || _toggleBloom.isOn;
+        private bool DirtOn => _toggleDirt == null || _toggleDirt.isOn;
         private float DirtStrength => _sliderDirtStrength != null ? _sliderDirtStrength.Value : TerrainLensDirt.DefaultStrength;
         private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
         private TiltMode Mode => _dropdownTiltMode != null ? (TiltMode)_dropdownTiltMode.value : (TiltMode)TerrainColorPalette.DefaultTiltDirection;
@@ -184,6 +190,10 @@ namespace Gavi
 
             if (_toggleTintBackground != null)
                 _toggleTintBackground.onValueChanged.AddListener(_ => ApplyBackground());
+            if (_toggleBloom != null)
+                _toggleBloom.onValueChanged.AddListener(_ => OnGlowSwitched());
+            if (_toggleDirt != null)
+                _toggleDirt.onValueChanged.AddListener(_ => OnGlowSwitched());
             if (_paletteDropdown != null)
                 _paletteDropdown.onValueChanged.AddListener(OnDropdownChanged);
             if (_buttonSave != null)
@@ -243,6 +253,8 @@ namespace Gavi
             profile.BloomThreshold = BloomThreshold;
             profile.BloomIntensity = BloomIntensity;
             profile.BloomScatter = BloomScatter;
+            profile.BloomEnabled = BloomOn;
+            profile.DirtEnabled = DirtOn;
             profile.DirtStrength = DirtStrength;
             profile.DirtBeat = DirtBeat;
             profile.ColorValues = new List<Vector3>();
@@ -258,6 +270,11 @@ namespace Gavi
 
             // The lens dirt belongs to the profile whether or not the profile carries its own color values.
             SetDirtSliders(profile.DirtStrength, profile.DirtBeat);
+            if (_toggleBloom != null)
+                _toggleBloom.SetIsOnWithoutNotify(profile.BloomEnabled);
+            if (_toggleDirt != null)
+                _toggleDirt.SetIsOnWithoutNotify(profile.DirtEnabled);
+            ApplyBloom();
             if (_sliderPatternBalance != null)
             {
                 bool wasSuppressed = _suppress;
@@ -969,9 +986,20 @@ namespace Gavi
             if (_bloom == null && !_bloomVolume.profile.TryGet(out _bloom))
                 return;
 
+            _bloom.active = BloomOn;
             _bloom.threshold.Override(BloomThreshold);
             _bloom.intensity.Override(BloomIntensity * SaturationCompensation());
             _bloom.scatter.Override(BloomScatter);
+        }
+
+        private void OnGlowSwitched()
+        {
+            if (!_ready || _suppress)
+                return;
+
+            ApplyBloom();
+            ApplyDirt();
+            OnUIValueChanged();
         }
 
         private void OnDirtChanged(float value)
@@ -987,6 +1015,7 @@ namespace Gavi
         {
             if (_lensDirt == null)
                 return;
+            _lensDirt.Enabled = DirtOn;
             _lensDirt.Strength = DirtStrength;
             _lensDirt.BeatAmount = DirtBeat;
         }

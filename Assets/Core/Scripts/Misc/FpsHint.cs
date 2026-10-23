@@ -4,8 +4,8 @@ using TMPro;
 namespace Gavi.Utility
 {
     /// <summary>
-    /// Shows the frame rate in a text and points to the face count when it stays low. Only runs while its object is
-    /// active, put it into the menu next to the face count slider.
+    /// Shows the frame rate in a text and points to the detail slider when it stays low. Only runs while its object is
+    /// active, put it into the menu next to the detail slider.
     /// </summary>
     public class FpsHint : MonoBehaviour
     {
@@ -21,8 +21,8 @@ namespace Gavi.Utility
         [SerializeField] private Color _normalColor = Color.white;
         [SerializeField] private Color _lowColor = new Color(1f, 0.82f, 0.35f);
         [SerializeField] private Color _veryLowColor = new Color(1f, 0.45f, 0.4f);
-        [SerializeField] private string _lowHint = " - fewer faces help";
-        [SerializeField] private string _veryLowHint = " - lower the face count!";
+        [SerializeField] private string _lowHint = " - less detail helps";
+        [SerializeField] private string _veryLowHint = " - lower the detail!";
 
         private int _frames;
         private float _elapsed;

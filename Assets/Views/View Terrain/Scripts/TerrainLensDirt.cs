@@ -26,6 +26,9 @@ namespace Gavi
         /// <summary>Extra dirt strength at the peak of a beat.</summary>
         public float BeatAmount { get; set; } = DefaultBeat;
 
+        /// <summary>Off: no dirt at all, the bloom itself is not touched.</summary>
+        public bool Enabled { get; set; } = true;
+
         private Bloom _bloom;
 
         private void LateUpdate()
@@ -37,7 +40,7 @@ namespace Gavi
             // Without a texture here the one from the volume profile stays.
             if (_dirtTexture != null)
                 _bloom.dirtTexture.Override(_dirtTexture);
-            _bloom.dirtIntensity.Override(Strength + BeatAmount * pulse);
+            _bloom.dirtIntensity.Override(Enabled ? Strength + BeatAmount * pulse : 0f);
         }
     }
 }

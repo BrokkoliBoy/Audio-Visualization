@@ -6,8 +6,8 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>
-    /// Speed settings of the terrain: how often the noise is calculated and the frame rate limit. The text shows what the mesh
-    /// update costs right now, so a setting can be judged by its saving and by eye.
+    /// Speed settings of the terrain in the General tab: the frame rate limit and what the mesh update costs. The text
+    /// shows what the mesh update costs right now, so a setting can be judged by its saving and by eye.
     /// </summary>
     public class TerrainGroupUIPerformance : TerrainGroupUI
     {
@@ -21,7 +21,6 @@ namespace Gavi
         [Tooltip("Seconds over which the frame rate is averaged.")]
         [SerializeField] private float _measureSeconds = 0.5f;
 
-        private int _frames;
         private float _elapsed;
 
         private void Awake()
@@ -37,25 +36,20 @@ namespace Gavi
 
         private void OnEnable()
         {
-            _frames = 0;
             _elapsed = 0f;
         }
 
         private void Update()
         {
-            _frames++;
             _elapsed += Time.unscaledDeltaTime;
             if (_elapsed < _measureSeconds)
                 return;
-
-            float fps = _frames / _elapsed;
-            _frames = 0;
             _elapsed = 0f;
 
             TerrainGenerator terrain = TerrainSettingsManager.Instance != null ? TerrainSettingsManager.Instance.Terrain : null;
             if (_textReadout == null || terrain == null)
                 return;
-            _textReadout.text = Mathf.RoundToInt(fps) + " FPS | mesh " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
+            _textReadout.text = "Mesh update: " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
         }
 
         public override void ExtractProfile(TerrainSettingsProfile profile)

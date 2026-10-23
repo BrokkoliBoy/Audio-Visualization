@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Gavi
 {
-    /// <summary>Bends the whole mesh (bowl, planet, tube ...). The header toggle switches the morph on and off.</summary>
+    /// <summary>Bends the whole mesh (dome, planet, tube ...). The header toggle switches the morph on and off.</summary>
     public class TerrainGroupUIMorph : TerrainGroupUI
     {
         [SerializeField] private Toggle _toggleApplyMorph;
@@ -13,7 +13,6 @@ namespace Gavi
         [SerializeField] private Button _buttonShapePrevious;
         [SerializeField] private Button _buttonShapeNext;
         [SerializeField] private SliderG _sliderAmount;
-        [SerializeField] private SliderG _sliderBeat;
 
         private void Awake()
         {
@@ -26,7 +25,6 @@ namespace Gavi
                 _buttonShapeNext.onClick.AddListener(() => StepShape(1));
             _toggleApplyMorph.onValueChanged.AddListener(OnUIValueChanged);
             _sliderAmount.OnValueChangedFloat.AddListener(OnUIValueChanged);
-            _sliderBeat.OnValueChangedFloat.AddListener(OnUIValueChanged);
         }
 
         /// <summary>Selects the next or previous shape and wraps around at the ends of the list.</summary>
@@ -40,19 +38,19 @@ namespace Gavi
         {
             base.ExtractProfile(profile);
             profile.ApplyMorph = _toggleApplyMorph.isOn;
-            profile.MorphShape = _dropdownShape.value;
+            profile.MorphShape = (int)TerrainGenerator.MorphOrder[_dropdownShape.value];
             profile.MorphAmount = _sliderAmount.Value;
-            profile.MorphBeat = _sliderBeat.Value;
         }
 
         public override void ShowProfile(TerrainSettingsProfile profile)
         {
             base.ShowProfile(profile);
             _toggleApplyMorph.isOn = profile.ApplyMorph;
-            _dropdownShape.SetValueWithoutNotify(Mathf.Clamp(profile.MorphShape, 0, TerrainGenerator.MorphNames.Length - 1));
+            // a profile of a removed shape shows the first one, which is also what the terrain draws
+            int index = System.Array.IndexOf(TerrainGenerator.MorphOrder, (TerrainGenerator.MorphShape)profile.MorphShape);
+            _dropdownShape.SetValueWithoutNotify(Mathf.Max(0, index));
             _dropdownShape.RefreshShownValue();
             _sliderAmount.Value = profile.MorphAmount;
-            _sliderBeat.Value = profile.MorphBeat;
         }
     }
 }

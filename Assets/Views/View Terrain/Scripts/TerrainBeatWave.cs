@@ -65,7 +65,7 @@ namespace Gavi
         /// <summary>Number of beats detected so far. Counts also while the waves are off.</summary>
         public int BeatCount { get; private set; }
         /// <summary>1 right at a beat, falling back to 0 within a part of the beat interval. Only moves while beats come in.</summary>
-        public float BeatEnvelope => Mathf.Exp(-(Time.time - _lastBeatTime) / Mathf.Max(0.05f, EnvelopeBeatShare * BeatInterval));
+        public float BeatEnvelope => Mathf.Exp(-(_clock - _lastBeatTime) / Mathf.Max(0.05f, EnvelopeBeatShare * BeatInterval));
         /// <summary>True when the waves start from the bass edge, the terrain then has to tell where it is (<see cref="SetBassEdge"/>).</summary>
         public bool NeedsBassEdge => _enabled && _origin == Origin.BassEdge;
         /// <summary>Number of lowest bands that count as bass.</summary>
@@ -179,18 +179,25 @@ namespace Gavi
             _bassEdge = Mathf.Clamp(distance, 0f, EdgeDistance);
         }
 
+        // The time of the waves. It stops while the terrain is frozen (paused), so the waves stand still and go on from there.
+        private float _clock;
+
         /// <summary>
         /// Called once per mesh update before the vertices are calculated. Detects beats, starts new waves and moves the running ones.
-        /// deltaTime is the time since the last call, the default is the time of the last frame.
+        /// deltaTime is the time since the last call, the default is the time of the last frame. While frozen, time stands still:
+        /// no beats, the running waves stay where they are.
         /// </summary>
-        public void Tick(float deltaTime = -1f)
+        public void Tick(float deltaTime = -1f, bool frozen = false)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.deltaTime;
-            float time = Time.time;
+            if (frozen)
+                deltaTime = 0f;
+            _clock += deltaTime;
+            float time = _clock;
             float pulse = AudioTestSignal.IsActive ? AudioTestSignal.Instance.Pulse
                 : _beatPulseModule != null ? Mathf.Clamp01(_beatPulseModule.GetValue()) : 0f;
-            bool beat = DetectBeat(pulse, time);
+            bool beat = !frozen && DetectBeat(pulse, time);
 
             if (!_enabled || _strength <= 0f)
             {
@@ -207,7 +214,8 @@ namespace Gavi
             }
 
             GetLevels(out float bass, out float other);
-            RecordLevels(time, bass, other);
+            if (!frozen)
+                RecordLevels(time, bass, other);
             _bassPeak = Mathf.Max(bass, _bassPeak * Mathf.Pow(0.5f, deltaTime / BassPeakHalfLife));
             _overallPeak = Mathf.Max(Mathf.Max(bass, other), _overallPeak * Mathf.Pow(0.5f, deltaTime / OverallPeakHalfLife));
 
@@ -356,7 +364,7 @@ namespace Gavi
                 _totalWay[oldest] = EdgeDistance + 2f * width;
             }
 
-            _startTime[oldest] = startTime >= 0f ? startTime : Time.time;
+            _startTime[oldest] = startTime >= 0f ? startTime : _clock;
             _amplitude[oldest] = amplitude <= 0f ? 0f : Mathf.Max(MinAmplitude, Mathf.Clamp01(amplitude));
             _targetAmplitude[oldest] = _amplitude[oldest];
             _waveSpeed[oldest] = WaveSpeedNow();
@@ -389,7 +397,7 @@ namespace Gavi
                 if (_amplitude[i] <= 0f)
                     continue;
 
-                float travelled = (Time.time - _startTime[i]) * _waveSpeed[i];
+                float travelled = (_clock - _startTime[i]) * _waveSpeed[i];
                 if (travelled > _totalWay[i])
                 {
                     _amplitude[i] = 0f;

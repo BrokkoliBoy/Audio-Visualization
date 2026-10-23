@@ -16,7 +16,7 @@ namespace Gavi
         [Header("- Terrain -")]
         public int FaceCountX = 500;
         public int FaceCountY = 500;
-        public float TerrainHeight = 3;
+        public float TerrainHeight = 2;
         
         [Header("- Perlin -")]
         public bool ApplyPerlin = true;
@@ -83,6 +83,9 @@ namespace Gavi
         public float BloomThreshold = TerrainColorPalette.DefaultBloomThreshold;
         public float BloomIntensity = TerrainColorPalette.DefaultBloomIntensity;
         public float BloomScatter = TerrainColorPalette.DefaultBloomScatter;
+        [Tooltip("The whole glow module on or off. The tinted background does not depend on it.")]
+        public bool BloomEnabled = true;
+        public bool DirtEnabled = true;
         [Tooltip("Lens dirt on the glow: fixed strength and extra strength on the beat.")]
         public float DirtStrength = TerrainLensDirt.DefaultStrength;
         public float DirtBeat = TerrainLensDirt.DefaultBeat;
@@ -97,10 +100,9 @@ namespace Gavi
 
         [Header("- Morph -")]
         public bool ApplyMorph = false;
-        [Tooltip("TerrainGenerator.MorphShape: 0 = Bowl, 1 = Dome, 2 = Planet, 3 = Tube, 4 = Halfpipe, 5 = Saddle, 6 = Flag, 7 = Twist.")]
-        public int MorphShape = 0;
+        [Tooltip("TerrainGenerator.MorphShape: 1 = Dome, 2 = Planet, 3 = Tube, 5 = Pringle, 6 = Flag, 7 = Twist. Other numbers (removed shapes) give the dome.")]
+        public int MorphShape = (int)TerrainGenerator.MorphShape.Dome;
         public float MorphAmount = 0.5f;
-        public float MorphBeat = 0f;
 
         [Header("- Performance -")]
         [Tooltip("The noise is calculated again every this many mesh updates, 1 = every update.")]
@@ -184,6 +186,8 @@ namespace Gavi
             BloomThreshold = profile.BloomThreshold;
             BloomIntensity = profile.BloomIntensity;
             BloomScatter = profile.BloomScatter;
+            BloomEnabled = profile.BloomEnabled;
+            DirtEnabled = profile.DirtEnabled;
             DirtStrength = profile.DirtStrength;
             DirtBeat = profile.DirtBeat;
             ColorBandHue = profile.ColorBandHue;
@@ -196,7 +200,6 @@ namespace Gavi
             ApplyMorph = profile.ApplyMorph;
             MorphShape = profile.MorphShape;
             MorphAmount = profile.MorphAmount;
-            MorphBeat = profile.MorphBeat;
 
             // Performance
             NoiseInterval = profile.NoiseInterval;
@@ -270,7 +273,6 @@ namespace Gavi
             ApplyMorph = terrain.ApplyMorph;
             MorphShape = terrain.Morph;
             MorphAmount = terrain.MorphAmount;
-            MorphBeat = terrain.MorphBeat;
 
             // Performance
             NoiseInterval = terrain.NoiseInterval;
@@ -294,7 +296,8 @@ namespace Gavi
         public void ApplyProfileToTerrain()
         {
             TerrainGenerator terrain = TerrainSettingsManager.Instance.Terrain;
-            
+            terrain.RequestRefresh();
+
             // Terrain
             terrain.FaceCountX = FaceCountX;
             terrain.FaceCountZ = FaceCountY;
@@ -352,7 +355,6 @@ namespace Gavi
             terrain.ApplyMorph = ApplyMorph;
             terrain.Morph = MorphShape;
             terrain.MorphAmount = MorphAmount;
-            terrain.MorphBeat = MorphBeat;
 
             // Performance
             terrain.NoiseInterval = NoiseInterval;

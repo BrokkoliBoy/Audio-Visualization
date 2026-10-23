@@ -34,6 +34,23 @@ namespace Gavi
             _currentProfile.CopyFromTerrainSettings();
             _currentProfile.ApplyProfileToUI();
         }
+
+        private void LateUpdate()
+        {
+            if (!_uiChanged)
+                return;
+            _uiChanged = false;
+            _currentProfile.ExtractProfileFromUI();
+            _currentProfile.ApplyProfileToTerrain();
+        }
+        #endregion
+
+
+        #region UI changes
+        private bool _uiChanged;
+
+        /// <summary>A menu value changed. The terrain follows at the end of the frame, once for all changes of this frame.</summary>
+        public void MarkUIChanged() => _uiChanged = true;
         #endregion
 
 

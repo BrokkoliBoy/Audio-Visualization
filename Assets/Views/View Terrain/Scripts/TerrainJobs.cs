@@ -452,23 +452,25 @@ namespace Gavi
         }
     }
 
-    /// <summary>Bends the flat vertices of the terrain by the morph (bowl, planet, tube ...), one vertex per job step.</summary>
+    /// <summary>Bends the flat vertices of the terrain by the morph (dome, planet, tube ...), one vertex per job step.</summary>
     [BurstCompile]
     public struct TerrainMorphJob : IJobParallelFor
     {
         /// <summary>Angle (in radians) of the planet from its top to the edge of the terrain. More than a half sphere, so the rim hangs below the equator.</summary>
         public const float PlanetAngle = 0.75f * Mathf.PI;
-        /// <summary>Angle (in radians) of the tube from its top to the left and right edge of the terrain.</summary>
-        public const float TubeAngle = 0.75f * Mathf.PI;
-        /// <summary>Largest height of bowl, dome, halfpipe, saddle and flag, as a share of half the terrain width.</summary>
+        /// <summary>Angle (in radians) of the tube from its top to the left and right edge of the terrain at full amount: both edges meet at the bottom, a closed tube.</summary>
+        public const float TubeAngle = Mathf.PI;
+        /// <summary>Largest height of dome, pringle and flag, as a share of half the terrain width.</summary>
         public const float BendHeight = 0.5f;
-        public const float SaddleHeight = 0.35f;
+        public const float PringleHeight = 0.35f;
         public const float FlagHeight = 0.1f;
         /// <summary>Largest turn of the twist (in radians) at the edge of the terrain.</summary>
         public const float TwistAngle = Mathf.PI;
 
         public int Shape;
         public float Amount;
+        /// <summary>Height added to planet and tube, see TerrainGenerator.MorphLiftTarget.</summary>
+        public float Lift;
         public float Half;
         public float CenterX;
         public float CenterZ;
@@ -479,7 +481,8 @@ namespace Gavi
         public void Execute(int i)
         {
             float planetRadius = Half / PlanetAngle;
-            float tubeRadius = Half / TubeAngle;
+            // the tube rolls up further the more the amount grows, its radius shrinks with it so the width stays the same
+            float tubeRadius = Half / (Mathf.Max(Amount, 0.0005f) * TubeAngle);
 
             Vector3 flat = Flat[i];
             float dx = flat.x - CenterX;
@@ -491,17 +494,11 @@ namespace Gavi
 
             switch ((TerrainGenerator.MorphShape)Shape)
             {
-                case TerrainGenerator.MorphShape.Bowl:
-                    bent.y = h + Amount * BendHeight * Half * (u * u + v * v);
-                    break;
                 case TerrainGenerator.MorphShape.Dome:
                     bent.y = h + Amount * BendHeight * Half * (1f - (u * u + v * v));
                     break;
-                case TerrainGenerator.MorphShape.Halfpipe:
-                    bent.y = h + Amount * BendHeight * Half * u * u;
-                    break;
-                case TerrainGenerator.MorphShape.Saddle:
-                    bent.y = h + Amount * SaddleHeight * Half * (u * u - v * v);
+                case TerrainGenerator.MorphShape.Pringle:
+                    bent.y = h + Amount * PringleHeight * Half * (u * u - v * v);
                     break;
                 case TerrainGenerator.MorphShape.Flag:
                     bent.y = h + Amount * FlagHeight * Half * Mathf.Sin(u * 5f + v * 2.5f - Seconds * 2.5f);
@@ -524,17 +521,15 @@ namespace Gavi
                     float scale = r > 0.0001f ? ring / (r * Half) : 1f;
                     bent.x = CenterX + Mathf.Lerp(dx, dx * scale, Amount);
                     bent.z = CenterZ + Mathf.Lerp(dz, dz * scale, Amount);
-                    bent.y = Mathf.Lerp(h, lift, Amount);
+                    bent.y = Mathf.Lerp(h, lift, Amount) + Lift;
                     break;
                 }
                 case TerrainGenerator.MorphShape.Tube:
                 {
-                    // the terrain rolls up along its width
-                    float angle = u * TubeAngle;
-                    float ring = (tubeRadius + h) * Mathf.Sin(angle);
-                    float lift = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius;
-                    bent.x = CenterX + Mathf.Lerp(dx, ring, Amount);
-                    bent.y = Mathf.Lerp(h, lift, Amount);
+                    // the terrain rolls up along its width, at full amount to a closed tube
+                    float angle = u * Amount * TubeAngle;
+                    bent.x = CenterX + (tubeRadius + h) * Mathf.Sin(angle);
+                    bent.y = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius + Lift;
                     break;
                 }
             }

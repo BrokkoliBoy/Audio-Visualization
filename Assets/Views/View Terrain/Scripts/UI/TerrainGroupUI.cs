@@ -7,17 +7,6 @@ namespace Gavi
 {
     public class TerrainGroupUI : MonoBehaviour
     {
-        private bool _wasUpdated;
-
-        private void LateUpdate()
-        {
-            if (!_wasUpdated) return;
-            _wasUpdated = false;
-            TerrainSettingsManager.Instance.CurrentProfile.ExtractProfileFromUI();
-            TerrainSettingsManager.Instance.CurrentProfile.ApplyProfileToTerrain();
-        }
-
-
         public virtual void ExtractProfile(TerrainSettingsProfile profile)
         {
             
@@ -28,21 +17,29 @@ namespace Gavi
             
         }
 
+        // The change is applied by the settings manager (see TerrainSettingsManager.LateUpdate), not by the group: a group in a
+        // closed tab is inactive, but its sliders can sit in another tab (e.g. height follows zoom in the Expert tab).
         public void OnUIValueChanged()
         {
-            _wasUpdated = true;
+            MarkChanged();
         }
         public void OnUIValueChanged(float f)
         {
-            _wasUpdated = true;
+            MarkChanged();
         }
         public void OnUIValueChanged(bool b)
         {
-            _wasUpdated = true;
+            MarkChanged();
         }
         public void OnUIValueChanged(int i)
         {
-            _wasUpdated = true;
+            MarkChanged();
+        }
+
+        private static void MarkChanged()
+        {
+            if (TerrainSettingsManager.Instance != null)
+                TerrainSettingsManager.Instance.MarkUIChanged();
         }
     }
 }
