@@ -15,6 +15,8 @@ namespace Gavi
         [SerializeField] private Button _buttonPatternPrevious;
         [SerializeField] private Button _buttonPatternNext;
         [SerializeField] private Toggle _toggleInvert;
+        [Tooltip("Optional: turns the whole noise (all pattern layers mixed) upside down.")]
+        [SerializeField] private Toggle _toggleInvertAll;
         [SerializeField] private SliderG _sliderPerlinDepth;
         [SerializeField] private SliderG _sliderPerlinZoom;
         [Tooltip("Optional: how strongly the terrain height follows the zoom (0 = off), so zooming out keeps the shapes instead of making them steeper.")]
@@ -38,6 +40,8 @@ namespace Gavi
                 _sliderFlipBeats.OnValueChangedFloat.AddListener(OnUIValueChanged);
             if (_toggleInvert != null)
                 _toggleInvert.onValueChanged.AddListener(OnInvertChanged);
+            if (_toggleInvertAll != null)
+                _toggleInvertAll.onValueChanged.AddListener(OnUIValueChanged);
 
             if (_dropdownPattern != null)
             {
@@ -49,7 +53,16 @@ namespace Gavi
                 _buttonPatternPrevious.onClick.AddListener(() => StepPattern(-1));
             if (_buttonPatternNext != null)
                 _buttonPatternNext.onClick.AddListener(() => StepPattern(1));
+
+            // The group can be switched off (closed tab) while the menu is filled with the profile. The dropdown has no options then,
+            // so the profile is shown again now.
+            _ready = true;
+            if (_shownProfile != null)
+                ShowProfile(_shownProfile);
         }
+
+        private bool _ready;
+        private TerrainSettingsProfile _shownProfile;
 
         /// <summary>The invert option belongs to the pattern: it is remembered per pattern while the menu is open, off at first.</summary>
         private void OnInvertChanged(bool isOn)
@@ -80,6 +93,9 @@ namespace Gavi
 
         public override void ExtractProfile(TerrainSettingsProfile profile)
         {
+            // before the first Awake the dropdown is empty, its value says nothing
+            if (!_ready)
+                return;
             base.ExtractProfile(profile);
             profile.ApplyPerlin = _toggleApplyPerlin.isOn;
             profile.PerlinDepth = _sliderPerlinDepth.Value;
@@ -93,12 +109,17 @@ namespace Gavi
                 profile.NoisePattern = _dropdownPattern.value;
             if (_toggleInvert != null)
                 profile.NoiseInvert = _toggleInvert.isOn;
+            if (_toggleInvertAll != null)
+                profile.NoiseInvertAll = _toggleInvertAll.isOn;
             if (_sliderFlipBeats != null)
                 profile.NoiseFlipBeats = _sliderFlipBeats.ValueInt;
         }
 
         public override void ShowProfile(TerrainSettingsProfile profile)
         {
+            _shownProfile = profile;
+            if (!_ready)
+                return;
             base.ShowProfile(profile);
             _toggleApplyPerlin.isOn = profile.ApplyPerlin;
             _sliderPerlinDepth.Value = profile.PerlinDepth;
@@ -121,6 +142,8 @@ namespace Gavi
             _invertByPattern[_shownPattern] = profile.NoiseInvert;
             if (_toggleInvert != null)
                 _toggleInvert.isOn = profile.NoiseInvert;
+            if (_toggleInvertAll != null)
+                _toggleInvertAll.isOn = profile.NoiseInvertAll;
             if (_sliderFlipBeats != null)
                 _sliderFlipBeats.Value = profile.NoiseFlipBeats;
         }

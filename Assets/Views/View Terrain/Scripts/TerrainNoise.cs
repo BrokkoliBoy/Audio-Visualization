@@ -49,6 +49,39 @@ namespace Gavi
             }
         }
 
+        /// <summary>How a pattern layer is mixed with the layers below it. Appended only, profiles store the index.</summary>
+        public enum LayerOperation { Override, Add, Multiply, Maximum, Minimum, Difference }
+
+        public static readonly string[] OperationNames = { "Override", "Add", "Multiply", "Maximum", "Minimum", "Difference" };
+
+        /// <summary>The layer on top of the layers below it. The depth is how much of the result is used (0 = the layers below stay as they are).</summary>
+        public static float Combine(float below, float layer, int operation, float depth)
+        {
+            float result;
+            switch ((LayerOperation)operation)
+            {
+                case LayerOperation.Add:
+                    result = Mathf.Clamp01(below + layer);
+                    break;
+                case LayerOperation.Multiply:
+                    result = below * layer;
+                    break;
+                case LayerOperation.Maximum:
+                    result = Mathf.Max(below, layer);
+                    break;
+                case LayerOperation.Minimum:
+                    result = Mathf.Min(below, layer);
+                    break;
+                case LayerOperation.Difference:
+                    result = Mathf.Abs(below - layer);
+                    break;
+                default:
+                    result = layer;
+                    break;
+            }
+            return Mathf.Lerp(below, result, Mathf.Clamp01(depth));
+        }
+
         /// <summary>Center of the reference terrain, the middle of the radial patterns.</summary>
         private const float Center = 48f;
         private const float Tau = 6.2831853f;
@@ -140,7 +173,7 @@ namespace Gavi
                 case Pattern.Honeycomb:
                     return Honeycomb(u * 0.6f, v * 0.6f);
                 default:
-                    return Mathf.PerlinNoise(u, v);
+                    return Perlin(u, v);
             }
         }
 
@@ -171,6 +204,12 @@ namespace Gavi
 
 
         #region Noise
+        /// <summary>Classic perlin noise, 0..1. Not Mathf.PerlinNoise, because that cannot run in a Burst job.</summary>
+        private static float Perlin(float x, float y)
+        {
+            return Mathf.Clamp01(0.5f + 0.5f * Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(x, y)));
+        }
+
         private static float ValueNoise(float x, float y)
         {
             int ix = Mathf.FloorToInt(x), iy = Mathf.FloorToInt(y);
@@ -210,7 +249,7 @@ namespace Gavi
             float sum = 0f, amplitude = 1f, total = 0f;
             for (int o = 0; o < octaves; o++)
             {
-                sum += amplitude * Mathf.PerlinNoise(x + o * 17.3f, y + o * 9.1f);
+                sum += amplitude * Perlin(x + o * 17.3f, y + o * 9.1f);
                 total += amplitude;
                 amplitude *= 0.5f;
                 x *= 2f;
@@ -225,7 +264,7 @@ namespace Gavi
             float sum = 0f, amplitude = 1f, total = 0f;
             for (int o = 0; o < octaves; o++)
             {
-                float n = 1f - Mathf.Abs(2f * Mathf.PerlinNoise(x + o * 17.3f, y + o * 9.1f) - 1f);
+                float n = 1f - Mathf.Abs(2f * Perlin(x + o * 17.3f, y + o * 9.1f) - 1f);
                 sum += amplitude * n * n;
                 total += amplitude;
                 amplitude *= 0.5f;
@@ -241,7 +280,7 @@ namespace Gavi
             float sum = 0f, amplitude = 1f, total = 0f;
             for (int o = 0; o < octaves; o++)
             {
-                sum += amplitude * Mathf.Abs(2f * Mathf.PerlinNoise(x + o * 17.3f, y + o * 9.1f) - 1f);
+                sum += amplitude * Mathf.Abs(2f * Perlin(x + o * 17.3f, y + o * 9.1f) - 1f);
                 total += amplitude;
                 amplitude *= 0.5f;
                 x *= 2f;

@@ -65,20 +65,36 @@ namespace Gavi
         [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
         [SerializeField] private TerrainNoise.Pattern _noisePattern = TerrainNoise.Pattern.Perlin;
         public int NoisePattern { get => (int)_noisePattern; set => _noisePattern = (TerrainNoise.Pattern)Mathf.Clamp(value, 0, TerrainNoise.Names.Length - 1); }
-        [Tooltip("Turns the pattern upside down: high becomes low and low becomes high. Some patterns (Voronoi, Hexagons ...) are upside down by themselves, this turns them back.")]
+        [Tooltip("Turns the main pattern upside down: high becomes low and low becomes high. Some patterns (Voronoi, Hexagons ...) are upside down by themselves, this turns them back.")]
         [SerializeField] private bool _noiseInvert;
         public bool NoiseInvert { get => _noiseInvert; set => _noiseInvert = value; }
+        [Tooltip("Turns the whole noise (all pattern layers mixed) upside down.")]
+        [SerializeField] private bool _noiseInvertAll;
+        public bool NoiseInvertAll { get => _noiseInvertAll; set => _noiseInvertAll = value; }
         [Tooltip("Turns the pattern upside down on the beat, every this many beats. 0 = off. The pattern flows from one state to the other.")]
         [SerializeField] private int _noiseFlipBeats;
         public int NoiseFlipBeats { get => _noiseFlipBeats; set => _noiseFlipBeats = Mathf.Max(0, value); }
         /// <summary>Seconds the pattern needs to flow to the other state at most (shorter when the beats are faster).</summary>
         private const float InvertFlowSeconds = 0.4f;
-        // 0 = the pattern as it is, 1 = upside down. Moves smoothly towards the wanted state.
-        private float _invertAmount;
+
+        // Extra pattern layers on top of the main pattern. Their settings come from the terrain profile.
+        private readonly TerrainNoiseLayerData[] _extraLayers = { new TerrainNoiseLayerData(), new TerrainNoiseLayerData() };
+        /// <summary>Settings of the extra pattern layer (0 = layer 2, 1 = layer 3).</summary>
+        public TerrainNoiseLayerData GetExtraLayer(int index) => _extraLayers[index];
+        private readonly float[] _extraOffsetX = new float[TerrainNoiseLayerData.Count];
+        private readonly float[] _extraOffsetZ = new float[TerrainNoiseLayerData.Count];
+
+        // 0 = the pattern as it is, 1 = upside down. Moves smoothly towards the wanted state. Index 0 = main pattern, then the
+        // extra layers, the last one is the whole noise (flips on the beat too).
+        private const int InvertSlots = TerrainNoiseLayerData.Count + 2;
+        private const int InvertAll = InvertSlots - 1;
+        private readonly float[] _invertAmounts = new float[InvertSlots];
+        private readonly float[] _invertEasedSlots = new float[InvertSlots];
+        private readonly bool[] _invertKnown = new bool[InvertSlots];
+        private readonly int[] _invertPatterns = new int[InvertSlots];
+        /// <summary>Upside down share of the whole noise, applied in the vertex job.</summary>
         private float _invertEased;
-        private bool _invertStateKnown;
         private bool _invertMoving;
-        private TerrainNoise.Pattern _invertPattern;
         private int _lastBeatCount;
         private bool _beatFlipped;
 
@@ -327,20 +343,15 @@ namespace Gavi
         // The noise pattern per vertex: the last two results, blended over NoiseInterval updates
         private NativeArray<float> _noisePrevious;
         private NativeArray<float> _noiseNext;
-        private float[] _noiseScratch;
+        private NativeArray<TerrainNoiseLayerJobData> _noiseLayerData;
         private bool _noiseValid;
         private int _noiseAge;
         /// <summary>Per grid point the update (0 to interval - 1) in which it is calculated again.</summary>
         private NativeArray<byte> _noiseSlots;
-        private float[] _noisePreviousScratch;
-        private bool _noiseDueOnly;
         private int _noiseIntervalUsed = 1;
         private int _noiseSlotSignature;
         private int _noiseGridWidth;
         private int _noiseGridHeight;
-        /// <summary>Below this many grid points the noise is calculated on the main thread, the threads would cost more than they save.</summary>
-        private const int ParallelNoiseMinPoints = 2500;
-        private System.Action<int> _noiseRowAction;
 
         //private int _bandSize;
 
@@ -379,6 +390,11 @@ namespace Gavi
                 return;
             _perlinOffsetX += _perlinOffsetSpeed.x * Time.deltaTime;
             _perlinOffsetY += _perlinOffsetSpeed.y * Time.deltaTime;
+            for (int i = 0; i < _extraLayers.Length; i++)
+            {
+                _extraOffsetX[i] += _extraLayers[i].SpeedX * Time.deltaTime;
+                _extraOffsetZ[i] += _extraLayers[i].SpeedY * Time.deltaTime;
+            }
         }
         #endregion
 
@@ -712,6 +728,7 @@ namespace Gavi
             DisposeArray(ref _noisePrevious);
             DisposeArray(ref _noiseNext);
             DisposeArray(ref _noiseSlots);
+            DisposeArray(ref _noiseLayerData);
         }
         #endregion
 
@@ -806,39 +823,56 @@ namespace Gavi
         /// <param name="onlyDue">Only the grid points whose slot is this update are calculated, the others keep their results.</param>
         private void CalculateNoise(bool onlyDue)
         {
-            int count = _noiseGridWidth * _noiseGridHeight;
-            if (_noiseScratch == null || _noiseScratch.Length != count)
-                _noiseScratch = new float[count];
-            _noiseDueOnly = onlyDue;
-            if (onlyDue)
+            EnsureArray(ref _noiseLayerData, 1 + _extraLayers.Length);
+            int layerCount = 0;
+            _noiseLayerData[layerCount++] = new TerrainNoiseLayerJobData
             {
-                if (_noisePreviousScratch == null || _noisePreviousScratch.Length != count)
-                    _noisePreviousScratch = new float[count];
-                _noiseNext.CopyTo(_noiseScratch);
-                _noisePrevious.CopyTo(_noisePreviousScratch);
+                Pattern = (int)_noisePattern,
+                Operation = (int)TerrainNoise.LayerOperation.Override,
+                Depth = 1f,
+                Zoom = _noiseZoom,
+                OffsetX = _perlinOffsetX,
+                OffsetZ = _perlinOffsetY,
+                Invert = _invertEasedSlots[0]
+            };
+            for (int i = 0; i < _extraLayers.Length; i++)
+            {
+                TerrainNoiseLayerData layer = _extraLayers[i];
+                if (!layer.Enabled)
+                    continue;
+                _noiseLayerData[layerCount++] = new TerrainNoiseLayerJobData
+                {
+                    Pattern = Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1),
+                    Operation = layer.Operation,
+                    Depth = layer.Depth,
+                    Zoom = layer.Zoom,
+                    OffsetX = _extraOffsetX[i],
+                    OffsetZ = _extraOffsetZ[i],
+                    Invert = _invertEasedSlots[1 + i]
+                };
             }
 
-            if (count < ParallelNoiseMinPoints)
+            // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
+            TerrainNoiseJob job = new TerrainNoiseJob
             {
-                for (int row = 0; row < _noiseGridHeight; row++)
-                    CalculateNoiseRow(row);
-            }
-            else
-            {
-                // The pattern functions only read their arguments, so the rows do not disturb each other.
-                if (_noiseRowAction == null)
-                    _noiseRowAction = CalculateNoiseRow;
-                System.Threading.Tasks.Parallel.For(0, _noiseGridHeight, _noiseRowAction);
-            }
-            _noiseNext.CopyFrom(_noiseScratch);
-            _noiseMean = SampleMean(_noiseScratch);
-            if (onlyDue)
-                _noisePrevious.CopyFrom(_noisePreviousScratch);
+                Width = _noiseGridWidth,
+                StepX = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX),
+                StepZ = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ),
+                DueOnly = onlyDue,
+                Age = _noiseAge,
+                LayerCount = layerCount,
+                Layers = _noiseLayerData,
+                Slots = _noiseSlots,
+                Previous = _noisePrevious,
+                Next = _noiseNext
+            };
+            job.Schedule(_noiseGridHeight, 4).Complete();
+            _noiseMean = SampleMean(_noiseNext);
         }
 
 
         /// <summary>Average of at most 2048 evenly spread points, enough to tell a high pattern from a low one.</summary>
-        private static float SampleMean(float[] values)
+        private static float SampleMean(NativeArray<float> values)
         {
             int step = Mathf.Max(1, values.Length / 2048);
             float sum = 0f;
@@ -865,28 +899,10 @@ namespace Gavi
             _colorScale = _colorScaleKnown ? Mathf.Lerp(_colorScale, target, Utility.Utility.Smooth(ColorScaleSmoothing, _fpsEqualizer)) : target;
             _colorScaleKnown = true;
         }
-        private void CalculateNoiseRow(int row)
-        {
-            // Scaled by the face count so the noise keeps its size on the terrain when the face count changes.
-            float scaleX = PerlinReferenceFaceCount / Mathf.Max(1, _faceCountX);
-            float zScaled = row * (PerlinReferenceFaceCount / Mathf.Max(1, _faceCountZ));
-            int index = row * _noiseGridWidth;
-            for (int column = 0; column < _noiseGridWidth; column++, index++)
-            {
-                if (_noiseDueOnly)
-                {
-                    if (_noiseSlots[index] != _noiseAge)
-                        continue;
-                    _noisePreviousScratch[index] = _noiseScratch[index];
-                }
-                float x = column * scaleX;
-                _noiseScratch[index] = TerrainNoise.Evaluate(_noisePattern, x, zScaled, _perlinOffsetX, _perlinOffsetY, _noiseZoom);
-            }
-        }
 
         /// <summary>
-        /// Moves the pattern towards its wanted state once per mesh update: upside down or not, from the pattern itself, the invert
-        /// option and the flips on the beat. A change of the pattern jumps, a change of the options or a flip flows.
+        /// Moves every pattern layer and the whole noise towards the wanted state once per mesh update: upside down or not, from the
+        /// pattern itself, the invert options and the flips on the beat. A change of the pattern jumps, a change of the options or a flip flows.
         /// </summary>
         private void UpdateInvert()
         {
@@ -903,24 +919,38 @@ namespace Gavi
                 _lastBeatCount = beats;
             }
 
-            bool upsideDown = TerrainNoise.InvertedByDefault(_noisePattern) ^ _noiseInvert ^ _beatFlipped;
-            float target = upsideDown ? 1f : 0f;
-            if (!_invertStateKnown || _invertPattern != _noisePattern)
+            float beatInterval = _beatWave != null ? _beatWave.BeatInterval : InvertFlowSeconds;
+            float seconds = Mathf.Clamp(0.8f * beatInterval, 0.1f, InvertFlowSeconds);
+
+            _invertMoving = false;
+            MoveInvert(0, (int)_noisePattern, TerrainNoise.InvertedByDefault(_noisePattern) ^ _noiseInvert, seconds);
+            for (int i = 0; i < _extraLayers.Length; i++)
             {
-                _invertAmount = target;
-                _invertEased = target;
-                _invertPattern = _noisePattern;
-                _invertStateKnown = true;
-                _invertMoving = false;
+                TerrainNoise.Pattern pattern = (TerrainNoise.Pattern)Mathf.Clamp(_extraLayers[i].Pattern, 0, TerrainNoise.Names.Length - 1);
+                MoveInvert(1 + i, (int)pattern, TerrainNoise.InvertedByDefault(pattern) ^ _extraLayers[i].Invert, seconds);
+            }
+            MoveInvert(InvertAll, 0, _noiseInvertAll ^ _beatFlipped, seconds);
+            _invertEased = _invertEasedSlots[InvertAll];
+        }
+
+        private void MoveInvert(int slot, int pattern, bool upsideDown, float seconds)
+        {
+            float target = upsideDown ? 1f : 0f;
+            if (!_invertKnown[slot] || _invertPatterns[slot] != pattern)
+            {
+                _invertAmounts[slot] = target;
+                _invertEasedSlots[slot] = target;
+                _invertPatterns[slot] = pattern;
+                _invertKnown[slot] = true;
                 return;
             }
 
-            float beatInterval = _beatWave != null ? _beatWave.BeatInterval : InvertFlowSeconds;
-            float seconds = Mathf.Clamp(0.8f * beatInterval, 0.1f, InvertFlowSeconds);
             // an eased flow: the amount moves linearly, the pattern follows it smoothed
-            _invertAmount = Mathf.MoveTowards(_invertAmount, target, _stepDelta / seconds);
-            _invertEased = _invertAmount * _invertAmount * (3f - 2f * _invertAmount);
-            _invertMoving = !Mathf.Approximately(_invertAmount, target);
+            float amount = Mathf.MoveTowards(_invertAmounts[slot], target, _stepDelta / seconds);
+            _invertAmounts[slot] = amount;
+            _invertEasedSlots[slot] = amount * amount * (3f - 2f * amount);
+            if (!Mathf.Approximately(amount, target))
+                _invertMoving = true;
         }
 
         /// <summary>Distance from the middle (in half terrain widths) where the bass bands end, found on the first active audio shape.</summary>

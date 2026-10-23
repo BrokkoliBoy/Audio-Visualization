@@ -28,6 +28,11 @@ namespace Gavi
         [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old profiles.")]
         public int NoisePattern = (int)TerrainNoise.Pattern.DomainWarp;
         public bool NoiseInvert = false;
+        [Tooltip("Turns the whole noise (all layers mixed) upside down.")]
+        public bool NoiseInvertAll = false;
+        [Tooltip("Extra pattern layers on top of the main pattern: layer 2 and layer 3.")]
+        public TerrainNoiseLayerData NoiseLayer2 = new TerrainNoiseLayerData();
+        public TerrainNoiseLayerData NoiseLayer3 = new TerrainNoiseLayerData();
         [Tooltip("Turns the pattern upside down on the beat every this many beats, 0 = off.")]
         public int NoiseFlipBeats = 0;
 
@@ -149,6 +154,9 @@ namespace Gavi
             PerlinSpeedY = profile.PerlinSpeedY;
             NoisePattern = profile.NoisePattern;
             NoiseInvert = profile.NoiseInvert;
+            NoiseInvertAll = profile.NoiseInvertAll;
+            NoiseLayer2.CopyFrom(profile.NoiseLayer2);
+            NoiseLayer3.CopyFrom(profile.NoiseLayer3);
             NoiseFlipBeats = profile.NoiseFlipBeats;
             ApplyWave = profile.ApplyWave;
             WaveStrength = profile.WaveStrength;
@@ -242,6 +250,9 @@ namespace Gavi
             PerlinSpeedY = terrain.PerlinOffsetSpeed.y;
             NoisePattern = terrain.NoisePattern;
             NoiseInvert = terrain.NoiseInvert;
+            NoiseInvertAll = terrain.NoiseInvertAll;
+            NoiseLayer2.CopyFrom(terrain.GetExtraLayer(0));
+            NoiseLayer3.CopyFrom(terrain.GetExtraLayer(1));
             NoiseFlipBeats = terrain.NoiseFlipBeats;
             if (terrain.BeatWave != null)
             {
@@ -330,6 +341,9 @@ namespace Gavi
             terrain.PerlinOffsetSpeed = new Vector2(PerlinSpeedX, PerlinSpeedY);
             terrain.NoisePattern = NoisePattern;
             terrain.NoiseInvert = NoiseInvert;
+            terrain.NoiseInvertAll = NoiseInvertAll;
+            terrain.GetExtraLayer(0).CopyFrom(NoiseLayer2);
+            terrain.GetExtraLayer(1).CopyFrom(NoiseLayer3);
             terrain.NoiseFlipBeats = NoiseFlipBeats;
             if (terrain.BeatWave != null)
             {
