@@ -21,11 +21,40 @@ namespace Gavi
         [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
         [SerializeField] private SliderG _sliderMaxFps;
         [SerializeField] private TextMeshProUGUI _textReadout;
+
+        [Header("--- Speed of the patterns (copies of the speed sliders) ---")]
+        [Tooltip("The pattern speeds next to the settings that decide the frame rate, so it is clear which speeds matter. Index 0 is the main pattern, then the layers.")]
+        [SerializeField] private TerrainGroupUIPerlin _perlin;
+        [SerializeField] private TerrainGroupUINoiseLayer[] _layers;
+        [Tooltip("One copy per pattern, in the same order. A copy only shows while its pattern is on.")]
+        [SerializeField] private SliderG[] _speedMirrors;
+        [Tooltip("Rows below the speed copies; they move down for every copy shown.")]
+        [SerializeField] private RectTransform[] _rowsBelow;
+        [SerializeField] private UiGroupFold _fold;
+        [SerializeField] private float _rowHeight = 25f;
+        [SerializeField] private float _slideSeconds = 0.2f;
+
+        [Header("--- Cost colors ---")]
+        [Tooltip("Gradient of the detail copy, the interval slider and the speed copies: green is cheap, red is expensive.")]
+        [SerializeField] private UiSliderGradient _gradientDetail;
+        [SerializeField] private UiSliderGradient _gradientNoiseInterval;
+        [SerializeField] private UiSliderGradient[] _gradientSpeeds;
+        [SerializeField] private Color _cheapColor = new Color(0.45f, 0.85f, 0.5f);
+        [SerializeField] private Color _midColor = new Color(1f, 0.82f, 0.35f);
+        [SerializeField] private Color _costlyColor = new Color(1f, 0.45f, 0.4f);
+        [Tooltip("Mesh detail from where it starts to cost frames, and where it is as costly as it gets.")]
+        [SerializeField] private Vector2 _detailRange = new Vector2(150f, 750f);
         [Tooltip("Seconds over which the update time is refreshed.")]
         [SerializeField] private float _measureSeconds = 0.5f;
 
         private float _elapsed;
         private bool _readoutDirty;
+        private float[] _shown;
+        private float[] _shownVelocity;
+        private float[] _rowBaseY;
+        private float[] _belowBaseY;
+        private CanvasGroup[] _mirrorFade;
+        private bool _syncing;
 
         private void Awake()
         {
@@ -51,16 +80,22 @@ namespace Gavi
             _sliderMaxFps.SetRange(FrameRateSettings.MinFps, FrameRateSettings.MonitorHz);
             _sliderMaxFps.ValueInt = FrameRateSettings.MaxFps;
             _sliderMaxFps.OnValueChangedInt.AddListener(value => FrameRateSettings.MaxFps = value);
+
+            SetUpSpeedMirrors();
+            SetUpGradients();
         }
 
         private void OnEnable()
         {
             _elapsed = 0f;
             _readoutDirty = true;
+            SyncMirrorsFromSources();
+            UpdateSpeedRows(true);
         }
 
         private void Update()
         {
+            UpdateSpeedRows(false);
             _elapsed += Time.unscaledDeltaTime;
             if (_elapsed < _measureSeconds)
                 return;
@@ -84,6 +119,145 @@ namespace Gavi
                 return;
             _textReadout.text = "Mesh: " + terrain.FaceCountX + " x " + terrain.FaceCountX + " faces, " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
         }
+
+        #region Speed copies and cost colors
+        private int PatternCount => 1 + (_layers != null ? _layers.Length : 0);
+
+        private SliderG SourceSlider(int index) => index == 0 ? (_perlin != null ? _perlin.SpeedSlider : null) : _layers[index - 1].SpeedSlider;
+        private bool SourceOn(int index) => index == 0 ? _perlin != null && _perlin.SpeedOn : _layers[index - 1].SpeedOn;
+
+        private void SetUpSpeedMirrors()
+        {
+            if (_speedMirrors == null)
+                return;
+            int count = Mathf.Min(_speedMirrors.Length, PatternCount);
+            _shown = new float[count];
+            _shownVelocity = new float[count];
+            _rowBaseY = new float[count];
+            _mirrorFade = new CanvasGroup[count];
+            for (int i = 0; i < count; i++)
+            {
+                SliderG mirror = _speedMirrors[i];
+                SliderG source = SourceSlider(i);
+                if (mirror == null || source == null)
+                    continue;
+                _rowBaseY[i] = ((RectTransform)mirror.transform).anchoredPosition.y;
+                _mirrorFade[i] = mirror.GetComponent<CanvasGroup>();
+
+                // Both sliders have the same range, setting the value the other one already has changes nothing, so the pair settles at once.
+                mirror.OnValueChangedFloat.AddListener(value => CopyValue(value, source));
+                source.OnValueChangedFloat.AddListener(value => CopyValue(value, mirror));
+            }
+            _belowBaseY = new float[_rowsBelow != null ? _rowsBelow.Length : 0];
+            for (int i = 0; i < _belowBaseY.Length; i++)
+                _belowBaseY[i] = _rowsBelow[i].anchoredPosition.y;
+        }
+
+        private void CopyValue(float value, SliderG target)
+        {
+            if (_syncing || Mathf.Approximately(target.Value, value))
+                return;
+            _syncing = true;
+            target.Value = value;
+            _syncing = false;
+        }
+
+        private void SyncMirrorsFromSources()
+        {
+            if (_shown == null)
+                return;
+            for (int i = 0; i < _shown.Length; i++)
+            {
+                SliderG source = SourceSlider(i);
+                if (_speedMirrors[i] != null && source != null)
+                    CopyValue(source.Value, _speedMirrors[i]);
+            }
+        }
+
+        // A copy slides in (the rows below make room) while its pattern is on and slides out again when it is switched off.
+        private void UpdateSpeedRows(bool instant)
+        {
+            if (_shown == null)
+                return;
+            // A folded group hides its children itself; a copy must not be switched on behind its back, and nothing needs to slide.
+            bool open = _fold == null || _fold.IsOpen;
+            instant |= !open;
+            float used = 0f;
+            for (int i = 0; i < _shown.Length; i++)
+            {
+                SliderG mirror = _speedMirrors[i];
+                if (mirror == null)
+                    continue;
+                float target = SourceOn(i) ? 1f : 0f;
+                if (instant)
+                {
+                    _shown[i] = target;
+                    _shownVelocity[i] = 0f;
+                }
+                else
+                {
+                    _shown[i] = Mathf.SmoothDamp(_shown[i], target, ref _shownVelocity[i], _slideSeconds, Mathf.Infinity, Time.unscaledDeltaTime);
+                    if (Mathf.Abs(_shown[i] - target) < 0.002f)
+                    {
+                        _shown[i] = target;
+                        _shownVelocity[i] = 0f;
+                    }
+                }
+
+                bool visible = _shown[i] > 0f;
+                if (open && mirror.gameObject.activeSelf != visible)
+                    mirror.gameObject.SetActive(visible);
+                if (visible)
+                {
+                    ((RectTransform)mirror.transform).anchoredPosition = new Vector2(0f, _rowBaseY[0] - used);
+                    if (_mirrorFade[i] != null)
+                        _mirrorFade[i].alpha = _shown[i];
+                }
+                used += _shown[i] * _rowHeight;
+            }
+
+            for (int i = 0; i < _belowBaseY.Length; i++)
+            {
+                Vector2 position = _rowsBelow[i].anchoredPosition;
+                position.y = _belowBaseY[i] - used;
+                _rowsBelow[i].anchoredPosition = position;
+            }
+            if (_fold != null)
+                _fold.SetExtraOpenHeight(used);
+        }
+
+        private void SetUpGradients()
+        {
+            if (_gradientDetail != null && _sliderDetail != null)
+                _gradientDetail.Bind(_sliderDetail, position => CostColor(DetailCost(_sliderDetail.ValueAtPosition(position))));
+            if (_gradientNoiseInterval != null && _sliderNoiseInterval != null)
+                _gradientNoiseInterval.Bind(_sliderNoiseInterval, position => CostColor(IntervalCost(_sliderNoiseInterval.ValueAtPosition(position))));
+            if (_gradientSpeeds == null || _speedMirrors == null)
+                return;
+            for (int i = 0; i < _gradientSpeeds.Length && i < _speedMirrors.Length; i++)
+            {
+                SliderG mirror = _speedMirrors[i];
+                if (_gradientSpeeds[i] != null && mirror != null)
+                    _gradientSpeeds[i].Bind(mirror, position => CostColor(SpeedCost(mirror.ValueAtPosition(position))));
+            }
+        }
+
+        // Cost 0 = free, 1 = as costly as it gets.
+        private float DetailCost(float detail) => Mathf.Clamp01((detail - _detailRange.x) / Mathf.Max(1f, _detailRange.y - _detailRange.x));
+
+        // The noise is calculated every n-th update, so a high interval saves the most.
+        private static float IntervalCost(float interval) => Mathf.Clamp01(1f - (interval - 1f) / (TerrainGenerator.MaxNoiseInterval - 1f));
+
+        // Below the first limit a pattern speed costs nothing extra, from there the interval is forced down (see TerrainGenerator.MaxIntervalForSpeed).
+        private static float SpeedCost(float speed)
+        {
+            if (speed <= 2f) return 0f;
+            if (speed <= 3f) return (speed - 2f) * 0.5f;
+            return Mathf.Clamp01(0.5f + (speed - 3f) * 0.5f);
+        }
+
+        private Color CostColor(float cost) => cost < 0.5f ? Color.Lerp(_cheapColor, _midColor, cost * 2f) : Color.Lerp(_midColor, _costlyColor, (cost - 0.5f) * 2f);
+        #endregion
 
         public override void ExtractProfile(TerrainSettingsProfile profile)
         {

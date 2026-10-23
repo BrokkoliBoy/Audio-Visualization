@@ -29,6 +29,8 @@ namespace Gavi
 
         /// <summary>Speed of the pattern as the slider shows it, 0 while the pattern is off.</summary>
         public float ActiveSpeed => (_toggleApplyPerlin == null || _toggleApplyPerlin.isOn) && _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 0f;
+        public SliderG SpeedSlider => _sliderPerlinSpeed;
+        public bool SpeedOn => _toggleApplyPerlin == null || _toggleApplyPerlin.isOn;
 
         private void Awake()
         {

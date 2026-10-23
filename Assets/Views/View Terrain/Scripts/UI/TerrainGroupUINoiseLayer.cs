@@ -24,6 +24,8 @@ namespace Gavi
 
         /// <summary>Speed of the pattern as the slider shows it, 0 while the layer is off.</summary>
         public float ActiveSpeed => _toggleEnabled != null && _toggleEnabled.isOn && _sliderSpeed != null ? _sliderSpeed.Value : 0f;
+        public SliderG SpeedSlider => _sliderSpeed;
+        public bool SpeedOn => _toggleEnabled != null && _toggleEnabled.isOn;
 
         private void Awake()
         {
