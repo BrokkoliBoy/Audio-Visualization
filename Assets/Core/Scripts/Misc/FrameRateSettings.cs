@@ -9,11 +9,11 @@ namespace Gavi.Game
     public static class FrameRateSettings
     {
         public const int MinFps = 30;
-        private const string PrefsKey = "MaxFps";
+        private const string PrefsKey = "MaxFps120";
         private const int UnknownMonitorHz = 144;
 
-        /// <summary>Limit without a saved value: the refresh rate in a build, 60 in the Editor to spare the computer while working.</summary>
-        private static int DefaultFps => Application.isEditor ? 60 : MonitorHz;
+        /// <summary>Limit without a saved value: 120 in a build (or the refresh rate if that is lower), 60 in the Editor to spare the computer while working.</summary>
+        private static int DefaultFps => Application.isEditor ? 60 : 120;
 
         /// <summary>Refresh rate of the monitor the window is on (240 for 239.996 Hz), a fallback if the system does not tell.</summary>
         public static int MonitorHz

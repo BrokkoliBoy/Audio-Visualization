@@ -15,6 +15,11 @@ namespace Gavi
 
         private CanvasGroup[] _groups;
 
+        /// <summary>The on / off toggle of the window, null if it has none.</summary>
+        public Toggle Toggle => _toggle;
+        /// <summary>Opacity of the rows while the toggle is off.</summary>
+        public float DimmedAlpha => _dimmedAlpha;
+
         private void Awake()
         {
             if (_toggle == null)

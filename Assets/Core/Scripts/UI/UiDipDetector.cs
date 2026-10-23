@@ -23,8 +23,15 @@ namespace Gavi
         private float _depth;
         private bool _spoiled;
         private float _blockedUntil;
+        private int _swipeDirection;
+        private float _swipeTime;
+        private const float _maxSwipeTime = 0.3f;
+        private const float _swipeWindow = 0.6f;
 
-        public UiDipDetector(float maxDipTime = 0.4f, float minDepth = 0.3f, float cooldown = 0.2f)
+        /// <summary>Sides the pointer may not come in from (e.g. where a neighbouring button sits). A dip from there is ignored.</summary>
+        public bool[] BlockedSides = new bool[5];
+
+        public UiDipDetector(float maxDipTime = 0.4f, float minDepth = 0.2f, float cooldown = 0.2f)
         {
             _maxDipTime = maxDipTime;
             _minDepth = minDepth;
@@ -36,6 +43,7 @@ namespace Gavi
         {
             _inside = false;
             _hasLast = false;
+            _swipeDirection = 0;
         }
 
         /// <summary>Call every frame. True in the frame the pointer leaves the rect after a dip.</summary>
@@ -60,7 +68,7 @@ namespace Gavi
             if (inside && !_inside)
             {
                 // entered: only counts when it came from outside
-                if (_hasLast && !rect.Contains(_last) && Time.unscaledTime >= _blockedUntil)
+                if (_hasLast && !rect.Contains(_last) && Time.unscaledTime >= _blockedUntil && !BlockedSides[(int)SideOf(rect, _last)])
                 {
                     _inside = true;
                     _entrySide = SideOf(rect, _last);
@@ -79,14 +87,42 @@ namespace Gavi
             {
                 _inside = false;
                 float dwell = Time.unscaledTime - _entryTime;
-                dip = !_spoiled && !Input.GetMouseButton(0) && dwell <= _maxDipTime && SideOf(rect, point) == _entrySide && _depth >= _minDepth;
+                Side exitSide = SideOf(rect, point);
+                bool clean = !_spoiled && !Input.GetMouseButton(0);
+                dip = clean && dwell <= _maxDipTime && exitSide == _entrySide && _depth >= _minDepth;
+
+                // A swipe straight through the rect; two of them in opposite directions in a row count as a dip. Both sides must be
+                // free, otherwise the swipe would hit the neighbour as well.
+                int direction = SwipeDirection(_entrySide, exitSide);
+                if (clean && direction != 0 && dwell <= _maxSwipeTime && !BlockedSides[(int)exitSide])
+                {
+                    dip |= _swipeDirection == -direction && Time.unscaledTime - _swipeTime <= _swipeWindow;
+                    _swipeDirection = dip ? 0 : direction;
+                    _swipeTime = Time.unscaledTime;
+                }
+                else
+                    _swipeDirection = 0;
+
                 if (dip)
+                {
+                    _swipeDirection = 0;
                     _blockedUntil = Time.unscaledTime + _cooldown;
+                }
             }
 
             _last = point;
             _hasLast = true;
             return dip;
+        }
+
+        // 1 / -1 for a swipe from left to right / right to left, 2 / -2 from bottom to top / top to bottom, else 0.
+        private static int SwipeDirection(Side entry, Side exit)
+        {
+            if (entry == Side.Left && exit == Side.Right) return 1;
+            if (entry == Side.Right && exit == Side.Left) return -1;
+            if (entry == Side.Bottom && exit == Side.Top) return 2;
+            if (entry == Side.Top && exit == Side.Bottom) return -2;
+            return 0;
         }
 
         // The side of the rect the point lies on (the dominant direction when it lies at a corner).

@@ -39,11 +39,13 @@ namespace Gavi
         [SerializeField] private UiSliderGradient _gradientDetail;
         [SerializeField] private UiSliderGradient _gradientNoiseInterval;
         [SerializeField] private UiSliderGradient[] _gradientSpeeds;
-        [SerializeField] private Color _cheapColor = new Color(0.45f, 0.85f, 0.5f);
-        [SerializeField] private Color _midColor = new Color(1f, 0.82f, 0.35f);
-        [SerializeField] private Color _costlyColor = new Color(1f, 0.45f, 0.4f);
+        [SerializeField] private Color _cheapColor = new Color(0.08f, 0.62f, 0.22f);
+        [SerializeField] private Color _midColor = new Color(0.92f, 0.66f, 0.04f);
+        [SerializeField] private Color _costlyColor = new Color(0.84f, 0.17f, 0.1f);
+        [Tooltip("End color of the detail slider: it is the setting that costs the most, so its red is deeper.")]
+        [SerializeField] private Color _costlyDetailColor = new Color(0.5f, 0.02f, 0.05f);
         [Tooltip("Mesh detail from where it starts to cost frames, and where it is as costly as it gets.")]
-        [SerializeField] private Vector2 _detailRange = new Vector2(150f, 750f);
+        [SerializeField] private Vector2 _detailRange = new Vector2(50f, 650f);
         [Tooltip("Seconds over which the update time is refreshed.")]
         [SerializeField] private float _measureSeconds = 0.5f;
 
@@ -117,7 +119,7 @@ namespace Gavi
             TerrainGenerator terrain = TerrainSettingsManager.Instance != null ? TerrainSettingsManager.Instance.Terrain : null;
             if (_textReadout == null || terrain == null)
                 return;
-            _textReadout.text = "Mesh: " + terrain.FaceCountX + " x " + terrain.FaceCountX + " faces, " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
+            _textReadout.text = "Mesh: " + (terrain.FaceCountX * terrain.FaceCountZ).ToString("N0") + " faces, " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
         }
 
         #region Speed copies and cost colors
@@ -229,7 +231,7 @@ namespace Gavi
         private void SetUpGradients()
         {
             if (_gradientDetail != null && _sliderDetail != null)
-                _gradientDetail.Bind(_sliderDetail, position => CostColor(DetailCost(_sliderDetail.ValueAtPosition(position))));
+                _gradientDetail.Bind(_sliderDetail, position => CostColor(DetailCost(_sliderDetail.ValueAtPosition(position)), _costlyDetailColor));
             if (_gradientNoiseInterval != null && _sliderNoiseInterval != null)
                 _gradientNoiseInterval.Bind(_sliderNoiseInterval, position => CostColor(IntervalCost(_sliderNoiseInterval.ValueAtPosition(position))));
             if (_gradientSpeeds == null || _speedMirrors == null)
@@ -251,12 +253,14 @@ namespace Gavi
         // Below the first limit a pattern speed costs nothing extra, from there the interval is forced down (see TerrainGenerator.MaxIntervalForSpeed).
         private static float SpeedCost(float speed)
         {
-            if (speed <= 2f) return 0f;
-            if (speed <= 3f) return (speed - 2f) * 0.5f;
-            return Mathf.Clamp01(0.5f + (speed - 3f) * 0.5f);
+            if (speed <= 1.3f) return 0f;
+            if (speed <= 2.3f) return (speed - 1.3f) * 0.5f;
+            return Mathf.Clamp01(0.5f + (speed - 2.3f) * 0.5f);
         }
 
-        private Color CostColor(float cost) => cost < 0.5f ? Color.Lerp(_cheapColor, _midColor, cost * 2f) : Color.Lerp(_midColor, _costlyColor, (cost - 0.5f) * 2f);
+        private Color CostColor(float cost) => CostColor(cost, _costlyColor);
+
+        private Color CostColor(float cost, Color costly) => cost < 0.5f ? Color.Lerp(_cheapColor, _midColor, cost * 2f) : Color.Lerp(_midColor, costly, (cost - 0.5f) * 2f);
         #endregion
 
         public override void ExtractProfile(TerrainSettingsProfile profile)

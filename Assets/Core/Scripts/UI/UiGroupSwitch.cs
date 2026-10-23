@@ -201,11 +201,27 @@ namespace Gavi
             {
                 if (buttons[i] == null)
                     continue;
+                BlockSidesWithNeighbours(buttons, i, _dips[_current][i]);
                 if (_dips[_current][i].Update((RectTransform)buttons[i].transform, usable) && i != _current)
                 {
                     Select(i);
                     return;
                 }
+            }
+        }
+
+        // A tab cannot be dipped into from the side where another tab sits: nobody goes through the neighbour to get there.
+        private static void BlockSidesWithNeighbours(Button[] buttons, int index, UiDipDetector dip)
+        {
+            Rect rect = UiPointer.GetScreenRect((RectTransform)buttons[index].transform, Vector4.zero);
+            System.Array.Clear(dip.BlockedSides, 0, dip.BlockedSides.Length);
+            for (int j = 0; j < buttons.Length; j++)
+            {
+                if (j == index || buttons[j] == null)
+                    continue;
+                // every other tab blocks the side it lies on, however far away (the tabs sit in a row)
+                Rect other = UiPointer.GetScreenRect((RectTransform)buttons[j].transform, Vector4.zero);
+                dip.BlockedSides[(int)UiDipDetector.SideOf(rect, other.center)] = true;
             }
         }
 
@@ -332,6 +348,7 @@ namespace Gavi
         // The small marks of the tabs show the selected one. They fade out while the window is folded.
         private void ApplyIndicatorColors()
         {
+            UpdateLayerAlpha();
             foreach (Entry entry in _entries)
             {
                 if (_toggleMode)
@@ -352,8 +369,20 @@ namespace Gavi
                         if (entry.Labels[k] == null)
                             continue;
                         Color label = k == _current ? _labelActiveColor : _labelInactiveColor;
-                        label.a *= _markFade;
+                        label.a *= _markFade * LayerAlpha(k);
                         entry.Labels[k].color = label;
+                    }
+                // the names on the tabs (child text of the button) when no labels are set
+                if (entry.Buttons != null && (entry.Labels == null || entry.Labels.Length == 0))
+                    for (int k = 0; k < entry.Buttons.Length; k++)
+                    {
+                        TMPro.TMP_Text text = entry.Buttons[k] != null ? entry.Buttons[k].GetComponentInChildren<TMPro.TMP_Text>(true) : null;
+                        if (text == null)
+                            continue;
+                        if (!_tabTextColors.TryGetValue(text, out Color baseColor))
+                            _tabTextColors[text] = baseColor = text.color;
+                        baseColor.a *= LayerAlpha(k);
+                        text.color = baseColor;
                     }
                 if (entry.Indicators == null)
                     continue;
@@ -362,10 +391,31 @@ namespace Gavi
                     if (entry.Indicators[k] == null)
                         continue;
                     Color color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
-                    color.a *= _markFade;
+                    color.a *= _markFade * LayerAlpha(k);
                     entry.Indicators[k].color = color;
                 }
             }
         }
+
+        // A tab of a layer that is switched off is dimmed, whichever layer is shown. The window of a layer dims its own rows by the
+        // same toggle, the tab row is kept bright there and dimmed per tab here.
+        private float LayerAlpha(int index) => index >= 0 && index < _layerAlpha.Count ? _layerAlpha[index] : 1f;
+
+        // Once per frame: every layer's alpha glides to its target instead of snapping.
+        private void UpdateLayerAlpha()
+        {
+            while (_layerAlpha.Count < _entries.Count)
+                _layerAlpha.Add(1f);
+            float blend = 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime);
+            for (int i = 0; i < _entries.Count; i++)
+            {
+                UiGroupDim dim = _entries[i].Group != null ? _entries[i].Group.GetComponent<UiGroupDim>() : null;
+                float target = dim != null && dim.Toggle != null && !dim.Toggle.isOn ? dim.DimmedAlpha : 1f;
+                _layerAlpha[i] = Mathf.Lerp(_layerAlpha[i], target, blend);
+            }
+        }
+
+        private readonly Dictionary<TMPro.TMP_Text, Color> _tabTextColors = new Dictionary<TMPro.TMP_Text, Color>();
+        private readonly List<float> _layerAlpha = new List<float>();
     }
 }

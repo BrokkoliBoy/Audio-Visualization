@@ -2671,10 +2671,10 @@ RectTransform:
   - {fileID: 1275646267}
   m_Father: {fileID: 414337255}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 276, y: -47}
-  m_SizeDelta: {x: 552, y: 6}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &23939344
 MonoBehaviour:
@@ -6203,10 +6203,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1497265462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -25}
-  m_SizeDelta: {x: 268, y: 22}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &65945976
 MonoBehaviour:
@@ -13970,10 +13970,10 @@ RectTransform:
   - {fileID: 2019195177}
   m_Father: {fileID: 1118605540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 138, y: -22}
-  m_SizeDelta: {x: 44, y: 44}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &161762282
 MonoBehaviour:
@@ -25717,10 +25717,10 @@ RectTransform:
   - {fileID: 605105917}
   m_Father: {fileID: 1118605540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 80, y: -22}
-  m_SizeDelta: {x: 56, y: 44}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &308533063
 MonoBehaviour:
@@ -27366,10 +27366,10 @@ RectTransform:
   - {fileID: 164935233}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 958, y: -38}
-  m_SizeDelta: {x: 52, y: 40}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &339274354
 MonoBehaviour:
@@ -30648,10 +30648,10 @@ RectTransform:
   - {fileID: 1586812728}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1044, y: -38}
-  m_SizeDelta: {x: 88, y: 40}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &393080552
 GameObject:
@@ -32022,10 +32022,10 @@ RectTransform:
   - {fileID: 23939343}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 468, y: -38}
-  m_SizeDelta: {x: 552, y: 50}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &414337256
 MonoBehaviour:
@@ -49941,10 +49941,10 @@ RectTransform:
   - {fileID: 918371386}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 838, y: -38}
-  m_SizeDelta: {x: 156, y: 24}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &645295366
 MonoBehaviour:
@@ -59958,7 +59958,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 2110229301}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!114 &777172453
 MonoBehaviour:
@@ -68622,10 +68623,10 @@ RectTransform:
   - {fileID: 284034546}
   m_Father: {fileID: 645295365}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 96, y: -12}
-  m_SizeDelta: {x: 120, y: 24}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &918371387
 MonoBehaviour:
@@ -69882,10 +69883,10 @@ RectTransform:
   - {fileID: 1034637415}
   m_Father: {fileID: 1118605540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 22, y: -22}
-  m_SizeDelta: {x: 44, y: 44}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &939838516
 MonoBehaviour:
@@ -75141,7 +75142,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 683219931}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!114 &1029985994
 MonoBehaviour:
@@ -82099,10 +82101,10 @@ RectTransform:
   - {fileID: 161762281}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 96, y: -38}
-  m_SizeDelta: {x: 160, y: 44}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1118605541
 MonoBehaviour:
@@ -83604,10 +83606,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937529535}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 497.00003, y: -19}
-  m_SizeDelta: {x: 110, y: 38}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1131869628
 MonoBehaviour:
@@ -86627,10 +86629,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 645295365}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 14, y: -12}
-  m_SizeDelta: {x: 28, y: 24}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1166798188
 MonoBehaviour:
@@ -90837,10 +90839,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1497265462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -172}
-  m_SizeDelta: {x: 268, y: 180}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1216306476
 MonoBehaviour:
@@ -98316,10 +98318,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937529535}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 217.00002, y: -19}
-  m_SizeDelta: {x: 434.00003, y: 38}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1315272493
 MonoBehaviour:
@@ -99133,10 +99135,10 @@ RectTransform:
   - {fileID: 861838624}
   m_Father: {fileID: 1316601357}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1142, y: -38}
-  m_SizeDelta: {x: 76, y: 40}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1326557759
 MonoBehaviour:
@@ -102045,7 +102047,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 587888384}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!1 &1362475634
 GameObject:
@@ -111632,7 +111635,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 2092322912}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!114 &1477571401
 MonoBehaviour:
@@ -113480,7 +113484,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 598, y: 98}
-  m_SizeDelta: {x: 300, y: 324}
+  m_SizeDelta: {x: 300, y: 0}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &1497265463
 MonoBehaviour:
@@ -113861,7 +113865,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 1657217470}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!1 &1501938113
 GameObject:
@@ -122241,10 +122246,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2131760324}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -25}
-  m_SizeDelta: {x: 268, y: 22}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1635751085
 MonoBehaviour:
@@ -131544,10 +131549,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2131760324}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -106}
-  m_SizeDelta: {x: 268, y: 120}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1771314068
 MonoBehaviour:
@@ -131907,10 +131912,10 @@ RectTransform:
   - {fileID: 973771654}
   m_Father: {fileID: 1497265462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -291}
-  m_SizeDelta: {x: 268, y: 38}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1772378635
 MonoBehaviour:
@@ -143831,7 +143836,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gavi.UiGroupDim
   _toggle: {fileID: 730585451}
-  _keepBright: []
+  _keepBright:
+  - Strip - Layers
   _dimmedAlpha: 0.4
 --- !u!1 &1913142805
 GameObject:
@@ -145573,10 +145579,10 @@ RectTransform:
   - {fileID: 2028237778}
   m_Father: {fileID: 414337255}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 276, y: -19}
-  m_SizeDelta: {x: 552, y: 38}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1937529536
 MonoBehaviour:
@@ -149037,10 +149043,11 @@ MonoBehaviour:
   - {fileID: 383025435}
   - {fileID: 1313069348}
   - {fileID: 1566663846}
-  _cheapColor: {r: 0.45, g: 0.85, b: 0.5, a: 1}
-  _midColor: {r: 1, g: 0.82, b: 0.35, a: 1}
-  _costlyColor: {r: 1, g: 0.45, b: 0.4, a: 1}
-  _detailRange: {x: 150, y: 750}
+  _cheapColor: {r: 0.08, g: 0.62, b: 0.22, a: 1}
+  _midColor: {r: 0.92, g: 0.66, b: 0.04, a: 1}
+  _costlyColor: {r: 0.84, g: 0.17, b: 0.1, a: 1}
+  _costlyDetailColor: {r: 0.5, g: 0.02, b: 0.05, a: 1}
+  _detailRange: {x: 50, y: 650}
   _measureSeconds: 0.5
 --- !u!224 &1993412102
 RectTransform:
@@ -149153,10 +149160,10 @@ RectTransform:
   - {fileID: 1627561743}
   m_Father: {fileID: 1497265462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -59}
-  m_SizeDelta: {x: 268, y: 26}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1994480205
 MonoBehaviour:
@@ -160909,7 +160916,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 490.00006, y: 98}
-  m_SizeDelta: {x: 300, y: 180}
+  m_SizeDelta: {x: 300, y: 0}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &2131760325
 MonoBehaviour:
