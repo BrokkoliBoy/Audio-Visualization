@@ -38,6 +38,7 @@ namespace Gavi
         private bool _started;
         private bool _pinnedSet;
         private float _arrowFade;
+        private float _arrowAngle;
         private Image _arrowImage;
         private float _arrowAlpha = 1f;
         private bool _pinned;
@@ -109,6 +110,7 @@ namespace Gavi
                 Apply();
             }
             _arrowFade = ArrowTarget();
+            _arrowAngle = _pinned ? -90f : 0f;
             ApplyArrow();
         }
 
@@ -169,6 +171,7 @@ namespace Gavi
                 Apply();
             }
             _arrowFade = ArrowTarget();
+            _arrowAngle = _pinned ? -90f : 0f;
             ApplyArrow();
         }
 
@@ -330,7 +333,9 @@ namespace Gavi
 
         private void StepArrow()
         {
-            _arrowFade = Mathf.Lerp(_arrowFade, ArrowTarget(), 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+            float k = 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime);
+            _arrowFade = Mathf.Lerp(_arrowFade, ArrowTarget(), k);
+            _arrowAngle = Mathf.Lerp(_arrowAngle, _pinned ? -90f : 0f, k);
             ApplyArrow();
         }
 
@@ -338,7 +343,8 @@ namespace Gavi
         {
             if (_arrow == null)
                 return;
-            // the arrow points right and only shows while the group is open, so a folded menu is not a wall of arrows
+            _arrow.localRotation = Quaternion.Euler(0f, 0f, _arrowAngle);
+            // the arrow points right while hovering, turns down when pinned and is hidden while folded, so a folded menu is not a wall of arrows
             if (_arrowImage != null)
             {
                 Color color = _arrowImage.color;
