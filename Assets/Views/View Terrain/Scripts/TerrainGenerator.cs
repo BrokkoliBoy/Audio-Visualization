@@ -1118,7 +1118,7 @@ namespace Gavi
         /// <summary>True when the ray hits the terrain. With a mesh morph on, the box around the terrain counts, because the drawn surface is bent.</summary>
         public bool TryHitTerrain(Ray ray)
         {
-            bool bent = _applyMorph && _shownAmount > 0.0005f;
+            bool bent = _applyMorph && Mathf.Abs(_shownAmount) > 0.0005f;
             if (!TryRaycast(ray, !bent, out Vector3 hit))
                 return false;
             if (bent || !_hideOutOfBounds)
@@ -1264,7 +1264,9 @@ namespace Gavi
                 wave = _motionWaveDepth * Mathf.Sin(_wavePhase * 2f * Mathf.PI);
             }
 
-            _shownAmount = Mathf.Clamp01(_morphAmount + _motionBeat * _breath + wave);
+            // the twist can turn the other way: wave and bounce may take the amount below 0
+            float lowest = _morphShape == MorphShape.Twist ? -1f : 0f;
+            _shownAmount = Mathf.Clamp(_morphAmount + _motionBeat * _breath + wave, lowest, 1f);
         }
 
         /// <summary>Starts the job that bends the vertices by the morph. False (and no job) when the terrain stays flat.</summary>
@@ -1273,7 +1275,7 @@ namespace Gavi
             UpdateMorphMotion();
             float amount = _shownAmount;
             // at amount 0 the job keeps running until the lift has glided back down, so it does not vanish at once
-            if (!_applyMorph || (amount <= 0.0005f && _morphLift < MorphLiftRest))
+            if (!_applyMorph || (Mathf.Abs(amount) <= 0.0005f && _morphLift < MorphLiftRest))
             {
                 _morphLift = 0f;
                 // the lift starts in place the next time the morph is on (no shape is nothing the morph can have)

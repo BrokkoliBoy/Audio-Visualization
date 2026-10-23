@@ -17,6 +17,10 @@ namespace Gavi
         [SerializeField] private Toggle _toggleNoiseSpread;
         [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
         [SerializeField] private SliderG _sliderMaxFps;
+        [Tooltip("Seconds the pointer must rest on a folded menu group before it opens. Saved on this computer, not part of a profile.")]
+        [SerializeField] private SliderG _sliderMenuOpenDelay;
+        [Tooltip("The same when the pointer comes from another group opened by hovering. 0 = switch straight through the groups.")]
+        [SerializeField] private SliderG _sliderMenuSwitchDelay;
         [SerializeField] private TextMeshProUGUI _textReadout;
         [Tooltip("Seconds over which the frame rate is averaged.")]
         [SerializeField] private float _measureSeconds = 0.5f;
@@ -32,6 +36,13 @@ namespace Gavi
             _sliderMaxFps.SetRange(FrameRateSettings.MinFps, FrameRateSettings.MonitorHz);
             _sliderMaxFps.ValueInt = FrameRateSettings.MaxFps;
             _sliderMaxFps.OnValueChangedInt.AddListener(value => FrameRateSettings.MaxFps = value);
+
+            _sliderMenuOpenDelay.SetRange(0f, MenuHoverSettings.MaxDelay);
+            _sliderMenuOpenDelay.Value = MenuHoverSettings.OpenDelay;
+            _sliderMenuOpenDelay.OnValueChangedFloat.AddListener(value => MenuHoverSettings.OpenDelay = value);
+            _sliderMenuSwitchDelay.SetRange(0f, MenuHoverSettings.MaxDelay);
+            _sliderMenuSwitchDelay.Value = MenuHoverSettings.SwitchDelay;
+            _sliderMenuSwitchDelay.OnValueChangedFloat.AddListener(value => MenuHoverSettings.SwitchDelay = value);
         }
 
         private void OnEnable()
