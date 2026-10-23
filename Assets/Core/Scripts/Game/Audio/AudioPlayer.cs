@@ -83,6 +83,7 @@ namespace Gavi.Audio
 
         public void Replay()
         {
+            _isPaused = false;
             _audioSource.Stop();
             _audioSource.Play();
         }

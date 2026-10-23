@@ -13,7 +13,7 @@ namespace Gavi
     public class UiToggleDip : MonoBehaviour
     {
         [Tooltip("A dip must be over after this long (s), a pointer that stays longer is just resting.")]
-        [SerializeField] private float _maxDipTime = 0.55f;
+        [SerializeField] private float _maxDipTime = 0.4f;
         [Tooltip("A swipe through the box must be over after this long (s).")]
         [SerializeField] private float _maxSwipeTime = 0.3f;
         [Tooltip("How far a dip has to reach into the box, as a share of the box size, so clipping a corner does not count.")]
