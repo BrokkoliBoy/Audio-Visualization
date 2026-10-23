@@ -3,12 +3,12 @@ using UnityEngine.UI;
 
 namespace Gavi
 {
-    /// <summary>Moves the amount of the mesh morph over time: a breath on every beat (smooth or like on a spring) and a slow wave in time with the beats. Shares its window with the morph (Expert tab of that window).</summary>
+    /// <summary>Moves the amount of the mesh morph over time: a breath on every beat (smooth or like on a spring) and a slow wave in time with the beats. Lives in the same window as the morph.</summary>
     public class TerrainGroupUIMorphMotion : TerrainGroupUI
     {
         [Tooltip("The on / off toggle of the morph. Its state is the only one, this window just shows it too.")]
         [SerializeField] private Toggle _toggleMorph;
-        [Tooltip("The copy of that toggle in the header of this tab.")]
+        [Tooltip("Optional: a copy of that toggle in the header of another page.")]
         [SerializeField] private Toggle _toggleMirror;
         [SerializeField] private SliderG _sliderBeat;
         [SerializeField] private SliderG _sliderAttack;
@@ -43,7 +43,8 @@ namespace Gavi
             }
 
             // one switch for the whole window: the copy in this tab sets the real one, which is the one the profile reads
-            _toggleMirror.onValueChanged.AddListener(isOn => { if (_toggleMorph.isOn != isOn) _toggleMorph.isOn = isOn; });
+            if (_toggleMirror != null)
+                _toggleMirror.onValueChanged.AddListener(isOn => { if (_toggleMorph.isOn != isOn) _toggleMorph.isOn = isOn; });
             _toggleMorph.onValueChanged.AddListener(_ => SyncMirror());
 
             // The group is switched off while the other tab of the window is shown, so it can be filled with a profile before it wakes up.
@@ -60,7 +61,8 @@ namespace Gavi
 
         private void SyncMirror()
         {
-            _toggleMirror.SetIsOnWithoutNotify(_toggleMorph.isOn);
+            if (_toggleMirror != null)
+                _toggleMirror.SetIsOnWithoutNotify(_toggleMorph.isOn);
             float alpha = _toggleMorph.isOn ? 1f : _dimmedAlpha;
             foreach (CanvasGroup group in _dimGroups)
                 group.alpha = alpha;

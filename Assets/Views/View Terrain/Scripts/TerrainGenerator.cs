@@ -57,9 +57,10 @@ namespace Gavi
         private const float HeightZoomMinFactor = 0.35f;
         private const float HeightZoomMaxFactor = 2.5f;
         /// <summary>Terrain height with the zoom coupling applied, limited so extreme zoom values neither flatten nor spike the terrain.</summary>
-        public float EffectiveTerrainSizeY => _heightZoomStrength <= 0f
+        private const float HeightZoomFixed = 0.5f; // the height follows the zoom by half, the slider was dropped
+        public float EffectiveTerrainSizeY => HeightZoomFixed <= 0f
             ? _terrainSizeY
-            : _terrainSizeY * Mathf.Lerp(1f, Mathf.Clamp(HeightZoomReference / Mathf.Max(0.01f, _noiseZoom), HeightZoomMinFactor, HeightZoomMaxFactor), _heightZoomStrength);
+            : _terrainSizeY * Mathf.Lerp(1f, Mathf.Clamp(HeightZoomReference / Mathf.Max(0.01f, _noiseZoom), HeightZoomMinFactor, HeightZoomMaxFactor), HeightZoomFixed);
         /// <summary>The face count the perlin zoom values were made for. At this face count the zoom is unchanged.</summary>
         private const float PerlinReferenceFaceCount = 97f;
         [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
@@ -766,7 +767,7 @@ namespace Gavi
             _noiseGridWidth = width;
             _noiseGridHeight = height;
 
-            int interval = Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval);
+            int interval = 1; // "Noise every" was dropped (no gain in frame rate, and moving patterns lag behind with it); the old setting is ignored
             bool spread = _noiseSpread && interval > 1;
             _noiseIntervalUsed = interval;
 
@@ -929,7 +930,7 @@ namespace Gavi
                 TerrainNoise.Pattern pattern = (TerrainNoise.Pattern)Mathf.Clamp(_extraLayers[i].Pattern, 0, TerrainNoise.Names.Length - 1);
                 MoveInvert(1 + i, (int)pattern, TerrainNoise.InvertedByDefault(pattern) ^ _extraLayers[i].Invert, seconds);
             }
-            MoveInvert(InvertAll, 0, _noiseInvertAll ^ _beatFlipped, seconds);
+            MoveInvert(InvertAll, 0, _beatFlipped, seconds); // "Invert all" was dropped from the menu
             _invertEased = _invertEasedSlots[InvertAll];
         }
 

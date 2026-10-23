@@ -11,9 +11,9 @@ namespace Gavi
     /// </summary>
     public class TerrainGroupUIPerformance : TerrainGroupUI
     {
-        [Tooltip("The noise is calculated again every this many mesh updates.")]
+        [Tooltip("Optional (dropped from the menu).")]
         [SerializeField] private SliderG _sliderNoiseInterval;
-        [Tooltip("The noise work is spread over the updates instead of done all at once every n-th update.")]
+        [Tooltip("Optional (dropped from the menu).")]
         [SerializeField] private Toggle _toggleNoiseSpread;
         [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
         [SerializeField] private SliderG _sliderMaxFps;
@@ -25,8 +25,10 @@ namespace Gavi
 
         private void Awake()
         {
-            _sliderNoiseInterval.OnValueChangedInt.AddListener(OnUIValueChanged);
-            _toggleNoiseSpread.onValueChanged.AddListener(OnUIValueChanged);
+            if (_sliderNoiseInterval != null)
+                _sliderNoiseInterval.OnValueChangedInt.AddListener(OnUIValueChanged);
+            if (_toggleNoiseSpread != null)
+                _toggleNoiseSpread.onValueChanged.AddListener(OnUIValueChanged);
 
             // The limit belongs to the computer, so it does not go through the profile.
             _sliderMaxFps.SetRange(FrameRateSettings.MinFps, FrameRateSettings.MonitorHz);
@@ -55,15 +57,19 @@ namespace Gavi
         public override void ExtractProfile(TerrainSettingsProfile profile)
         {
             base.ExtractProfile(profile);
-            profile.NoiseInterval = _sliderNoiseInterval.ValueInt;
-            profile.NoiseSpread = _toggleNoiseSpread.isOn;
+            if (_sliderNoiseInterval != null)
+                profile.NoiseInterval = _sliderNoiseInterval.ValueInt;
+            if (_toggleNoiseSpread != null)
+                profile.NoiseSpread = _toggleNoiseSpread.isOn;
         }
 
         public override void ShowProfile(TerrainSettingsProfile profile)
         {
             base.ShowProfile(profile);
-            _sliderNoiseInterval.ValueInt = profile.NoiseInterval;
-            _toggleNoiseSpread.isOn = profile.NoiseSpread;
+            if (_sliderNoiseInterval != null)
+                _sliderNoiseInterval.ValueInt = profile.NoiseInterval;
+            if (_toggleNoiseSpread != null)
+                _toggleNoiseSpread.isOn = profile.NoiseSpread;
         }
     }
 }
