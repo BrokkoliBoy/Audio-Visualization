@@ -14,8 +14,8 @@ namespace Gavi
         
         #region Settings Variables
         [Header("- Terrain -")]
-        public int FaceCountX = 500;
-        public int FaceCountY = 500;
+        public int FaceCountX = 90;
+        public int FaceCountY = 90;
         public float TerrainHeight = 2;
         
         [Header("- Perlin -")]

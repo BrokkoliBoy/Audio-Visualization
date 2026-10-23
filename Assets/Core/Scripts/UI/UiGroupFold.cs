@@ -62,6 +62,9 @@ namespace Gavi
         private float _slideHeight;
         private float _slideEndTime = float.NegativeInfinity;
         private float _handoverHeight = -1f;
+
+        /// <summary>The pointer left the group for good (not while a slider is dragged or a dropdown is open).</summary>
+        public event System.Action PointerLeft;
         private ColorBlock _buttonColors;
         private bool _buttonColorsKept;
         private bool _pinnedTinted;
@@ -276,6 +279,7 @@ namespace Gavi
             _hoverReady = false;
             _hoverSuppressed = false;
             _dirty = true;
+            PointerLeft?.Invoke();
         }
 
         private void EndHover()
@@ -448,6 +452,25 @@ namespace Gavi
             SetLayoutHeight(_slideHeight);
             if (t >= 1f)
                 EndSlide();
+        }
+
+        /// <summary>Opens the group as if the pointer had just been on it (it folds again when another group opens), unless it is pinned.</summary>
+        public void OpenAsHover()
+        {
+            if (_pinned)
+                return;
+            _stayOpen = true;
+            // a window that is there from the first frame of its tab does not slide open
+            if (_started && isActiveAndEnabled)
+            {
+                _applied = false;
+                _dirty = false;
+                Apply();
+            }
+            else
+            {
+                _dirty = true;
+            }
         }
 
         /// <summary>Whether the group is open (pinned or by hovering), also while it is still sliding open.</summary>

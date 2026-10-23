@@ -42,6 +42,7 @@ namespace Gavi
                 AddTrigger(trigger, EventTriggerType.PointerEnter, () => { if (index != _current) Select(index); });
             }
             Select(_startIndex);
+            _started = true;
         }
 
         private static void AddTrigger(EventTrigger trigger, EventTriggerType type, Action action)
@@ -52,6 +53,18 @@ namespace Gavi
         }
 
         private int _current = -1;
+        private bool _started;
+
+        // Coming into a tab by hand opens its first window (not pinned), so the top of the tab is at hand.
+        private static void OpenFirstGroup(Tab tab)
+        {
+            if (tab.Pages.Count == 0 || tab.Pages[0] == null)
+                return;
+            GameObject page = tab.Pages[0];
+            UiGroupFold fold = page.GetComponent<UiGroupSwitch>() != null ? page.GetComponent<UiGroupSwitch>().CurrentFold : page.GetComponent<UiGroupFold>();
+            if (fold != null)
+                fold.OpenAsHover();
+        }
 
         public void Select(int index)
         {
@@ -62,6 +75,8 @@ namespace Gavi
                 foreach (GameObject page in _tabs[i].Pages)
                     if (page != null)
                         page.SetActive(active);
+                if (active && _started)
+                    OpenFirstGroup(_tabs[i]);
                 if (_tabs[i].Indicator != null)
                     _tabs[i].Indicator.color = active ? _indicatorActiveColor : _indicatorInactiveColor;
             }

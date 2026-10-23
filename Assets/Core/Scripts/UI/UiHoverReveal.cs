@@ -35,6 +35,10 @@ namespace Gavi
         [SerializeField] private bool _openByIntent;
         [Tooltip("Minimum pointer speed for that, in screen heights per second.")]
         [SerializeField] private float _intentSpeed = 0.6f;
+        [Tooltip("The pointer has to be in this part of the screen for the intent (left, bottom, right, top as fractions of the screen), e.g. the lower half for a menu at the bottom.")]
+        [SerializeField] private Vector4 _intentScreenArea = new Vector4(0f, 0f, 1f, 1f);
+        [Tooltip("A fast movement that does not lead to the menu takes the intent back only after this many seconds of it.")]
+        [SerializeField] private float _intentCancelDelay = 0.15f;
         [Tooltip("The pointer is followed this many seconds ahead; the menu opens when that point is in the trigger area.")]
         [SerializeField] private float _intentLookAhead = 0.4f;
         [Tooltip("The menu stays open this long (s) after the last movement towards it, so a pointer that slows down on the way still finds it.")]
@@ -63,6 +67,7 @@ namespace Gavi
         private bool _dismissed;
         private float _startUntil;
         private float _intentUntil;
+        private float _intentMissTime;
         private Vector2 _lastPosition;
         private Vector2 _velocity;
 
@@ -222,10 +227,24 @@ namespace Gavi
             float minSpeed = _intentSpeed * Screen.height;
             if (_velocity.magnitude >= minSpeed)
             {
-                if (PathReachesMenu(position))
+                bool inArea = position.x >= Screen.width * _intentScreenArea.x && position.y >= Screen.height * _intentScreenArea.y
+                    && position.x <= Screen.width * _intentScreenArea.z && position.y <= Screen.height * _intentScreenArea.w;
+                if (inArea && PathReachesMenu(position))
+                {
                     _intentUntil = Time.unscaledTime + _intentHold;
+                    _intentMissTime = 0f;
+                }
                 else
-                    _intentUntil = 0f;
+                {
+                    // a single frame of a jittery path must not take the menu away again
+                    _intentMissTime += dt;
+                    if (_intentMissTime >= _intentCancelDelay)
+                        _intentUntil = 0f;
+                }
+            }
+            else
+            {
+                _intentMissTime = 0f;
             }
             return Time.unscaledTime < _intentUntil;
         }

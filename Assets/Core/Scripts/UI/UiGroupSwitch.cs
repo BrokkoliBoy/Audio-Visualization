@@ -27,6 +27,10 @@ namespace Gavi
 
         [SerializeField] private List<Entry> _entries = new List<Entry>();
         [SerializeField] private int _startIndex;
+        [Tooltip("One single button per group (the first of its Buttons) that switches to the next group while the pointer rests on it. The marks of the group show the page: one mark for the first group, two for the second.")]
+        [SerializeField] private bool _toggleMode;
+        [Tooltip("Optional: while this toggle is off, leaving the window shows the first group again (e.g. a window whose second page does nothing while its feature is off).")]
+        [SerializeField] private Toggle _firstPageWhenOff;
         [SerializeField] private Color _indicatorActiveColor = new Color(0.1f, 0.83f, 0.88f, 1f);
         [SerializeField] private Color _indicatorInactiveColor = new Color(1f, 1f, 1f, 0.12f);
 
@@ -37,6 +41,8 @@ namespace Gavi
         private int _hoverIndex = -1;
         private bool _wired;
         private float _markFade = 1f;
+        private bool _toggleArmed;
+        private bool _toggleInside;
 
         private void Awake()
         {
@@ -45,10 +51,19 @@ namespace Gavi
 
         private void Start()
         {
-            foreach (Entry entry in _entries)
+            for (int e = 0; e < _entries.Count; e++)
             {
+                Entry entry = _entries[e];
                 if (entry.Buttons == null)
                     continue;
+                if (_toggleMode)
+                {
+                    // the pointer is followed in Update, so a button that appears under the pointer does not switch back at once
+                    int next = (e + 1) % _entries.Count;
+                    if (entry.Buttons.Length > 0 && entry.Buttons[0] != null)
+                        entry.Buttons[0].onClick.AddListener(() => { _toggleArmed = false; Select(next); });
+                    continue;
+                }
                 for (int i = 0; i < entry.Buttons.Length; i++)
                 {
                     int index = i;
@@ -67,12 +82,20 @@ namespace Gavi
                     trigger.triggers.Add(exit);
                 }
             }
+            for (int e = 0; e < _entries.Count; e++)
+            {
+                int index = e;
+                UiGroupFold fold = _entries[e].Group != null ? _entries[e].Group.GetComponent<UiGroupFold>() : null;
+                if (fold != null)
+                    fold.PointerLeft += () => OnGroupLeft(index);
+            }
             _wired = true;
         }
 
         private void OnEnable()
         {
             _hoverIndex = -1;
+            _toggleArmed = false;
             Apply(-1);
         }
 
@@ -87,11 +110,48 @@ namespace Gavi
             _markFade = Mathf.Lerp(_markFade, target, 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
             ApplyIndicatorColors();
 
+            if (_toggleMode)
+            {
+                UpdateToggle(current, target);
+                return;
+            }
+
             if (_hoverIndex < 0 || _hoverIndex == _current || target < 0.5f)
                 return;
             if (current != null && current.IsSlidingWithin(_hoverSettleTime))
                 return;
             Select(_hoverIndex);
+        }
+
+        private void OnGroupLeft(int index)
+        {
+            if (_firstPageWhenOff != null && !_firstPageWhenOff.isOn && index == _current && _current != 0)
+                Select(0);
+        }
+
+        // The button of the shown group switches to the next page while the pointer rests on it. It has to be left once before it
+        // switches again, otherwise the button that appears under the pointer would switch back at once.
+        private void UpdateToggle(UiGroupFold current, float open)
+        {
+            Entry entry = _current < _entries.Count ? _entries[_current] : null;
+            Button button = entry != null && entry.Buttons != null && entry.Buttons.Length > 0 ? entry.Buttons[0] : null;
+            _toggleInside = button != null && UiPointer.IsInsideWindow
+                && UiPointer.GetScreenRect((RectTransform)button.transform, Vector4.zero).Contains(UiPointer.Position);
+            if (!_toggleInside)
+            {
+                _toggleArmed = true;
+                return;
+            }
+            // a pointer that only opens the window by resting on the header must not flip its page
+            if (open < 0.5f)
+            {
+                _toggleArmed = false;
+                return;
+            }
+            if (!_toggleArmed || (current != null && current.IsSlidingWithin(_hoverSettleTime)))
+                return;
+            _toggleArmed = false;
+            Select((_current + 1) % _entries.Count);
         }
 
         private void OnDisable()
@@ -100,6 +160,9 @@ namespace Gavi
                 if (entry.Group != null)
                     entry.Group.SetActive(false);
         }
+
+        /// <summary>The fold of the group that is shown right now.</summary>
+        public UiGroupFold CurrentFold => _current >= 0 && _current < _entries.Count && _entries[_current].Group != null ? _entries[_current].Group.GetComponent<UiGroupFold>() : null;
 
         public void Select(int index)
         {
@@ -142,6 +205,12 @@ namespace Gavi
                     if (entry.Indicators[k] == null)
                         continue;
                     Color color = k == _current ? _indicatorActiveColor : _indicatorInactiveColor;
+                    if (_toggleMode)
+                    {
+                        // one mark for the first page, two for the second; brighter while the pointer is on the button
+                        color = _indicatorActiveColor;
+                        color.a = k <= _current ? (_toggleInside ? 1f : 0.55f) : 0f;
+                    }
                     color.a *= _markFade;
                     entry.Indicators[k].color = color;
                 }
