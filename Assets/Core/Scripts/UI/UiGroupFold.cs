@@ -15,8 +15,8 @@ namespace Gavi
     {
         [Tooltip("The button in the header. A click pins the group open or folds it.")]
         [SerializeField] private Button _button;
-        [Tooltip("Shows v while the group is pinned open and > otherwise.")]
-        [SerializeField] private TMP_Text _label;
+        [Tooltip("Small arrow in the header. Points right while folded, down while pinned open, in between while opened by hovering.")]
+        [SerializeField] private RectTransform _arrow;
         [Tooltip("Children that stay visible while folded: the header and the background.")]
         [SerializeField] private List<GameObject> _keepVisible = new List<GameObject>();
         [Tooltip("Height of the group while folded. Only used for groups sized by a Layout Element (groups with their own layout group fit themselves).")]
@@ -37,6 +37,8 @@ namespace Gavi
         private readonly List<GameObject> _hidden = new List<GameObject>();
 
         private bool _started;
+        private bool _pinnedSet;
+        private float _arrowAngle;
         private bool _pinned;
         private bool _hover;
         private bool _hoverSuppressed;
@@ -89,8 +91,17 @@ namespace Gavi
         private void Start()
         {
             _started = true;
-            _pinned = !_startFolded;
+            if (!_pinnedSet)
+                _pinned = !_startFolded;
             Apply();
+            // a group that was changed while its tab was off shows the new state in the very frame the tab opens
+            if (_started)
+            {
+                _dirty = false;
+                Apply();
+            }
+            _arrowAngle = ArrowTarget();
+            ApplyArrow();
         }
 
         private void OnDisable()
@@ -121,6 +132,14 @@ namespace Gavi
             _leaving = false;
             _exitPending = false;
             _dirty = true;
+            // a group changed while its tab was off shows the new state in the very frame the tab opens
+            if (_started)
+            {
+                _dirty = false;
+                Apply();
+            }
+            _arrowAngle = ArrowTarget();
+            ApplyArrow();
         }
 
         private void Update()
@@ -146,6 +165,7 @@ namespace Gavi
             }
             if (_sliding)
                 StepSlide();
+            StepArrow();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -225,18 +245,19 @@ namespace Gavi
         {
             bool pin = !_pinned;
             SetPinned(pin);
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            // Ctrl + click opens or folds every group of every tab, Shift + click every group of the open tab
+            bool all = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+            bool tab = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            if (!all && !tab)
+                return;
+            Transform parent = transform.parent;
+            if (parent == null)
+                return;
+            foreach (Transform sibling in parent)
             {
-                // Shift + click opens or folds every group of the tab
-                Transform parent = transform.parent;
-                if (parent == null)
-                    return;
-                foreach (Transform sibling in parent)
-                {
-                    UiGroupFold other = sibling.GetComponent<UiGroupFold>();
-                    if (other != null && other.isActiveAndEnabled && other != this)
-                        other.SetPinned(pin);
-                }
+                UiGroupFold other = sibling.GetComponent<UiGroupFold>();
+                if (other != null && other != this && (all || other.isActiveAndEnabled))
+                    other.SetPinned(pin);
             }
         }
 
@@ -249,14 +270,33 @@ namespace Gavi
                 _hoverReady = false;
             }
             _pinned = pin;
+            _pinnedSet = true;
+            // a group of another tab changes without sliding, it is not on screen
+            if (!isActiveAndEnabled)
+                _applied = false;
             _dirty = true;
+        }
+
+        private float ArrowTarget()
+        {
+            return _pinned ? -90f : (_open ? -45f : 0f);
+        }
+
+        private void StepArrow()
+        {
+            _arrowAngle = Mathf.Lerp(_arrowAngle, ArrowTarget(), 1f - Mathf.Exp(-18f * Time.unscaledDeltaTime));
+            ApplyArrow();
+        }
+
+        private void ApplyArrow()
+        {
+            if (_arrow != null)
+                _arrow.localRotation = Quaternion.Euler(0f, 0f, _arrowAngle);
         }
 
         private void Apply()
         {
             bool open = _pinned || (_openOnHover && _hover && _hoverReady && !_hoverSuppressed);
-            if (_label != null)
-                _label.text = _pinned ? "v" : ">";
             if (_applied && open == _open)
                 return;
             bool slide = _applied && _slideTime > 0f && isActiveAndEnabled;

@@ -1340,6 +1340,34 @@ namespace Gavi
         #endregion
 
         #region Audio
+        private float[] _shownBands;
+
+        // Follows the band values with the same dampening as the picture. While paused the band values are replaced by what the picture
+        // shows, so a menu change on the frozen moment does not jump from the dampened height to the raw one.
+        private void FollowShownBands()
+        {
+            if (_shownBands == null || _shownBands.Length != _bandCount)
+            {
+                _shownBands = new float[_bandCount];
+                for (int i = 0; i < _bandCount; i++)
+                    _shownBands[i] = _bandValues[i];
+            }
+            bool paused = Frozen;
+            for (int i = 0; i < _bandCount; i++)
+            {
+                if (paused)
+                {
+                    _bandValues[i] = _shownBands[i];
+                    continue;
+                }
+                float raw = _bandValues[i];
+                if (_applyDampening)
+                    _shownBands[i] = Mathf.Lerp(_shownBands[i], raw, Utility.Utility.Smooth(raw < _shownBands[i] ? _dampenLerpFactorDown : _dampenLerpFactorUp, _fpsEqualizer));
+                else
+                    _shownBands[i] = raw;
+            }
+        }
+
         private void PrepareAudio()
         {
             if (!_applyAudio || _samplesContainer == null)
@@ -1352,6 +1380,7 @@ namespace Gavi
             EnsureArray(ref _bandValues, Mathf.Max(1, _bandCount));
             for (int i = 0; i < _bandCount; i++)
                 _bandValues[i] = _samplesContainer.GetValue(i);
+            FollowShownBands();
 #if UNITY_EDITOR
             // the debug mode replaces the spectrum by a line that falls from the first to the last band
             if (_applyAudioDebugMode)
