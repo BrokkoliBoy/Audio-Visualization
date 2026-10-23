@@ -62,6 +62,7 @@ namespace Gavi
         private float _slideStart;
         private float _slideHeight;
         private float _slideEndTime = float.NegativeInfinity;
+        private float _handoverHeight = -1f;
 
         private void Awake()
         {
@@ -135,7 +136,8 @@ namespace Gavi
 
         /// <summary>
         /// Takes over the fold state of a group that shares its window with this one (see UiGroupSwitch), before this group is
-        /// switched on. The state is applied without sliding.
+        /// switched on. The fold state is taken over as it is; if the heights of the two windows differ, this one slides from the
+        /// height of the old one to its own.
         /// </summary>
         public void TakeOver(UiGroupFold from)
         {
@@ -147,6 +149,7 @@ namespace Gavi
             _enterTime = from._enterTime;
             _enterDelay = from._enterDelay;
             _takenOver = true;
+            _handoverHeight = from._sliding ? from._slideHeight : ((RectTransform)from.transform).rect.height;
             _applied = false;
             _dirty = true;
         }
@@ -358,7 +361,7 @@ namespace Gavi
             bool open = _pinned || (_openOnHover && _hover && _hoverReady && !_hoverSuppressed);
             if (_applied && open == _open)
                 return;
-            bool slide = _applied && _slideTime > 0f && isActiveAndEnabled;
+            bool slide = (_applied || _handoverHeight >= 0f) && _slideTime > 0f && isActiveAndEnabled;
             _applied = true;
             _open = open;
 
@@ -366,6 +369,7 @@ namespace Gavi
                 StartSlide(open);
             else
                 SetInstant(open);
+            _handoverHeight = -1f;
         }
 
         private void SetInstant(bool open)
@@ -387,8 +391,15 @@ namespace Gavi
 
         private void StartSlide(bool open)
         {
-            float from = _sliding ? _slideHeight : ((RectTransform)transform).rect.height;
+            float from = _handoverHeight >= 0f ? _handoverHeight : (_sliding ? _slideHeight : ((RectTransform)transform).rect.height);
+            _handoverHeight = -1f;
             _slideTo = open ? MeasureOpen() : MeasureFolded();
+            // windows of the same height need no slide (and must not hold back the next hover switch)
+            if (Mathf.Abs(from - _slideTo) < 0.5f)
+            {
+                SetInstant(open);
+                return;
+            }
             _slideFrom = from;
             _slideHeight = from;
             _slideStart = Time.unscaledTime;
