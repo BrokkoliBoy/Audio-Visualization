@@ -24,6 +24,11 @@ namespace Gavi.Utility
         [SerializeField] private string _lowHint = " - less detail helps";
         [SerializeField] private string _veryLowHint = " - lower the detail!";
 
+        /// <summary>Fastest pattern speed right now, set by the terrain. A fast pattern is the likely cause of a slightly low frame rate, so the
+        /// speed hint speaks first and the hint for less detail waits for a very low frame rate.</summary>
+        public static float HighestSpeed;
+        public const float SpeedBlamedFrom = 2f;
+
         private int _frames;
         private float _elapsed;
         private float _lowFor;
@@ -57,7 +62,7 @@ namespace Gavi.Utility
                 hint = _veryLowHint;
                 color = _veryLowColor;
             }
-            else if (_lowFor >= _lowSeconds)
+            else if (_lowFor >= _lowSeconds && HighestSpeed <= SpeedBlamedFrom)
             {
                 hint = _lowHint;
                 color = _lowColor;

@@ -11,7 +11,7 @@ namespace Gavi
     /// </summary>
     public class TerrainGroupUIPerformance : TerrainGroupUI
     {
-        [Tooltip("Noise pattern is calculated only every n-th mesh update, in between it blends from the last result.")]
+        [Tooltip("Upper limit of Noise every: the noise pattern is calculated only every n-th mesh update, in between it blends from the last result. The interval used is lowered on its own for fast patterns.")]
         [SerializeField] private SliderG _sliderNoiseInterval;
         [Tooltip("Optional (dropped from the menu).")]
         [SerializeField] private Toggle _toggleNoiseSpread;
@@ -21,14 +21,11 @@ namespace Gavi
         [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
         [SerializeField] private SliderG _sliderMaxFps;
         [SerializeField] private TextMeshProUGUI _textReadout;
-        [Tooltip("Says up to which Noise every the fastest pattern speed still looks right, turns orange when the slider is above that.")]
-        [SerializeField] private TextMeshProUGUI _textSpeedHint;
-        [Tooltip("Seconds over which the frame rate is averaged.")]
+        [Tooltip("Seconds over which the update time is refreshed.")]
         [SerializeField] private float _measureSeconds = 0.5f;
 
         private float _elapsed;
-        private TerrainGroupUIPerlin _perlin;
-        private TerrainGroupUINoiseLayer[] _layers;
+        private bool _readoutDirty;
 
         private void Awake()
         {
@@ -44,6 +41,11 @@ namespace Gavi
                 _sliderDetail.OnValueChangedInt.AddListener(value => _sliderDetailMain.ValueInt = value);
                 _sliderDetailMain.OnValueChangedInt.AddListener(value => _sliderDetail.ValueInt = value);
             }
+            // The face count in the text follows a detail change at once, not with the next refresh.
+            if (_sliderDetail != null)
+                _sliderDetail.OnValueChangedInt.AddListener(_ => _readoutDirty = true);
+            if (_sliderDetailMain != null)
+                _sliderDetailMain.OnValueChangedInt.AddListener(_ => _readoutDirty = true);
 
             // The limit belongs to the computer, so it does not go through the profile.
             _sliderMaxFps.SetRange(FrameRateSettings.MinFps, FrameRateSettings.MonitorHz);
@@ -54,6 +56,7 @@ namespace Gavi
         private void OnEnable()
         {
             _elapsed = 0f;
+            _readoutDirty = true;
         }
 
         private void Update()
@@ -62,41 +65,24 @@ namespace Gavi
             if (_elapsed < _measureSeconds)
                 return;
             _elapsed = 0f;
+            UpdateReadout();
+        }
 
-            UpdateSpeedHint();
+        // After the other scripts of this frame, so the new face count is already applied to the terrain.
+        private void LateUpdate()
+        {
+            if (!_readoutDirty)
+                return;
+            _readoutDirty = false;
+            UpdateReadout();
+        }
 
+        private void UpdateReadout()
+        {
             TerrainGenerator terrain = TerrainSettingsManager.Instance != null ? TerrainSettingsManager.Instance.Terrain : null;
             if (_textReadout == null || terrain == null)
                 return;
-            _textReadout.text = "Mesh: " + terrain.FaceCountX + " x " + terrain.FaceCountX + " faces, update " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
-        }
-
-        /// <summary>Largest Noise every that still looks right for a pattern speed: moving patterns lag behind with a long interval.</summary>
-        private static int MaxIntervalForSpeed(float speed)
-        {
-            if (speed >= 4f) return 1;
-            if (speed >= 3f) return 2;
-            if (speed >= 2f) return 3;
-            return TerrainGenerator.MaxNoiseInterval;
-        }
-
-        private void UpdateSpeedHint()
-        {
-            if (_textSpeedHint == null || _sliderNoiseInterval == null)
-                return;
-            if (_perlin == null)
-                _perlin = FindFirstObjectByType<TerrainGroupUIPerlin>(FindObjectsInactive.Include);
-            if (_layers == null)
-                _layers = FindObjectsByType<TerrainGroupUINoiseLayer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-            float speed = _perlin != null ? _perlin.ActiveSpeed : 0f;
-            foreach (TerrainGroupUINoiseLayer layer in _layers)
-                speed = Mathf.Max(speed, layer.ActiveSpeed);
-
-            int allowed = MaxIntervalForSpeed(speed);
-            bool tooHigh = _sliderNoiseInterval.ValueInt > allowed;
-            _textSpeedHint.text = "Fastest pattern speed " + speed.ToString("0.#") + ": noise every up to " + allowed;
-            _textSpeedHint.color = tooHigh ? new Color(1f, 0.65f, 0.2f) : new Color(1f, 1f, 1f, 0.45f);
+            _textReadout.text = "Mesh: " + terrain.FaceCountX + " x " + terrain.FaceCountX + " faces, " + terrain.UpdateMilliseconds.ToString("F1") + " ms";
         }
 
         public override void ExtractProfile(TerrainSettingsProfile profile)

@@ -102,7 +102,7 @@ namespace Gavi
             if (_toggleSway == null)
                 return;
 
-            bool on = PlayerPrefs.GetInt(KeySway, _control == null || _control.KeepSway ? 1 : 0) == 1;
+            bool on = PlayerPrefs.GetInt(KeySway, 1) == 1;
             _toggleSway.SetIsOnWithoutNotify(on);
             if (_control != null)
                 _control.KeepSway = on;
@@ -119,7 +119,7 @@ namespace Gavi
             if (_toggleBeatZoom == null)
                 return;
 
-            bool on = PlayerPrefs.GetInt(KeyBeatZoom, 1) == 1;
+            bool on = PlayerPrefs.GetInt(KeyBeatZoom, 0) == 1;
             _toggleBeatZoom.SetIsOnWithoutNotify(on);
             CameraModifiable.BeatZoomEnabled = on;
             _toggleBeatZoom.onValueChanged.AddListener(v =>

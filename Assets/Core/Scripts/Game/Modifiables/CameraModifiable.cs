@@ -10,7 +10,7 @@ namespace Gavi.Modifiables
     public class CameraModifiable : MonoBehaviour
     {
         /// <summary>Switched by the camera menu. While off, or while the test signal replaces the audio, the cameras keep the field of view they started with instead of zooming to the beat.</summary>
-        public static bool BeatZoomEnabled { get; set; } = true;
+        public static bool BeatZoomEnabled { get; set; } = false;
 
         [SerializeField] private List<Camera> _cameras;
 

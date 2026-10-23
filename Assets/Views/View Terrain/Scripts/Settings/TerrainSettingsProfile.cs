@@ -108,7 +108,7 @@ namespace Gavi
         [Header("- Morph -")]
         public bool ApplyMorph = false;
         [Tooltip("TerrainGenerator.MorphShape: 1 = Dome, 2 = Planet, 3 = Tube, 5 = Pringle, 6 = Flag, 7 = Twist. Other numbers (removed shapes) give the dome.")]
-        public int MorphShape = (int)TerrainGenerator.MorphShape.Dome;
+        public int MorphShape = (int)TerrainGenerator.MorphShape.Planet;
         public float MorphAmount = 0.5f;
         [Header("- Morph motion -")]
         public float MotionBeat = 0f;

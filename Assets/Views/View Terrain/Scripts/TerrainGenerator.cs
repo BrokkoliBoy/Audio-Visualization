@@ -163,7 +163,7 @@ namespace Gavi
         [Tooltip("Bends the whole mesh after the heights are calculated. Off = the flat terrain.")]
         [SerializeField] private bool _applyMorph;
         public bool ApplyMorph { get => _applyMorph; set => _applyMorph = value; }
-        [SerializeField] private MorphShape _morphShape = MorphShape.Dome;
+        [SerializeField] private MorphShape _morphShape = MorphShape.Planet;
         /// <summary>The numbers are what profiles store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
         public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7 }
         /// <summary>The shapes in the order of the menu.</summary>
@@ -278,6 +278,29 @@ namespace Gavi
         public int NoiseInterval { get => _noiseInterval; set => _noiseInterval = Mathf.Clamp(value, 1, MaxNoiseInterval); }
         public bool NoiseSpread { get => _noiseSpread; set => _noiseSpread = value; }
 
+        /// <summary>Speed of the fastest noise pattern that is switched on, as the speed sliders show it.</summary>
+        public float FastestPatternSpeed
+        {
+            get
+            {
+                float speed = _applyPerlinNoise ? _perlinOffsetSpeed.magnitude : 0f;
+                for (int i = 0; i < _extraLayers.Length; i++)
+                    if (_extraLayers[i].Enabled)
+                        speed = Mathf.Max(speed, new Vector2(_extraLayers[i].SpeedX, _extraLayers[i].SpeedY).magnitude);
+                return speed;
+            }
+        }
+
+        /// <summary>Largest Noise every that still looks right for a pattern speed: moving patterns lag behind with a long interval.
+        /// The Noise every slider is the upper limit, the interval used follows the fastest pattern on its own.</summary>
+        public static int MaxIntervalForSpeed(float speed)
+        {
+            if (speed >= 4f) return 1;
+            if (speed >= 3f) return 2;
+            if (speed >= 2f) return 3;
+            return MaxNoiseInterval;
+        }
+
         /// <summary>Time the last mesh updates took on average (milliseconds on the main thread, the worker threads included).</summary>
         public float UpdateMilliseconds => _updateMilliseconds;
         private float _updateMilliseconds;
@@ -360,6 +383,7 @@ namespace Gavi
         private void Update()
         {
             ApplyPerlinSpeed();
+            FpsHint.HighestSpeed = FastestPatternSpeed;
 
             if (!_generateOnUpdate)
                 return;
@@ -767,7 +791,7 @@ namespace Gavi
             _noiseGridWidth = width;
             _noiseGridHeight = height;
 
-            int interval = Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval);
+            int interval = Mathf.Min(Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval), MaxIntervalForSpeed(FastestPatternSpeed));
             bool spread = interval > 1; // the work of one update is always spread over the frames, there is no switch for it any more
             _noiseIntervalUsed = interval;
 

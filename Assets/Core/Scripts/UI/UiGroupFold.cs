@@ -33,6 +33,7 @@ namespace Gavi
         private bool _ownLayout;
         private float _openMin;
         private float _openPreferred;
+        private float _extraHeight;
         private readonly List<GameObject> _hidden = new List<GameObject>();
 
         private bool _started;
@@ -500,7 +501,7 @@ namespace Gavi
             ShowChildren();
             RestoreOpenLayout();
             if (!_ownLayout)
-                return _openPreferred >= 0f ? _openPreferred : (_openMin >= 0f ? _openMin : ((RectTransform)transform).rect.height);
+                return OpenPreferred >= 0f ? OpenPreferred : (OpenMin >= 0f ? OpenMin : ((RectTransform)transform).rect.height);
             return MeasureOwn();
         }
 
@@ -543,10 +544,30 @@ namespace Gavi
             }
         }
 
+        // The open height plus the room of a row that is shown at the moment (see SetExtraOpenHeight).
+        private float OpenMin => _openMin >= 0f ? _openMin + _extraHeight : _openMin;
+        private float OpenPreferred => _openPreferred >= 0f ? _openPreferred + _extraHeight : _openPreferred;
+
+        /// <summary>
+        /// Makes the open group taller by this much, for a row that comes and goes. Call it every frame while the row slides in or
+        /// out; the folded height stays.
+        /// </summary>
+        public void SetExtraOpenHeight(float extra)
+        {
+            if (Mathf.Approximately(extra, _extraHeight))
+                return;
+            _extraHeight = extra;
+            if (_applied && _open && !_sliding)
+            {
+                RestoreOpenLayout();
+                MarkLayout();
+            }
+        }
+
         private void RestoreOpenLayout()
         {
-            _layout.minHeight = _openMin;
-            _layout.preferredHeight = _openPreferred;
+            _layout.minHeight = OpenMin;
+            _layout.preferredHeight = OpenPreferred;
         }
 
         private void SetFoldedLayout()
