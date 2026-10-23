@@ -27,6 +27,9 @@ namespace Gavi
         [Tooltip("Direction of the noise movement. The speed slider is the length of this direction (radial patterns move outward with a negative y).")]
         [SerializeField] private Vector2 _speedDirection = new Vector2(0f, -1f);
 
+        /// <summary>Speed of the pattern as the slider shows it, 0 while the pattern is off.</summary>
+        public float ActiveSpeed => (_toggleApplyPerlin == null || _toggleApplyPerlin.isOn) && _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 0f;
+
         private void Awake()
         {
             _toggleApplyPerlin.onValueChanged.AddListener(OnUIValueChanged);

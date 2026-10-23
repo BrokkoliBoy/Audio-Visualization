@@ -153,7 +153,7 @@ namespace Gavi
         [Tooltip("Fake light: shades the colors by the slope of the ground against a fixed light, in exposure steps (surfaces facing the light brighter, the others darker). Gives contours where the color is flat. 0 = off.")]
         [Range(0, 3)]
         [SerializeField] private float _reliefStrength;
-        public float ReliefStrength { get => _reliefStrength; set => _reliefStrength = Mathf.Clamp(value, 0f, 3f); }
+        public float ReliefStrength { get => _reliefStrength; set => _reliefStrength = Mathf.Clamp(value, 0f, 1f); }
         [Tooltip("Heights above the top of the gradient (loud bands push vertices over 1) keep a little color variation instead of all showing the last color. 0 = hard end as before, 1 = soft end: the top colors are reached later and the last one only approaches.")]
         [Range(0, 1)]
         [SerializeField] private float _colorHeadroom;
@@ -271,7 +271,7 @@ namespace Gavi
         [Tooltip("Only meaningful with a noise interval above 1. Off: the whole pattern is calculated in one update every n-th update. On: every update calculates a different n-th of the points, so the work is the same in every frame and no part of the pattern flows in step with the others.")]
         [SerializeField] private bool _noiseSpread = DefaultNoiseSpread;
 
-        public const int DefaultNoiseInterval = 1;
+        public const int DefaultNoiseInterval = 8;
         public const bool DefaultNoiseSpread = false;
         public const int MaxNoiseInterval = 8;
 
@@ -767,8 +767,8 @@ namespace Gavi
             _noiseGridWidth = width;
             _noiseGridHeight = height;
 
-            int interval = 1; // "Noise every" was dropped (no gain in frame rate, and moving patterns lag behind with it); the old setting is ignored
-            bool spread = _noiseSpread && interval > 1;
+            int interval = Mathf.Clamp(_noiseInterval, 1, MaxNoiseInterval);
+            bool spread = interval > 1; // the work of one update is always spread over the frames, there is no switch for it any more
             _noiseIntervalUsed = interval;
 
             // The slot of every grid point depends on the grid, the interval and the spread, a change starts over.

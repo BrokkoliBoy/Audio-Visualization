@@ -51,8 +51,8 @@ namespace Gavi
         [SerializeField] private Toggle _toggleBloom;
 
         [Header("--- Background ---")]
-        [Tooltip("The sky of the bloom volume takes the hue of the base color (the first one). Brightness and saturation come from the sky colors in the volume.")]
-        [SerializeField] private Toggle _toggleTintBackground;
+        [Tooltip("How far the sky of the bloom volume takes the hue of the base color (the first one): 0 = untinted dark gray, 1 = fully tinted. Brightness and saturation come from the sky colors in the volume.")]
+        [SerializeField] private SliderG _sliderTintBackground;
 
         [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
@@ -129,6 +129,7 @@ namespace Gavi
         private bool DirtOn => _toggleDirt == null || _toggleDirt.isOn;
         private float DirtStrength => _sliderDirtStrength != null ? _sliderDirtStrength.Value : TerrainLensDirt.DefaultStrength;
         private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
+        private float TintBackground => _sliderTintBackground != null ? _sliderTintBackground.Value : 1f;
         private TiltMode Mode => _dropdownTiltMode != null ? (TiltMode)_dropdownTiltMode.value : (TiltMode)TerrainColorPalette.DefaultTiltDirection;
         /// <summary>The first key of the gradient (the lowest vertices) never gets brighter than this glow (menu scale), whatever the base color is set to.</summary>
         private float CurveFloor => _sliderCurveFloor != null ? _sliderCurveFloor.Value : TerrainColorPalette.DefaultCurveFloor;
@@ -188,8 +189,7 @@ namespace Gavi
             foreach (TerrainColorEntryUI entry in _entries)
                 entry.Changed += OnEntryChanged;
 
-            if (_toggleTintBackground != null)
-                _toggleTintBackground.onValueChanged.AddListener(_ => ApplyBackground());
+            ListenToSlider(_sliderTintBackground, 1f, _ => ApplyBackground());
             if (_toggleBloom != null)
                 _toggleBloom.onValueChanged.AddListener(_ => OnGlowSwitched());
             if (_toggleDirt != null)
@@ -257,6 +257,7 @@ namespace Gavi
             profile.DirtEnabled = DirtOn;
             profile.DirtStrength = DirtStrength;
             profile.DirtBeat = DirtBeat;
+            profile.TintBackground = TintBackground;
             profile.ColorValues = new List<Vector3>();
             foreach (TerrainColorEntryUI entry in _entries)
                 profile.ColorValues.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
@@ -270,6 +271,8 @@ namespace Gavi
 
             // The lens dirt belongs to the profile whether or not the profile carries its own color values.
             SetDirtSliders(profile.DirtStrength, profile.DirtBeat);
+            if (_sliderTintBackground != null)
+                _sliderTintBackground.Value = profile.TintBackground;
             if (_toggleBloom != null)
                 _toggleBloom.SetIsOnWithoutNotify(profile.BloomEnabled);
             if (_toggleDirt != null)
@@ -950,10 +953,10 @@ namespace Gavi
                 _skyBottom = _sky.bottom.value;
             }
 
-            bool tint = (_toggleTintBackground == null || _toggleTintBackground.isOn) && _entries.Count > 0;
+            float tint = _entries.Count > 0 && _sliderTintBackground != null ? _sliderTintBackground.Value : (_entries.Count > 0 ? 1f : 0f);
             float hue = _entries.Count > 0 ? _entries[0].Hue : 0f;
-            _sky.middle.Override(tint ? WithHue(_skyMiddle, hue) : Neutral(_skyMiddle));
-            _sky.bottom.Override(tint ? WithHue(_skyBottom, hue) : Neutral(_skyBottom));
+            _sky.middle.Override(Color.Lerp(Neutral(_skyMiddle), WithHue(_skyMiddle, hue), tint));
+            _sky.bottom.Override(Color.Lerp(Neutral(_skyBottom), WithHue(_skyBottom, hue), tint));
         }
 
         // The untinted background is darkened. SDR already looks darker than HDR, so it gets less.

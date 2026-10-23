@@ -94,6 +94,8 @@ namespace Gavi
         [Tooltip("Lens dirt on the glow: fixed strength and extra strength on the beat.")]
         public float DirtStrength = TerrainLensDirt.DefaultStrength;
         public float DirtBeat = TerrainLensDirt.DefaultBeat;
+        [Tooltip("How far the background takes the hue of the base color: 0 = untinted, 1 = fully tinted.")]
+        public float TintBackground = 1f;
         [Tooltip("How much the color comes from the band activity instead of the height: gradient position, brightness, glow. 0 = from the height.")]
         public float ColorBandHue = 0f;
         public float ColorBandBrightness = 0f;
@@ -205,6 +207,7 @@ namespace Gavi
             DirtEnabled = profile.DirtEnabled;
             DirtStrength = profile.DirtStrength;
             DirtBeat = profile.DirtBeat;
+            TintBackground = profile.TintBackground;
             ColorBandHue = profile.ColorBandHue;
             ColorBandBrightness = profile.ColorBandBrightness;
             ColorBandGlow = profile.ColorBandGlow;

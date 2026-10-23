@@ -17,12 +17,8 @@ namespace Gavi
         [SerializeField] private SliderG _sliderWaveDepth;
         [SerializeField] private SliderG _sliderWaveBeats;
 
-        [Tooltip("Opacity of the sliders while the morph is off (they have no effect then).")]
-        [SerializeField] private float _dimmedAlpha = 0.4f;
-
         private bool _ready;
         private TerrainSettingsProfile _shownProfile;
-        private CanvasGroup[] _dimGroups;
 
         private void Awake()
         {
@@ -32,15 +28,6 @@ namespace Gavi
             _sliderBounce.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderWaveDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderWaveBeats.OnValueChangedFloat.AddListener(OnUIValueChanged);
-
-            SliderG[] sliders = { _sliderBeat, _sliderAttack, _sliderRelease, _sliderBounce, _sliderWaveDepth, _sliderWaveBeats };
-            _dimGroups = new CanvasGroup[sliders.Length];
-            for (int i = 0; i < sliders.Length; i++)
-            {
-                _dimGroups[i] = sliders[i].GetComponent<CanvasGroup>();
-                if (_dimGroups[i] == null)
-                    _dimGroups[i] = sliders[i].gameObject.AddComponent<CanvasGroup>();
-            }
 
             // one switch for the whole window: the copy in this tab sets the real one, which is the one the profile reads
             if (_toggleMirror != null)
@@ -63,9 +50,6 @@ namespace Gavi
         {
             if (_toggleMirror != null)
                 _toggleMirror.SetIsOnWithoutNotify(_toggleMorph.isOn);
-            float alpha = _toggleMorph.isOn ? 1f : _dimmedAlpha;
-            foreach (CanvasGroup group in _dimGroups)
-                group.alpha = alpha;
         }
 
         public override void ExtractProfile(TerrainSettingsProfile profile)

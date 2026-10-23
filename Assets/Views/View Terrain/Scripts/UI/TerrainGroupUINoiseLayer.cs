@@ -22,6 +22,9 @@ namespace Gavi
         [Tooltip("Direction of the pattern movement. The speed slider is the length of this direction.")]
         [SerializeField] private Vector2 _speedDirection = new Vector2(0f, -1f);
 
+        /// <summary>Speed of the pattern as the slider shows it, 0 while the layer is off.</summary>
+        public float ActiveSpeed => _toggleEnabled != null && _toggleEnabled.isOn && _sliderSpeed != null ? _sliderSpeed.Value : 0f;
+
         private void Awake()
         {
             _toggleEnabled.onValueChanged.AddListener(OnUIValueChanged);
