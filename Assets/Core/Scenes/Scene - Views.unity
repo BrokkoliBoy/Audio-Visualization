@@ -25883,7 +25883,7 @@ MonoBehaviour:
   - {fileID: 1540549759}
   - {fileID: 1255891179}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -30730,7 +30730,7 @@ MonoBehaviour:
   - {fileID: 656831204}
   - {fileID: 2067632400}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -36157,7 +36157,7 @@ MonoBehaviour:
   - {fileID: 1312810135}
   - {fileID: 1268625175}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -40254,7 +40254,7 @@ MonoBehaviour:
   - {fileID: 967276490}
   - {fileID: 1324514750}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -49795,7 +49795,7 @@ MonoBehaviour:
   - {fileID: 169835648}
   - {fileID: 1372750270}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -50231,7 +50231,7 @@ MonoBehaviour:
   - {fileID: 663364159}
   - {fileID: 497847897}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -50914,7 +50914,7 @@ MonoBehaviour:
   - {fileID: 786607182}
   - {fileID: 436280690}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -51025,7 +51025,7 @@ MonoBehaviour:
   - {fileID: 2001366044}
   - {fileID: 1122721169}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -58469,7 +58469,7 @@ MonoBehaviour:
   - {fileID: 2110229300}
   - {fileID: 381987629}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -61799,7 +61799,7 @@ MonoBehaviour:
   - {fileID: 250030386}
   - {fileID: 451002603}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -73696,7 +73696,7 @@ MonoBehaviour:
   - {fileID: 683219930}
   - {fileID: 2116547683}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -81152,7 +81152,7 @@ MonoBehaviour:
   - {fileID: 1042694829}
   - {fileID: 1238903117}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -82944,7 +82944,7 @@ MonoBehaviour:
   - {fileID: 941950050}
   - {fileID: 1042426205}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -86030,7 +86030,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 290, y: 0}
+  m_AnchoredPosition: {x: 290, y: -24}
   m_SizeDelta: {x: -20, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1178821659
@@ -92249,9 +92249,12 @@ MonoBehaviour:
   - {fileID: 90358523}
   _stayRegions:
   - {fileID: 1450599394}
-  _triggerPadding: {x: 120, y: 5000, z: 60, w: 5000}
+  _triggerPadding: {x: 24, y: 24, z: 24, w: 24}
   _stayPadding: {x: 24, y: 24, z: 24, w: 24}
   _openExtension: {x: 0.45, y: 0.2, z: 0.3, w: 0.3}
+  _dockedMenuArea: {fileID: 1450599394}
+  _dockedExtraWidth: 0.2
+  _dockedExtraHeight: 0.08
   _keepOpenWhileVisible: []
   _showOnStartSeconds: 0
   _keepOpenWhileMouseHeld: 1
@@ -93392,7 +93395,7 @@ MonoBehaviour:
   - {fileID: 2115784281}
   - {fileID: 1541457878}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -94776,7 +94779,7 @@ MonoBehaviour:
   - {fileID: 1306028469}
   - {fileID: 13047586}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -97576,6 +97579,9 @@ MonoBehaviour:
   _triggerPadding: {x: 40, y: 80, z: 40, w: 30}
   _stayPadding: {x: 24, y: 24, z: 24, w: 24}
   _openExtension: {x: 0.3, y: 0.3, z: 0.3, w: 0.3}
+  _dockedMenuArea: {fileID: 0}
+  _dockedExtraWidth: 0.2
+  _dockedExtraHeight: 0.08
   _keepOpenWhileVisible:
   - {fileID: 1497265465}
   - {fileID: 2131760329}
@@ -101291,7 +101297,7 @@ MonoBehaviour:
   - {fileID: 587888381}
   - {fileID: 473366411}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -101938,7 +101944,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -10, y: 0}
+  m_AnchoredPosition: {x: -10, y: -24}
   m_SizeDelta: {x: -20, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1367480973 stripped
@@ -106145,7 +106151,7 @@ MonoBehaviour:
   - {fileID: 1768100858}
   - {fileID: 261229753}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -111030,7 +111036,7 @@ MonoBehaviour:
   - {fileID: 2092322911}
   - {fileID: 1351962445}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -112570,7 +112576,7 @@ MonoBehaviour:
   - {fileID: 1623263839}
   - {fileID: 1501938113}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -112849,6 +112855,9 @@ MonoBehaviour:
   _triggerPadding: {x: 10, y: 10, z: 10, w: 30}
   _stayPadding: {x: 10, y: 10, z: 10, w: 10}
   _openExtension: {x: 0.3, y: 0.3, z: 0.3, w: 0.3}
+  _dockedMenuArea: {fileID: 0}
+  _dockedExtraWidth: 0.2
+  _dockedExtraHeight: 0.08
   _keepOpenWhileVisible: []
   _showOnStartSeconds: 0
   _keepOpenWhileMouseHeld: 1
@@ -113067,7 +113076,7 @@ MonoBehaviour:
   - {fileID: 1657217467}
   - {fileID: 1871107194}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -123736,7 +123745,7 @@ MonoBehaviour:
   - {fileID: 1871981671}
   - {fileID: 1940962967}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -126873,7 +126882,7 @@ MonoBehaviour:
   - {fileID: 501237450}
   - {fileID: 501237451}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -127526,7 +127535,7 @@ MonoBehaviour:
   - {fileID: 779393502}
   - {fileID: 1225946110}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -130723,7 +130732,7 @@ MonoBehaviour:
   - {fileID: 1467997806}
   - {fileID: 1512635479}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -132081,7 +132090,7 @@ MonoBehaviour:
   - {fileID: 2007500841}
   - {fileID: 1148697924}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -141062,7 +141071,7 @@ MonoBehaviour:
   - {fileID: 1470049897}
   - {fileID: 279154189}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -142882,7 +142891,7 @@ MonoBehaviour:
   - {fileID: 730585448}
   - {fileID: 961922342}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -148193,7 +148202,7 @@ MonoBehaviour:
   - {fileID: 102772431}
   - {fileID: 1886175244}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -159517,6 +159526,9 @@ MonoBehaviour:
   _triggerPadding: {x: 10, y: 10, z: 10, w: 30}
   _stayPadding: {x: 10, y: 10, z: 10, w: 10}
   _openExtension: {x: 0.3, y: 0.3, z: 0.3, w: 0.3}
+  _dockedMenuArea: {fileID: 0}
+  _dockedExtraWidth: 0.2
+  _dockedExtraHeight: 0.08
   _keepOpenWhileVisible: []
   _showOnStartSeconds: 0
   _keepOpenWhileMouseHeld: 1
@@ -159899,7 +159911,7 @@ MonoBehaviour:
   - {fileID: 221264116}
   - {fileID: 1370648903}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15
@@ -161187,7 +161199,7 @@ MonoBehaviour:
   - {fileID: 602506533}
   - {fileID: 2018586954}
   _foldedHeight: 34
-  _startFolded: 0
+  _startFolded: 1
   _openOnHover: 1
   _closeDelay: 0.3
   _slideTime: 0.15

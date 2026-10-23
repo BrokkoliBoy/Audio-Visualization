@@ -22,6 +22,12 @@ namespace Gavi
         [SerializeField] private Vector4 _stayPadding = new Vector4(24, 24, 24, 24);
         [Tooltip("While the menu is open, every region grows by this fraction of its own size on each side (left, bottom, right, top), so the pointer can leave a bit without closing it.")]
         [SerializeField] private Vector4 _openExtension = new Vector4(0.3f, 0.3f, 0.3f, 0.3f);
+        [Tooltip("Optional trigger area for a menu docked at the right screen edge: from the edge to a bit left of the menu, and as high as the menu (as it is right now, so folded windows count) plus a margin above and below. Leave empty to use only the regions above.")]
+        [SerializeField] private RectTransform _dockedMenuArea;
+        [Tooltip("How far the docked trigger area reaches to the left, as a fraction of the menu width beyond the menu (0.2 = 20 % wider than the menu).")]
+        [SerializeField] private float _dockedExtraWidth = 0.2f;
+        [Tooltip("Margin of the docked trigger area above and below the menu, as a fraction of the screen height.")]
+        [SerializeField] private float _dockedExtraHeight = 0.08f;
         [Tooltip("The menu stays open while any of these is visible (e.g. a popup that belongs to it).")]
         [SerializeField] private List<CanvasGroup> _keepOpenWhileVisible = new List<CanvasGroup>();
 
@@ -123,12 +129,27 @@ namespace Gavi
                 if (UiPointer.IsNear(_triggerRegions[i], _triggerPadding, includeStayRegions ? _openExtension : Vector4.zero))
                     return true;
 
+            if (IsPointerInDockedArea())
+                return true;
+
             if (includeStayRegions)
                 for (int i = 0; i < _stayRegions.Count; i++)
                     if (UiPointer.IsNear(_stayRegions[i], _stayPadding, _openExtension))
                         return true;
 
             return false;
+        }
+
+        // The menu slides in from the right edge. Its own rect is used for the height only; the width is measured from the screen edge,
+        // so the area is the same while the menu is slid out.
+        private bool IsPointerInDockedArea()
+        {
+            if (_dockedMenuArea == null || !_dockedMenuArea.gameObject.activeInHierarchy || !UiPointer.IsInsideWindow)
+                return false;
+            Rect menu = UiPointer.GetScreenRect(_dockedMenuArea, Vector4.zero);
+            float margin = Screen.height * _dockedExtraHeight;
+            Rect area = Rect.MinMaxRect(Screen.width - menu.width * (1f + _dockedExtraWidth), menu.yMin - margin, Screen.width, menu.yMax + margin);
+            return area.Contains(UiPointer.Position);
         }
 
         private bool IsKeptOpenByOthers()

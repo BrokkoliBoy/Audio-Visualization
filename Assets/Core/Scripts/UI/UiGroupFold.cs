@@ -28,6 +28,8 @@ namespace Gavi
         [SerializeField] private float _closeDelay = 0.3f;
         [Tooltip("Seconds the group takes to slide open or shut. 0 = instant.")]
         [SerializeField] private float _slideTime = 0.15f;
+        [Tooltip("Opacity of the header highlight that stays while the group is pinned open and the pointer is elsewhere. Hovering it is brighter still.")]
+        [SerializeField] private float _pinnedHighlight = 0.02f;
 
         private LayoutElement _layout;
         private bool _ownLayout;
@@ -63,6 +65,9 @@ namespace Gavi
         private float _slideHeight;
         private float _slideEndTime = float.NegativeInfinity;
         private float _handoverHeight = -1f;
+        private ColorBlock _buttonColors;
+        private bool _buttonColorsKept;
+        private bool _pinnedTinted;
 
         private void Awake()
         {
@@ -199,6 +204,7 @@ namespace Gavi
                 _dirty = false;
                 Apply();
             }
+            StepPinnedTint();
             if (_sliding)
                 StepSlide();
             StepArrow();
@@ -327,6 +333,31 @@ namespace Gavi
             if (!isActiveAndEnabled)
                 _applied = false;
             _dirty = true;
+        }
+
+        // A pinned group keeps a faint highlight on its header when the pointer is elsewhere, so the open windows can be found at a glance.
+        private void StepPinnedTint()
+        {
+            if (_button == null || _pinned == _pinnedTinted)
+                return;
+            if (!_buttonColorsKept)
+            {
+                _buttonColors = _button.colors;
+                _buttonColorsKept = true;
+            }
+            _pinnedTinted = _pinned;
+            ColorBlock colors = _buttonColors;
+            if (_pinned)
+            {
+                Color tint = colors.normalColor;
+                tint.a = Mathf.Max(tint.a, _pinnedHighlight);
+                colors.normalColor = tint;
+                colors.selectedColor = tint;
+                Color hover = colors.highlightedColor;
+                hover.a = Mathf.Max(hover.a, tint.a + 0.03f);
+                colors.highlightedColor = hover;
+            }
+            _button.colors = colors;
         }
 
         private float ArrowTarget()
