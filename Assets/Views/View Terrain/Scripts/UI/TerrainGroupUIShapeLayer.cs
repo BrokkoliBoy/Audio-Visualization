@@ -80,8 +80,12 @@ namespace Gavi
         public override void ShowProfile(TerrainSettingsProfile profile)
         {
             _shownProfile = profile;
+            // the on switch is shown even before the group woke up, the tab of the layer is dimmed by it
             if (!_ready)
+            {
+                _toggleEnabled.SetIsOnWithoutNotify(profile.Shapes != null && _layerIndex < profile.Shapes.Count && profile.Shapes[_layerIndex].ApplyShape);
                 return;
+            }
             base.ShowProfile(profile);
             bool stored = profile.Shapes != null && _layerIndex < profile.Shapes.Count;
             TerrainShapeData shape = stored ? profile.Shapes[_layerIndex] : new TerrainShapeData { ApplyShape = false };

@@ -87,8 +87,12 @@ namespace Gavi
         public override void ShowProfile(TerrainSettingsProfile profile)
         {
             _shownProfile = profile;
+            // the on switch is shown even before the group woke up, the tab of the layer is dimmed by it
             if (!_ready)
+            {
+                _toggleEnabled.SetIsOnWithoutNotify(Layer(profile).Enabled);
                 return;
+            }
             base.ShowProfile(profile);
             TerrainNoiseLayerData layer = Layer(profile);
             _toggleEnabled.isOn = layer.Enabled;
