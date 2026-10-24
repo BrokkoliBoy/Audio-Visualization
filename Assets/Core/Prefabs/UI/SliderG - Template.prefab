@@ -371,9 +371,9 @@ MonoBehaviour:
   m_fontSize: 16
   m_fontSizeBase: 16
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 9
+  m_fontSizeMax: 16
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
@@ -804,6 +804,7 @@ MonoBehaviour:
   _useDisplayRange: 0
   _displayMin: 1
   _displayMax: 10
+  _wheelStep: 0
   _slider: {fileID: 7217721047635580197}
   _textValue: {fileID: 7217721048253125528}
   OnValueChangedFloat:
