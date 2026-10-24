@@ -27,6 +27,53 @@ namespace Gavi
         };
 
         /// <summary>
+        /// Zoom slider per pattern, in the units of the zoom slider text on its old scale (0-10): default, lowest and highest zoom.
+        /// The slider of the pattern runs from the lowest to the highest, with the default in the middle (shown as 5).
+        /// Same order as <see cref="Names"/>.
+        /// </summary>
+        private static readonly Vector3[] ZoomScale =
+        {
+            new Vector3(4.5f, 2.0f, 7.5f),   // Perlin
+            new Vector3(3.3f, 1.5f, 5.5f),   // Simplex
+            new Vector3(4.5f, 2.6f, 6.8f),   // Value
+            new Vector3(3.2f, 1.6f, 6.0f),   // Fractal
+            new Vector3(2.2f, 0.8f, 5.0f),   // Ridged
+            new Vector3(2.2f, 0.8f, 5.0f),   // Billow
+            new Vector3(2.8f, 1.4f, 4.6f),   // Domain warp
+            new Vector3(4.3f, 2.3f, 8.0f),   // Voronoi
+            new Vector3(5.3f, 2.5f, 8.6f),   // Mosaic
+            new Vector3(4.3f, 2.2f, 8.8f),   // Cracks
+            new Vector3(4.8f, 2.5f, 9.0f),   // Rings
+            new Vector3(5.0f, 3.0f, 9.8f),   // Interference
+            new Vector3(3.9f, 2.0f, 9.0f),   // Spiral
+            new Vector3(4.2f, 2.3f, 8.5f),   // Waffle
+            new Vector3(4.2f, 1.8f, 9.0f),   // Hexagons
+            new Vector3(4.1f, 2.0f, 8.4f),   // Bricks (lowest zoom guessed)
+            new Vector3(4.4f, 1.9f, 7.6f),   // Dots
+            new Vector3(4.7f, 1.8f, 8.9f),   // Pyramids
+            new Vector3(5.1f, 3.0f, 7.6f),   // Flower
+            new Vector3(4.4f, 3.1f, 8.4f),   // Zigzag
+            new Vector3(6.1f, 3.5f, 10f),    // Plasma
+            new Vector3(5.4f, 2.2f, 9.0f),   // Tiles
+            new Vector3(5.4f, 2.2f, 9.0f),   // Triangles
+            new Vector3(5.2f, 2.6f, 9.2f),   // Checker
+            new Vector3(5.9f, 3.2f, 8.7f),   // Steps
+            new Vector3(4.9f, 2.9f, 8.2f),   // Cubes
+            new Vector3(4.3f, 2.2f, 9.0f),   // Honeycomb
+        };
+
+        /// <summary>Gives a zoom slider the range of a pattern; the value is kept unless <paramref name="toDefault"/> is set.</summary>
+        public static void ApplyZoomScale(SliderG slider, int pattern, bool toDefault)
+        {
+            if (slider == null)
+                return;
+            Vector3 scale = ZoomScale[Mathf.Clamp(pattern, 0, ZoomScale.Length - 1)];
+            slider.SetPositionMap(scale.y * 0.1f, scale.x * 0.1f, scale.z * 0.1f, toDefault);
+            if (toDefault)
+                slider.NotifyValue();
+        }
+
+        /// <summary>
         /// Patterns whose shapes (cells, tiles, bricks ...) are meant to stand up from the ground. The terrain is
         /// lowered where the pattern is high, so these are turned upside down before the invert option is applied.
         /// </summary>

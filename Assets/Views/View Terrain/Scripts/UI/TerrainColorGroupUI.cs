@@ -74,11 +74,11 @@ namespace Gavi
         [Header("--- Color curve ---")]
         [Tooltip("Direction the two long color areas are tilted in. Index of TiltMode.")]
         [SerializeField] private TMP_Dropdown _dropdownTiltMode;
-        [Tooltip("Glow of the lowest vertices on the menu glow scale (the cap of the first key).")]
+        [Tooltip("Brightness of the lowest vertices as a share of the glow of the base color (0-1, in linear brightness).")]
         [SerializeField] private SliderG _sliderCurveFloor;
         [Tooltip("Moves the colors along the height: + lower (the hot colors take more area), - higher.")]
         [SerializeField] private SliderG _sliderColorShift;
-        [Tooltip("Width of the two long color areas (the keys that hold one color). 1 = as in the scene gradient.")]
+        [Tooltip("How strongly the colors blend, 0 to 1. The slider is the opposite of the hold width of the two long color areas (stored as hold: 0.5 = hold 1 = as in the scene gradient, 1 = hold 0.2, 0 = hold 2.5).")]
         [SerializeField] private SliderG _sliderColorHold;
         [Tooltip("Slope of the two long color areas in exposure steps per full height, so the height stays readable. The direction comes from the tilt mode, the slope scales up for bright colors and every stretch of the curve keeps at least this slope (even if a color then misses its menu glow). 0 = flat areas.")]
         [SerializeField] private SliderG _sliderPlateauTilt;
@@ -88,6 +88,8 @@ namespace Gavi
         [SerializeField] private SliderG _sliderHueBalance;
         /// <summary>Smallest distance between two key times, so no stretch collapses.</summary>
         private const float MinKeyGap = 0.01f;
+        /// <summary>Floor share 0 would be black at infinite depth in the exposure scale; this is the lowest share used (about 10 steps down).</summary>
+        private const float MinFloorShare = 0.001f;
 
         private Color[] _curveTable;
         private float[] _glowCurve;
@@ -131,10 +133,30 @@ namespace Gavi
         private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
         private float TintBackground => _sliderTintBackground != null ? _sliderTintBackground.Value : 1f;
         private TiltMode Mode => _dropdownTiltMode != null ? (TiltMode)_dropdownTiltMode.value : (TiltMode)TerrainColorPalette.DefaultTiltDirection;
-        /// <summary>The first key of the gradient (the lowest vertices) never gets brighter than this glow (menu scale), whatever the base color is set to.</summary>
-        private float CurveFloor => _sliderCurveFloor != null ? _sliderCurveFloor.Value : TerrainColorPalette.DefaultCurveFloor;
+        /// <summary>The lowest vertices get this share of the glow of the base color.</summary>
+        private float FloorShare => _sliderCurveFloor != null ? _sliderCurveFloor.Value : TerrainColorPalette.DefaultFloorShare;
         private float ColorShift => _sliderColorShift != null ? _sliderColorShift.Value : TerrainColorPalette.DefaultColorShift;
-        private float ColorHold => _sliderColorHold != null ? _sliderColorHold.Value : TerrainColorPalette.DefaultColorHold;
+        private float ColorHold => _sliderColorHold != null ? HoldFromBlend(_sliderColorHold.Value) : TerrainColorPalette.DefaultColorHold;
+        private const float MinHold = 0.2f;
+        private const float MaxHold = 2.5f;
+        private const float BlendAtDefaultHold = 0.5f;
+
+        /// <summary>The blend slider (1 = strongest blending) as the hold width of the long color areas: 0 = widest, 0.5 = as in the scene gradient, 1 = narrowest.</summary>
+        private static float HoldFromBlend(float blend)
+        {
+            blend = Mathf.Clamp01(blend);
+            return blend <= BlendAtDefaultHold
+                ? Mathf.Lerp(MaxHold, TerrainColorPalette.DefaultColorHold, blend / BlendAtDefaultHold)
+                : Mathf.Lerp(TerrainColorPalette.DefaultColorHold, MinHold, (blend - BlendAtDefaultHold) / (1f - BlendAtDefaultHold));
+        }
+
+        private static float BlendFromHold(float hold)
+        {
+            hold = Mathf.Clamp(hold, MinHold, MaxHold);
+            return hold >= TerrainColorPalette.DefaultColorHold
+                ? Mathf.InverseLerp(MaxHold, TerrainColorPalette.DefaultColorHold, hold) * BlendAtDefaultHold
+                : BlendAtDefaultHold + Mathf.InverseLerp(TerrainColorPalette.DefaultColorHold, MinHold, hold) * (1f - BlendAtDefaultHold);
+        }
         private float PlateauTilt => _sliderPlateauTilt != null ? _sliderPlateauTilt.Value : TerrainColorPalette.DefaultPlateauTilt;
         private float Relief => _sliderRelief != null ? _sliderRelief.Value : TerrainColorPalette.DefaultRelief;
         private float HueBalance => _sliderHueBalance != null ? _sliderHueBalance.Value : TerrainColorPalette.DefaultHueBalance;
@@ -166,9 +188,9 @@ namespace Gavi
             ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
             ListenToSlider(_sliderDirtStrength, TerrainLensDirt.DefaultStrength, OnDirtChanged);
             ListenToSlider(_sliderDirtBeat, TerrainLensDirt.DefaultBeat, OnDirtChanged);
-            ListenToSlider(_sliderCurveFloor, TerrainColorPalette.DefaultCurveFloor, OnCurveChanged);
+            ListenToSlider(_sliderCurveFloor, TerrainColorPalette.DefaultFloorShare, OnCurveChanged);
             ListenToSlider(_sliderColorShift, TerrainColorPalette.DefaultColorShift, OnCurveChanged);
-            ListenToSlider(_sliderColorHold, TerrainColorPalette.DefaultColorHold, OnCurveChanged);
+            ListenToSlider(_sliderColorHold, BlendFromHold(TerrainColorPalette.DefaultColorHold), OnCurveChanged);
             ListenToSlider(_sliderPlateauTilt, TerrainColorPalette.DefaultPlateauTilt, OnCurveChanged);
             ListenToSlider(_sliderRelief, TerrainColorPalette.DefaultRelief, OnCurveChanged);
             ListenToSlider(_sliderHueBalance, TerrainColorPalette.DefaultHueBalance, OnCurveChanged);
@@ -242,7 +264,7 @@ namespace Gavi
             profile.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
             profile.ColorOverallIntensity = OverallIntensity;
             profile.TiltDirection = (int)Mode;
-            profile.CurveFloor = CurveFloor;
+            profile.FloorShare = FloorShare;
             profile.ColorShift = ColorShift;
             profile.ColorHold = ColorHold;
             profile.PlateauTilt = PlateauTilt;
@@ -308,7 +330,7 @@ namespace Gavi
 
             _suppress = true;
             SetSliders(profile.ColorOverallIntensity, profile.BloomThreshold, profile.BloomIntensity, profile.BloomScatter);
-            SetCurveLook(profile.TiltDirection, profile.CurveFloor, profile.ColorShift, profile.ColorHold, profile.PlateauTilt, profile.ReliefStrength, profile.HueBalance);
+            SetCurveLook(profile.TiltDirection, profile.FloorShare, profile.ColorShift, profile.ColorHold, profile.PlateauTilt, profile.ReliefStrength, profile.HueBalance);
             for (int c = 0; c < _entries.Count; c++)
                 _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
             _suppress = false;
@@ -333,7 +355,7 @@ namespace Gavi
                 && Mathf.Abs(palette.BloomIntensity - profile.BloomIntensity) < 0.001f
                 && Mathf.Abs(palette.BloomScatter - profile.BloomScatter) < 0.001f
                 && palette.TiltDirection == profile.TiltDirection
-                && Mathf.Abs(palette.CurveFloor - profile.CurveFloor) < 0.001f
+                && Mathf.Abs(palette.FloorShare - profile.FloorShare) < 0.001f
                 && Mathf.Abs(palette.ColorShift - profile.ColorShift) < 0.001f
                 && Mathf.Abs(palette.ColorHold - profile.ColorHold) < 0.001f
                 && Mathf.Abs(palette.PlateauTilt - profile.PlateauTilt) < 0.001f
@@ -392,7 +414,7 @@ namespace Gavi
         {
             _suppress = true;
             SetSliders(_defaultOverallIntensity, TerrainColorPalette.DefaultBloomThreshold, TerrainColorPalette.DefaultBloomIntensity, TerrainColorPalette.DefaultBloomScatter);
-            SetCurveLook(TerrainColorPalette.DefaultTiltDirection, TerrainColorPalette.DefaultCurveFloor, TerrainColorPalette.DefaultColorShift, TerrainColorPalette.DefaultColorHold, TerrainColorPalette.DefaultPlateauTilt, TerrainColorPalette.DefaultRelief, TerrainColorPalette.DefaultHueBalance);
+            SetCurveLook(TerrainColorPalette.DefaultTiltDirection, TerrainColorPalette.DefaultFloorShare, TerrainColorPalette.DefaultColorShift, TerrainColorPalette.DefaultColorHold, TerrainColorPalette.DefaultPlateauTilt, TerrainColorPalette.DefaultRelief, TerrainColorPalette.DefaultHueBalance);
             for (int c = 0; c < _entries.Count && c < _referenceHue.Length; c++)
                 _entries[c].SetValues(_referenceHue[c], _referenceSaturation[c], TerrainColorMapping.IntensityToMenu(_referenceIntensity[c]));
             _suppress = false;
@@ -455,7 +477,7 @@ namespace Gavi
         {
             _suppress = true;
             SetSliders(palette.OverallIntensity, palette.BloomThreshold, palette.BloomIntensity, palette.BloomScatter);
-            SetCurveLook(palette.TiltDirection, palette.CurveFloor, palette.ColorShift, palette.ColorHold, palette.PlateauTilt, palette.ReliefStrength, palette.HueBalance);
+            SetCurveLook(palette.TiltDirection, palette.FloorShare, palette.ColorShift, palette.ColorHold, palette.PlateauTilt, palette.ReliefStrength, palette.HueBalance);
             for (int c = 0; c < _entries.Count && c < palette.Colors.Count; c++)
                 _entries[c].SetValues(palette.Colors[c].x, palette.Colors[c].y, palette.Colors[c].z);
             _suppress = false;
@@ -493,7 +515,7 @@ namespace Gavi
             if (_sliderColorShift != null)
                 _sliderColorShift.Value = shift;
             if (_sliderColorHold != null)
-                _sliderColorHold.Value = hold;
+                _sliderColorHold.Value = BlendFromHold(hold);
             if (_sliderPlateauTilt != null)
                 _sliderPlateauTilt.Value = tilt;
             if (_sliderRelief != null)
@@ -540,7 +562,7 @@ namespace Gavi
                 BloomIntensity = BloomIntensity,
                 BloomScatter = BloomScatter,
                 TiltDirection = (int)Mode,
-                CurveFloor = CurveFloor,
+                FloorShare = FloorShare,
                 ColorShift = ColorShift,
                 ColorHold = ColorHold,
                 PlateauTilt = PlateauTilt,
@@ -756,7 +778,7 @@ namespace Gavi
                 unit[i] = TerrainColorMapping.ToHdrColor(entry.Hue, saturation, 0f);
                 glow[i] = TerrainColorMapping.MenuToIntensity(entry.MenuIntensity) + Mathf.Log(ColorCompensation(entry), 2f) + HueOffset(entry);
                 if (i == 0)
-                    glow[i] = Mathf.Min(glow[i] + _intensityOffset[i], TerrainColorMapping.MenuToIntensity(CurveFloor));
+                    glow[i] += Mathf.Log(Mathf.Max(FloorShare, MinFloorShare), 2f);
             }
 
             ApplyTilt(time, glow, unit);

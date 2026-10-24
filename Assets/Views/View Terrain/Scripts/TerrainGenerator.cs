@@ -53,7 +53,8 @@ namespace Gavi
         [Range(0f, 1f)]
         [SerializeField] private float _heightZoomStrength;
         public float HeightZoomStrength { get => _heightZoomStrength; set => _heightZoomStrength = Mathf.Clamp01(value); }
-        private const float HeightZoomReference = 0.354f; // the noise zoom around the middle of the zoom slider, where the height is the set terrain height
+        /// <summary>The noise zoom at the middle of the zoom slider of the main pattern (shown as 5), where the height is the set terrain height. Set by the menu when the pattern changes.</summary>
+        public static float HeightZoomReference = 0.354f;
         private const float HeightZoomMinFactor = 0.35f;
         private const float HeightZoomMaxFactor = 2.5f;
         /// <summary>Terrain height with the zoom coupling applied, limited so extreme zoom values neither flatten nor spike the terrain.</summary>

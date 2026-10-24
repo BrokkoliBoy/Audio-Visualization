@@ -81,7 +81,7 @@ namespace Gavi
         public float ColorOverallIntensity = 1f;
         [Tooltip("Color curve, see TerrainColorPalette.")]
         public int TiltDirection = TerrainColorPalette.DefaultTiltDirection;
-        public float CurveFloor = TerrainColorPalette.DefaultCurveFloor;
+        public float FloorShare = TerrainColorPalette.DefaultFloorShare;
         public float ColorShift = TerrainColorPalette.DefaultColorShift;
         public float ColorHold = TerrainColorPalette.DefaultColorHold;
         public float PlateauTilt = TerrainColorPalette.DefaultPlateauTilt;
@@ -197,7 +197,7 @@ namespace Gavi
             ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
             ColorOverallIntensity = profile.ColorOverallIntensity;
             TiltDirection = profile.TiltDirection;
-            CurveFloor = profile.CurveFloor;
+            FloorShare = profile.FloorShare;
             ColorShift = profile.ColorShift;
             ColorHold = profile.ColorHold;
             PlateauTilt = profile.PlateauTilt;

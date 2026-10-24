@@ -38,6 +38,7 @@ namespace Gavi
         [Tooltip("Gradient of the detail copy, the interval slider and the speed copies: green is cheap, red is expensive.")]
         [SerializeField] private UiSliderGradient _gradientDetail;
         [SerializeField] private UiSliderGradient _gradientNoiseInterval;
+        [SerializeField] private UiSliderGradient _gradientMaxFps;
         [SerializeField] private UiSliderGradient[] _gradientSpeeds;
         [SerializeField] private Color _cheapColor = new Color(0.08f, 0.62f, 0.22f);
         [SerializeField] private Color _midColor = new Color(0.92f, 0.66f, 0.04f);
@@ -46,6 +47,8 @@ namespace Gavi
         [SerializeField] private Color _costlyDetailColor = new Color(0.5f, 0.02f, 0.05f);
         [Tooltip("Mesh detail from where it starts to cost frames, and where it is as costly as it gets.")]
         [SerializeField] private Vector2 _detailRange = new Vector2(50f, 650f);
+        [Tooltip("Max FPS where the gradient is at its yellow peak, and from where it is fully red. Below the peak it fades up from green.")]
+        [SerializeField] private Vector2 _fpsRange = new Vector2(120f, 180f);
         [Tooltip("Seconds over which the update time is refreshed.")]
         [SerializeField] private float _measureSeconds = 0.5f;
 
@@ -234,6 +237,8 @@ namespace Gavi
                 _gradientDetail.Bind(_sliderDetail, position => CostColor(DetailCost(_sliderDetail.ValueAtPosition(position)), _costlyDetailColor));
             if (_gradientNoiseInterval != null && _sliderNoiseInterval != null)
                 _gradientNoiseInterval.Bind(_sliderNoiseInterval, position => CostColor(IntervalCost(_sliderNoiseInterval.ValueAtPosition(position))));
+            if (_gradientMaxFps != null && _sliderMaxFps != null)
+                _gradientMaxFps.Bind(_sliderMaxFps, position => CostColor(FpsCost(_sliderMaxFps.ValueAtPosition(position))));
             if (_gradientSpeeds == null || _speedMirrors == null)
                 return;
             for (int i = 0; i < _gradientSpeeds.Length && i < _speedMirrors.Length; i++)
@@ -246,6 +251,14 @@ namespace Gavi
 
         // Cost 0 = free, 1 = as costly as it gets.
         private float DetailCost(float detail) => Mathf.Clamp01((detail - _detailRange.x) / Mathf.Max(1f, _detailRange.y - _detailRange.x));
+
+        // A high frame rate limit lets the app use more of the computer: green at the lowest limit, yellow at the peak, red from the upper end.
+        private float FpsCost(float fps)
+        {
+            if (fps <= _fpsRange.x)
+                return Mathf.Clamp01((fps - FrameRateSettings.MinFps) / Mathf.Max(1f, _fpsRange.x - FrameRateSettings.MinFps)) * 0.5f;
+            return 0.5f + Mathf.Clamp01((fps - _fpsRange.x) / Mathf.Max(1f, _fpsRange.y - _fpsRange.x)) * 0.5f;
+        }
 
         // The noise is calculated every n-th update, so a high interval saves the most.
         private static float IntervalCost(float interval) => Mathf.Clamp01(1f - (interval - 1f) / (TerrainGenerator.MaxNoiseInterval - 1f));

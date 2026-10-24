@@ -86,6 +86,9 @@ namespace Gavi
 
         public float ValueAtPosition(float position) => PositionToValue(Mathf.Clamp01(position));
 
+        /// <summary>Sends the change event with the current value, for when the value was moved without one.</summary>
+        public void NotifyValue() => OnValueChangedFloat.Invoke(Value);
+
         private void Awake()
         {
             _slider.onValueChanged.AddListener(OnValueChangedM);
@@ -188,7 +191,7 @@ namespace Gavi
                 if (span < 0.00001f)
                     return;
                 float shown = Mathf.Lerp(_displayMin, _displayMax, _slider.value);
-                float next = SteppedValue(shown, WheelStep(span, false) * boost, direction);
+                float next = SteppedValue(shown, WheelStep(span, false, boost > 1f), direction);
                 float nextPosition = Mathf.Clamp01(Mathf.InverseLerp(_displayMin, _displayMax, next));
                 // a whole-number slider rests on whole values, so a step that lands on the same one goes one further
                 if (_isInteger && Mathf.RoundToInt(PositionToValue(nextPosition)) == Mathf.RoundToInt(PositionToValue(_slider.value)))
@@ -198,18 +201,25 @@ namespace Gavi
             }
             else
             {
-                Value = SteppedValue(PositionToValue(_slider.value), WheelStep(Range, _isInteger) * boost, direction);
+                Value = SteppedValue(PositionToValue(_slider.value), WheelStep(Range, _isInteger, boost > 1f), direction);
             }
             eventData.Use();
         }
 
-        private float WheelStep(float range, bool whole)
+        private float WheelStep(float range, bool whole, bool shift)
         {
-            if (_wheelStep > 0f)
-                return _wheelStep;
-            if (whole)
-                return 1f;
-            // about 1/50 of the range, rounded to one digit
+            float step = _wheelStep > 0f ? _wheelStep : whole ? 1f : RoundedFiftieth(range);
+            if (shift)
+                return step * ShiftWheelFactor;
+            // a range of 2 would give 0.04, 0.05 is the nicer step there (Shift keeps the 0.2 steps)
+            if (_wheelStep <= 0f && !whole && Mathf.Approximately(step / Mathf.Pow(10f, Mathf.Floor(Mathf.Log10(step))), 4f))
+                return step * 1.25f;
+            return step;
+        }
+
+        // about 1/50 of the range, rounded to one digit
+        private static float RoundedFiftieth(float range)
+        {
             float raw = range / 50f;
             float magnitude = Mathf.Pow(10f, Mathf.Floor(Mathf.Log10(raw)));
             return Mathf.Round(raw / magnitude) * magnitude;
@@ -224,9 +234,52 @@ namespace Gavi
         }
         #endregion
 
+        #region Position map
+        // Optional: the handle runs from a lower to an upper position of the normal mapping, with a chosen position in the middle.
+        // The text then shows the display range along the handle, so the middle reads as the middle of the display range.
+        private bool _useMap;
+        private float _mapMin;
+        private float _mapMiddle;
+        private float _mapMax;
+
+        /// <summary>
+        /// Limits the slider to the positions min..max of its normal mapping (0-1) and puts <paramref name="middle"/> at the middle of the handle.
+        /// The value is kept (and limited to the new range) unless <paramref name="toMiddle"/> is set. No change event.
+        /// </summary>
+        public void SetPositionMap(float min, float middle, float max, bool toMiddle)
+        {
+            float value = Value;
+            _useMap = true;
+            _mapMin = Mathf.Clamp01(min);
+            _mapMax = Mathf.Clamp01(max);
+            _mapMiddle = Mathf.Clamp(middle, _mapMin, _mapMax);
+            _slider.SetValueWithoutNotify(toMiddle ? 0.5f : ValueToPosition(value));
+            ShowText(_slider.value);
+        }
+
+        private float HandleToBase(float handle)
+        {
+            if (!_useMap)
+                return handle;
+            handle = Mathf.Clamp01(handle);
+            return handle <= 0.5f ? Mathf.Lerp(_mapMin, _mapMiddle, handle * 2f) : Mathf.Lerp(_mapMiddle, _mapMax, (handle - 0.5f) * 2f);
+        }
+
+        private float BaseToHandle(float basePosition)
+        {
+            if (!_useMap)
+                return basePosition;
+            if (basePosition <= _mapMiddle)
+                return _mapMiddle > _mapMin ? Mathf.Clamp01(Mathf.InverseLerp(_mapMin, _mapMiddle, basePosition) * 0.5f) : 0.5f;
+            return _mapMax > _mapMiddle ? Mathf.Clamp01(0.5f + Mathf.InverseLerp(_mapMiddle, _mapMax, basePosition) * 0.5f) : 0.5f;
+        }
+        #endregion
+
         #region Mapping
         /// <summary>Slider position (0-1) to value. Linear, or with a snap plateau and slow zone around the snap value.</summary>
-        private float PositionToValue(float position)
+        private float PositionToValue(float handle) => BasePositionToValue(HandleToBase(handle));
+
+        private float BasePositionToValue(float position)
         {
             if (!UseSnap(out float p1, out float a, out float b, out float d))
                 return UseCurve(out float exponent) ? RangeMin + Range * Mathf.Pow(Mathf.Clamp01(position), exponent) : RangeMin + position * Range;
@@ -244,7 +297,9 @@ namespace Gavi
             return _snapValue + sign * (d + outerValue * (distance - b) / Mathf.Max(0.00001f, outerLength));
         }
 
-        private float ValueToPosition(float value)
+        private float ValueToPosition(float value) => BaseToHandle(BaseValueToPosition(value));
+
+        private float BaseValueToPosition(float value)
         {
             if (!UseSnap(out float p1, out float a, out float b, out float d))
             {

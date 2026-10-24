@@ -90,6 +90,8 @@ namespace Gavi
         private void OnPatternChanged(int pattern)
         {
             _shownPattern = Mathf.Clamp(pattern, 0, _invertByPattern.Length - 1);
+            TerrainNoise.ApplyZoomScale(_sliderPerlinZoom, _shownPattern, true);
+            TerrainGenerator.HeightZoomReference = _sliderPerlinZoom.ValueAtPosition(0.5f);
             if (_toggleInvert != null)
                 _toggleInvert.SetIsOnWithoutNotify(_invertByPattern[_shownPattern]);
             OnUIValueChanged(pattern);
@@ -139,7 +141,6 @@ namespace Gavi
             base.ShowProfile(profile);
             _toggleApplyPerlin.isOn = profile.ApplyPerlin;
             _sliderPerlinDepth.Value = profile.PerlinDepth;
-            _sliderPerlinZoom.Value = profile.PerlinZoom;
             if (_sliderHeightZoom != null)
                 _sliderHeightZoom.Value = profile.HeightZoomStrength;
             if (_sliderPerlinSpeed != null)
@@ -154,6 +155,9 @@ namespace Gavi
                 _dropdownPattern.SetValueWithoutNotify(_shownPattern);
                 _dropdownPattern.RefreshShownValue();
             }
+            TerrainNoise.ApplyZoomScale(_sliderPerlinZoom, _shownPattern, false);
+            TerrainGenerator.HeightZoomReference = _sliderPerlinZoom.ValueAtPosition(0.5f);
+            _sliderPerlinZoom.Value = profile.PerlinZoom;
             // the profile only knows the invert option of its own pattern
             _invertByPattern[_shownPattern] = profile.NoiseInvert;
             if (_toggleInvert != null)

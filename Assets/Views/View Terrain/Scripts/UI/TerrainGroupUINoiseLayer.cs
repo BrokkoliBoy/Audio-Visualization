@@ -37,7 +37,7 @@ namespace Gavi
 
             _dropdownPattern.ClearOptions();
             _dropdownPattern.AddOptions(new List<string>(TerrainNoise.Names));
-            _dropdownPattern.onValueChanged.AddListener(OnUIValueChanged);
+            _dropdownPattern.onValueChanged.AddListener(OnPatternChanged);
             _dropdownOperation.ClearOptions();
             _dropdownOperation.AddOptions(new List<string>(TerrainNoise.OperationNames));
             _dropdownOperation.onValueChanged.AddListener(OnUIValueChanged);
@@ -63,6 +63,13 @@ namespace Gavi
                 int pattern = _ready || _shownProfile == null ? _dropdownPattern.value : Layer(_shownProfile).Pattern;
                 return _toggleEnabled.isOn ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
             }
+        }
+
+        private void OnPatternChanged(int pattern)
+        {
+            // each pattern has its own zoom range, a new pattern starts at its default zoom
+            TerrainNoise.ApplyZoomScale(_sliderZoom, pattern, true);
+            OnUIValueChanged(pattern);
         }
 
         /// <summary>Selects the next or previous pattern and wraps around at the ends of the list.</summary>
@@ -108,11 +115,12 @@ namespace Gavi
             _toggleEnabled.isOn = layer.Enabled;
             _dropdownPattern.SetValueWithoutNotify(Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1));
             _dropdownPattern.RefreshShownValue();
+            TerrainNoise.ApplyZoomScale(_sliderZoom, layer.Pattern, false);
+            _sliderZoom.Value = layer.Zoom;
             _dropdownOperation.SetValueWithoutNotify(Mathf.Clamp(layer.Operation, 0, TerrainNoise.OperationNames.Length - 1));
             _dropdownOperation.RefreshShownValue();
             _toggleInvert.isOn = layer.Invert;
             _sliderDepth.Value = layer.Depth;
-            _sliderZoom.Value = layer.Zoom;
             // the length of the stored speed along the direction of the menu
             float length = Mathf.Max(0.0001f, _speedDirection.magnitude);
             _sliderSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(layer.SpeedX, layer.SpeedY), _speedDirection) / (length * length));
