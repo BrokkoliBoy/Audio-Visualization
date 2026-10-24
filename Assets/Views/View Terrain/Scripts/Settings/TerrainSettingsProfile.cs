@@ -22,6 +22,8 @@ namespace Gavi
         public bool ApplyPerlin = true;
         public float PerlinDepth = 0.6f;
         public float PerlinZoom = 0.3f;
+        /// <summary>Zoom at the middle of the zoom slider (belongs to the pattern, not saved): the height follows the zoom relative to it. Travels with the zoom so both reach the terrain in the same frame.</summary>
+        [System.NonSerialized] public float HeightZoomReference = 0.354f;
         public float HeightZoomStrength;
         public float PerlinSpeedX = 0;
         public float PerlinSpeedY = 1;
@@ -153,6 +155,7 @@ namespace Gavi
             ApplyPerlin = profile.ApplyPerlin;
             PerlinDepth = profile.PerlinDepth;
             PerlinZoom = profile.PerlinZoom;
+            HeightZoomReference = profile.HeightZoomReference;
             HeightZoomStrength = profile.HeightZoomStrength;
             PerlinSpeedX = profile.PerlinSpeedX;
             PerlinSpeedY = profile.PerlinSpeedY;
@@ -251,6 +254,7 @@ namespace Gavi
             ApplyPerlin = terrain.ApplyPerlinNoise;
             PerlinDepth = terrain.PerlinStrength;
             PerlinZoom = terrain.PerlinNoiseZoom;
+            HeightZoomReference = terrain.HeightZoomReference;
             HeightZoomStrength = terrain.HeightZoomStrength;
             PerlinSpeedX = terrain.PerlinOffsetSpeed.x;
             PerlinSpeedY = terrain.PerlinOffsetSpeed.y;
@@ -344,6 +348,7 @@ namespace Gavi
             terrain.ApplyPerlinNoise = ApplyPerlin;
             terrain.PerlinStrength = PerlinDepth;
             terrain.PerlinNoiseZoom = PerlinZoom;
+            terrain.HeightZoomReference = HeightZoomReference;
             terrain.HeightZoomStrength = HeightZoomStrength;
             terrain.PerlinOffsetSpeed = new Vector2(PerlinSpeedX, PerlinSpeedY);
             terrain.NoisePattern = NoisePattern;
