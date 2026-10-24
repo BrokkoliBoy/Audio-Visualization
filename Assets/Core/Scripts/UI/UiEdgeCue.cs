@@ -37,6 +37,12 @@ namespace Gavi
         [Tooltip("Fades the cue out while the menu is open.")]
         [SerializeField] private bool _hideWhileRevealed;
         [SerializeField] private float _fadeSpeed = 6f;
+        [Tooltip("Moves out with this part of the menu (stays left of its edge) and fades out on the way.")]
+        [SerializeField] private RectTransform _followMenu;
+        [Tooltip("Gap between the cue and the menu in canvas pixels.")]
+        [SerializeField] private float _followGap = 6f;
+        [Tooltip("The cue is gone after being pushed out this far (canvas pixels).")]
+        [SerializeField] private float _fadeOutDistance = 120f;
 
         [Header("--- Idle ---")]
         [Tooltip("Fades the cue out when the mouse was not moved for a while. It returns on the next movement. Key presses do not bring it back.")]
@@ -47,6 +53,7 @@ namespace Gavi
 
         private Vector2 _basePosition;
         private float _visibility = 1f;
+        private float _docked;
 
         private void Awake()
         {
@@ -63,6 +70,7 @@ namespace Gavi
         {
             if (_target != null)
                 _target.anchoredPosition = _basePosition;
+            _docked = 0f;
         }
 
         private void Update()
@@ -75,20 +83,41 @@ namespace Gavi
             float wave = Mathf.Sin(Time.unscaledTime * _pulseSpeed);
             float far = 1f - proximity;
 
-            bool hidden = _hideWhileRevealed && _reveal != null && _reveal.IsRevealed;
+            bool revealed = _reveal != null && _reveal.IsRevealed;
+            bool hidden = _hideWhileRevealed && revealed;
+            // open menu: the cue stands still
+            _docked = Mathf.MoveTowards(_docked, _followMenu != null && revealed ? 1f : 0f, _fadeSpeed * Time.unscaledDeltaTime);
+            proximity *= 1f - _docked;
             float idleLimit = _followCursorHideTime && Gavi.Player.BasicUi.Instance != null ? Gavi.Player.BasicUi.Instance.CursorHideSeconds : _idleSeconds;
             if (_hideWhenIdle && UiPointer.IdleSeconds > idleLimit)
                 hidden = true;
             float targetVisibility = hidden ? 0f : 1f;
             _visibility = Mathf.MoveTowards(_visibility, targetVisibility, _fadeSpeed * Time.unscaledDeltaTime);
 
+            Vector2 position = _basePosition + _peekOffset * proximity + _bobAmount * (wave * far * (1f - _docked));
+            float pushFade = 0f;
+            if (_followMenu != null)
+            {
+                // stays left of the menu edge: at rest where it is, pushed out as soon as the menu reaches it, fading while it goes
+                Vector3[] corners = new Vector3[4];
+                _followMenu.GetWorldCorners(corners);
+                float cueRight = _target.position.x + (1f - _target.pivot.x) * _target.rect.width * _target.lossyScale.x
+                    + (position.x - _target.anchoredPosition.x) * scale;
+                float wanted = corners[0].x - _followGap * scale;
+                if (wanted < cueRight)
+                {
+                    float pushed = (cueRight - wanted) / scale;
+                    position.x -= pushed;
+                    pushFade = Mathf.Clamp01(pushed / Mathf.Max(1f, _fadeOutDistance));
+                }
+            }
+            _target.anchoredPosition = position;
+
             if (_group != null)
             {
                 float alpha = Mathf.Lerp(_idleAlpha, _nearAlpha, proximity) + wave * _pulseAmount * 0.5f * far * _idleAlpha;
-                _group.alpha = Mathf.Clamp01(alpha) * _visibility;
+                _group.alpha = Mathf.Clamp01(alpha) * _visibility * (1f - pushFade);
             }
-
-            _target.anchoredPosition = _basePosition + _peekOffset * proximity + _bobAmount * (wave * far);
         }
 
         private float GetCanvasScale()

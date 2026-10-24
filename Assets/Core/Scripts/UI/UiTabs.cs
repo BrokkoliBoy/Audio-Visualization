@@ -47,7 +47,7 @@ namespace Gavi
                 EventTrigger trigger = _tabs[i].Button.gameObject.GetComponent<EventTrigger>();
                 if (trigger == null)
                     trigger = _tabs[i].Button.gameObject.AddComponent<EventTrigger>();
-                AddTrigger(trigger, EventTriggerType.PointerEnter, () => { if (index != _current) Select(index); });
+                AddTrigger(trigger, EventTriggerType.PointerEnter, () => { if (index != _current && MenuNavigation.TabHover) Select(index); });
             }
             ApplyAccents();
             Select(_startIndex);

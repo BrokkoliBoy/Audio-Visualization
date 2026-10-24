@@ -199,6 +199,12 @@ namespace Gavi
                 HoverOpenSibling(true);
                 _dirty = true;
             }
+            // hovering was switched off: a window that is open by hovering stays open instead of folding when the pointer leaves
+            if (_open && !_pinned && !_stayOpen && !_hoverSuppressed && !MenuNavigation.WindowHover)
+            {
+                _stayOpen = true;
+                _dirty = true;
+            }
             // a right click on the header folds the window, whether it is pinned or only opened by hovering
             if (_open && _hover && Input.GetMouseButtonDown(1) && PointerOnHeader())
                 Fold();
@@ -420,7 +426,7 @@ namespace Gavi
 
         private void Apply()
         {
-            bool open = _pinned || _stayOpen || (_openOnHover && _hover && _hoverReady && !_hoverSuppressed);
+            bool open = _pinned || _stayOpen || (_openOnHover && MenuNavigation.WindowHover && _hover && _hoverReady && !_hoverSuppressed);
             if (_applied && open == _open)
                 return;
             bool slide = (_applied || _handoverHeight >= 0f) && _slideTime > 0f && isActiveAndEnabled;

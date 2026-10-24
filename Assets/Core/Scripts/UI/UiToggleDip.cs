@@ -57,7 +57,7 @@ namespace Gavi
 
         private void Update()
         {
-            bool usable = _toggle.interactable && !UiPointer.IsLocked && UiPointer.IsInsideWindow
+            bool usable = _toggle.interactable && MenuNavigation.CheckboxDip && !UiPointer.IsLocked && UiPointer.IsInsideWindow
                 && (_reveal == null || _reveal.IsRevealed);
             Rect rect = UiPointer.GetScreenRect(_box, Vector4.zero);
             Vector2 point = UiPointer.Position;

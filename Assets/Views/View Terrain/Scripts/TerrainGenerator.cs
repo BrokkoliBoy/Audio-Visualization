@@ -481,8 +481,24 @@ namespace Gavi
             handle.Complete();
         }
 
+        // grid size of the dampened values in _lastYs and _lastBands
+        private int _lastGridX = -1;
+        private int _lastGridZ = -1;
+
         private void AllocateVertexBuffers(int vertexCount)
         {
+            // The dampened values are kept: a new vertex takes the value at its place in the old grid, so a detail change
+            // does not restart the dampening from zero and the pictures before and after can be compared.
+            float[] oldYs = null;
+            float[] oldBands = null;
+            int oldX = _lastGridX;
+            int oldZ = _lastGridZ;
+            if (_lastYs.IsCreated && oldX > 0 && oldZ > 0 && _lastYs.Length == (oldX + 1) * (oldZ + 1))
+            {
+                oldYs = _lastYs.ToArray();
+                oldBands = _lastBands.ToArray();
+            }
+
             DisposeArray(ref _vertices);
             DisposeArray(ref _drawnVertices);
             DisposeArray(ref _colors);
@@ -493,6 +509,38 @@ namespace Gavi
             _lastYs = new NativeArray<float>(vertexCount, Allocator.Persistent);
             _lastBands = new NativeArray<float>(vertexCount, Allocator.Persistent);
             _noiseValid = false;
+
+            if (oldYs != null)
+            {
+                int index = 0;
+                for (int z = 0; z <= _faceCountZ; z++)
+                {
+                    float vz = z / (float)_faceCountZ * oldZ;
+                    for (int x = 0; x <= _faceCountX; x++, index++)
+                    {
+                        float vx = x / (float)_faceCountX * oldX;
+                        _lastYs[index] = SampleOld(oldYs, oldX, oldZ, vx, vz);
+                        _lastBands[index] = SampleOld(oldBands, oldX, oldZ, vx, vz);
+                    }
+                }
+            }
+            _lastGridX = _faceCountX;
+            _lastGridZ = _faceCountZ;
+        }
+
+        // bilinear value of the old grid at a position given in old grid steps
+        private static float SampleOld(float[] values, int gridX, int gridZ, float x, float z)
+        {
+            int x0 = Mathf.Min((int)x, gridX);
+            int z0 = Mathf.Min((int)z, gridZ);
+            int x1 = Mathf.Min(x0 + 1, gridX);
+            int z1 = Mathf.Min(z0 + 1, gridZ);
+            float fx = x - x0;
+            float fz = z - z0;
+            int stride = gridX + 1;
+            float a = Mathf.Lerp(values[z0 * stride + x0], values[z0 * stride + x1], fx);
+            float b = Mathf.Lerp(values[z1 * stride + x0], values[z1 * stride + x1], fx);
+            return Mathf.Lerp(a, b, fz);
         }
 
         /// <summary>Triangles and uvs, only needed again when the face count changes or the triangles outside of the shapes change.</summary>

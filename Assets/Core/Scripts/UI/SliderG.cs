@@ -146,6 +146,9 @@ namespace Gavi
         /// <summary>Holding Shift makes one wheel notch this many times larger.</summary>
         private const float ShiftWheelFactor = 5f;
 
+        private float _wheelSum;
+        private float _lastWheelTime;
+
         /// <summary>Wheel forward = higher value, wheel back = lower value, in steps of the wheel step.</summary>
         public void OnScroll(PointerEventData eventData)
         {
@@ -155,12 +158,30 @@ namespace Gavi
             if (Mathf.Abs(wheel) < 0.001f)
                 return;
 
+            // Some mice send one notch as several small events; they add up to one step.
+            if (Time.unscaledTime - _lastWheelTime > 0.4f || Mathf.Sign(wheel) != Mathf.Sign(_wheelSum))
+                _wheelSum = 0f;
+            _lastWheelTime = Time.unscaledTime;
+            _wheelSum += wheel;
+            eventData.Use();
+            if (Mathf.Abs(_wheelSum) < 0.999f)
+                return;
+            _wheelSum = 0f;
+
             int direction = wheel > 0f ? 1 : -1;
             // Shift = large steps
             float boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? ShiftWheelFactor : 1f;
-            // a short whole-number range has no use for larger steps
+            // a short whole-number range has no use for larger steps: Shift jumps to the end of the range
             if (_isInteger && Range < 20f)
+            {
+                if (boost > 1f)
+                {
+                    Value = direction > 0 ? RangeMax : RangeMin;
+                    eventData.Use();
+                    return;
+                }
                 boost = 1f;
+            }
             if (_useDisplayRange)
             {
                 float span = Mathf.Abs(_displayMax - _displayMin);
@@ -168,7 +189,12 @@ namespace Gavi
                     return;
                 float shown = Mathf.Lerp(_displayMin, _displayMax, _slider.value);
                 float next = SteppedValue(shown, WheelStep(span, false) * boost, direction);
-                _slider.value = Mathf.Clamp01(Mathf.InverseLerp(_displayMin, _displayMax, next));
+                float nextPosition = Mathf.Clamp01(Mathf.InverseLerp(_displayMin, _displayMax, next));
+                // a whole-number slider rests on whole values, so a step that lands on the same one goes one further
+                if (_isInteger && Mathf.RoundToInt(PositionToValue(nextPosition)) == Mathf.RoundToInt(PositionToValue(_slider.value)))
+                    Value = Mathf.RoundToInt(PositionToValue(_slider.value)) + direction;
+                else
+                    _slider.value = nextPosition;
             }
             else
             {

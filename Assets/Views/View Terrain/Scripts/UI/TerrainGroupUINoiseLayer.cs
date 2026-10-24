@@ -55,6 +55,16 @@ namespace Gavi
         private bool _ready;
         private TerrainSettingsProfile _shownProfile;
 
+        // before the group woke up the dropdown is empty, the profile knows
+        public override string LayerLabel
+        {
+            get
+            {
+                int pattern = _ready || _shownProfile == null ? _dropdownPattern.value : Layer(_shownProfile).Pattern;
+                return _toggleEnabled.isOn ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
+            }
+        }
+
         /// <summary>Selects the next or previous pattern and wraps around at the ends of the list.</summary>
         private void StepPattern(int direction)
         {

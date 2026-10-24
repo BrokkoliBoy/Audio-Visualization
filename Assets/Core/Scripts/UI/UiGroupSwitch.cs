@@ -98,8 +98,6 @@ namespace Gavi
                     if (button == null)
                         continue;
                     button.onClick.AddListener(() => Select(index));
-                    if (_selectByDip)
-                        continue;
                     EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
                     if (trigger == null)
                         trigger = button.gameObject.AddComponent<EventTrigger>();
@@ -167,15 +165,28 @@ namespace Gavi
 
             if (_selectByDip)
             {
-                UpdateDips(current, target);
-                return;
+                if (MenuNavigation.LayerDip)
+                    UpdateDips(current, target);
+                else
+                    ResetDips();
             }
 
-            if (_hoverIndex < 0 || _hoverIndex == _current || target < 0.5f)
+            if (!MenuNavigation.LayerHover || _hoverIndex < 0 || _hoverIndex == _current || target < 0.5f)
                 return;
             if (current != null && current.IsSlidingWithin(_hoverSettleTime))
                 return;
             Select(_hoverIndex);
+        }
+
+        // a dip in progress is dropped (e.g. when the switch is turned off meanwhile)
+        private void ResetDips()
+        {
+            if (_dips == null)
+                return;
+            foreach (UiDipDetector[] group in _dips)
+                if (group != null)
+                    foreach (UiDipDetector dip in group)
+                        dip?.Reset();
         }
 
         // The tabs of the shown group pick their layer by a dip. Nothing counts while the window slides or is folded.

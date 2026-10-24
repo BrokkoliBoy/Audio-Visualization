@@ -36,6 +36,11 @@ namespace Gavi
             MarkChanged();
         }
 
+        /// <summary>Text for the layer tab of this group: the name of its pattern or shape, or "Off" while the layer is off. Null if the group is no layer.</summary>
+        public virtual string LayerLabel => null;
+
+        public const string LayerOffLabel = "Off";
+
         private static void MarkChanged()
         {
             if (TerrainSettingsManager.Instance != null)

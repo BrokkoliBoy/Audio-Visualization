@@ -25,6 +25,18 @@ namespace Gavi
         private bool _ready;
         private TerrainSettingsProfile _shownProfile;
 
+        // before the group woke up the dropdown is empty, the profile knows
+        public override string LayerLabel
+        {
+            get
+            {
+                int shape = _dropdownShape.value;
+                if (!_ready && _shownProfile != null && _shownProfile.Shapes != null && _layerIndex < _shownProfile.Shapes.Count)
+                    shape = _shownProfile.Shapes[_layerIndex].Shape;
+                return _toggleEnabled.isOn ? TerrainShape.ShapeNames[Mathf.Clamp(shape, 0, TerrainShape.ShapeNames.Length - 1)] : LayerOffLabel;
+            }
+        }
+
         private void Awake()
         {
             _toggleEnabled.onValueChanged.AddListener(OnUIValueChanged);

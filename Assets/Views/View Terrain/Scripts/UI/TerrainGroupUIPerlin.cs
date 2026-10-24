@@ -69,6 +69,17 @@ namespace Gavi
         private bool _ready;
         private TerrainSettingsProfile _shownProfile;
 
+        // before the group woke up the dropdown and the tick box are empty, the profile knows
+        public override string LayerLabel
+        {
+            get
+            {
+                bool on = _ready || _shownProfile == null ? _toggleApplyPerlin.isOn : _shownProfile.ApplyPerlin;
+                int pattern = _ready || _shownProfile == null ? _dropdownPattern.value : _shownProfile.NoisePattern;
+                return on ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
+            }
+        }
+
         /// <summary>The invert option belongs to the pattern: it is remembered per pattern while the menu is open, off at first.</summary>
         private void OnInvertChanged(bool isOn)
         {
