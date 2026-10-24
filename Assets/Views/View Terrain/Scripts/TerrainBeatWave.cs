@@ -30,6 +30,7 @@ namespace Gavi
         public const int DefaultMode = (int)Mode.Floor;
         public const int DefaultOrigin = (int)Origin.Middle;
         public const bool DefaultUseNoise = false;
+        public const int DefaultEveryNthBeat = 1;
 
         [Tooltip("Beat pulse between 0 and 1. A new wave starts when it jumps up.")]
         [SerializeField] private FloatModule _beatPulseModule;
@@ -53,6 +54,11 @@ namespace Gavi
         [Tooltip("The noise pattern shapes the wave: it is higher where the noise leaves the terrain high.")]
         [SerializeField] private bool _useNoise = DefaultUseNoise;
 
+        [Tooltip("A wave starts on every n-th beat. 1 = every beat.")]
+        [Range(1, 8)]
+        [SerializeField] private int _everyNthBeat = DefaultEveryNthBeat;
+
+        public int EveryNthBeat { get => _everyNthBeat; set => _everyNthBeat = Mathf.Clamp(value, 1, 8); }
         public bool UseNoise { get => _useNoise; set => _useNoise = value; }
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public float Strength { get => _strength; set => _strength = value; }
@@ -220,6 +226,8 @@ namespace Gavi
             _overallPeak = Mathf.Max(Mathf.Max(bass, other), _overallPeak * Mathf.Pow(0.5f, deltaTime / OverallPeakHalfLife));
 
             // Every beat sends a flat wave off at once. While its window is open it collects the bass levels.
+            if (beat && (BeatCount - 1) % _everyNthBeat != 0)
+                beat = false;
             if (beat)
             {
                 _trackBass = HighestSince(_historyBass, time - BassWindowBefore);

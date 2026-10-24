@@ -42,6 +42,8 @@ namespace Gavi
         public float WaveSpeed = TerrainBeatWave.DefaultSpeed;
         public float WaveWidth = TerrainBeatWave.DefaultWidth;
         public float WaveFade = TerrainBeatWave.DefaultFade;
+        [Tooltip("A wave starts on every n-th beat (1-8).")]
+        public int WaveEveryNthBeat = TerrainBeatWave.DefaultEveryNthBeat;
         [Tooltip("TerrainBeatWave.Mode: 0 = Add, 1 = Floor, 2 = Absorb.")]
         public int WaveMode = TerrainBeatWave.DefaultMode;
         [Tooltip("TerrainBeatWave.Origin: 0 = Middle, 1 = Edge, 2 = Alternate, 3 = Bass edge.")]
@@ -165,6 +167,7 @@ namespace Gavi
             WaveSpeed = profile.WaveSpeed;
             WaveWidth = profile.WaveWidth;
             WaveFade = profile.WaveFade;
+            WaveEveryNthBeat = profile.WaveEveryNthBeat;
             WaveMode = profile.WaveMode;
             WaveOrigin = profile.WaveOrigin;
             WaveUseNoise = profile.WaveUseNoise;
@@ -264,6 +267,7 @@ namespace Gavi
                 WaveSpeed = terrain.BeatWave.Speed;
                 WaveWidth = terrain.BeatWave.Width;
                 WaveFade = terrain.BeatWave.Fade;
+                WaveEveryNthBeat = terrain.BeatWave.EveryNthBeat;
                 WaveMode = terrain.BeatWave.WaveMode;
                 WaveOrigin = terrain.BeatWave.WaveOrigin;
                 WaveUseNoise = terrain.BeatWave.UseNoise;
@@ -355,6 +359,7 @@ namespace Gavi
                 terrain.BeatWave.Speed = WaveSpeed;
                 terrain.BeatWave.Width = WaveWidth;
                 terrain.BeatWave.Fade = WaveFade;
+                terrain.BeatWave.EveryNthBeat = WaveEveryNthBeat;
                 terrain.BeatWave.WaveMode = WaveMode;
                 terrain.BeatWave.WaveOrigin = WaveOrigin;
                 terrain.BeatWave.UseNoise = WaveUseNoise;

@@ -17,6 +17,7 @@ namespace Gavi
         [SerializeField] private Button _button;
         [Tooltip("Small arrow in the header. Hidden while folded, appears turning half way while opened by hovering and points down while pinned open.")]
         [SerializeField] private RectTransform _arrow;
+        public RectTransform Arrow => _arrow;
         [Tooltip("Children that stay visible while folded: the header and the background.")]
         [SerializeField] private List<GameObject> _keepVisible = new List<GameObject>();
         [Tooltip("Height of the group while folded. Only used for groups sized by a Layout Element (groups with their own layout group fit themselves).")]
@@ -198,6 +199,9 @@ namespace Gavi
                 HoverOpenSibling(true);
                 _dirty = true;
             }
+            // a right click on the header folds the window, whether it is pinned or only opened by hovering
+            if (_open && _hover && Input.GetMouseButtonDown(1) && PointerOnHeader())
+                Fold();
             if (_dirty && _started)
             {
                 _dirty = false;
@@ -321,6 +325,28 @@ namespace Gavi
                 if (other != null && other != this && (all || other.isActiveAndEnabled))
                     other.SetPinned(pin);
             }
+        }
+
+        private bool PointerOnHeader()
+        {
+            RectTransform header = _button != null ? _button.transform.parent as RectTransform : null;
+            if (header == null || header == transform)
+                header = _button != null ? (RectTransform)_button.transform : null;
+            if (header == null)
+                return false;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            return RectTransformUtility.RectangleContainsScreenPoint(header, Input.mousePosition, camera);
+        }
+
+        private void Fold()
+        {
+            _pinned = false;
+            _pinnedSet = true;
+            _stayOpen = false;
+            _hoverSuppressed = true;
+            _hoverReady = false;
+            _dirty = true;
         }
 
         private void SetPinned(bool pin)

@@ -16,6 +16,7 @@ namespace Gavi
         [SerializeField] private TMP_Dropdown _dropdownWaveMode;
         [SerializeField] private TMP_Dropdown _dropdownWaveOrigin;
         [SerializeField] private Toggle _toggleUseNoise;
+        [SerializeField] private SliderG _sliderEveryNthBeat;
 
         private void Awake()
         {
@@ -26,6 +27,8 @@ namespace Gavi
             _sliderWaveSpeed.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderWaveWidth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderWaveFade.OnValueChangedFloat.AddListener(OnUIValueChanged);
+            if (_sliderEveryNthBeat != null)
+                _sliderEveryNthBeat.OnValueChangedFloat.AddListener(OnUIValueChanged);
             SetupDropdown(_dropdownWaveMode, TerrainBeatWave.ModeNames);
             SetupDropdown(_dropdownWaveOrigin, TerrainBeatWave.OriginNames);
         }
@@ -45,6 +48,8 @@ namespace Gavi
             profile.WaveSpeed = _sliderWaveSpeed.Value;
             profile.WaveWidth = _sliderWaveWidth.Value;
             profile.WaveFade = _sliderWaveFade.Value;
+            if (_sliderEveryNthBeat != null)
+                profile.WaveEveryNthBeat = _sliderEveryNthBeat.ValueInt;
             profile.WaveMode = _dropdownWaveMode.value;
             profile.WaveOrigin = _dropdownWaveOrigin.value;
             if (_toggleUseNoise != null)
@@ -59,6 +64,8 @@ namespace Gavi
             _sliderWaveSpeed.Value = profile.WaveSpeed;
             _sliderWaveWidth.Value = profile.WaveWidth;
             _sliderWaveFade.Value = profile.WaveFade;
+            if (_sliderEveryNthBeat != null)
+                _sliderEveryNthBeat.Value = profile.WaveEveryNthBeat;
             ShowDropdown(_dropdownWaveMode, profile.WaveMode, TerrainBeatWave.ModeNames.Length);
             ShowDropdown(_dropdownWaveOrigin, profile.WaveOrigin, TerrainBeatWave.OriginNames.Length);
             if (_toggleUseNoise != null)

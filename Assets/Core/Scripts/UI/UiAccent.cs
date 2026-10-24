@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,11 +29,32 @@ namespace Gavi
             return true;
         }
 
+        /// <summary>Gives the accent stripe of a window another hue, saturation and brightness stay.</summary>
+        public static void SetHue(GameObject group, float hue)
+        {
+            Transform stripe = group != null ? group.transform.Find(AccentName) : null;
+            Image image = stripe != null ? stripe.GetComponent<Image>() : null;
+            if (image == null)
+                return;
+            Color.RGBToHSV(image.color, out _, out float s, out float v);
+            Color color = Color.HSVToRGB(Mathf.Repeat(hue, 1f), s, v);
+            color.a = image.color.a;
+            image.color = color;
+        }
+
         /// <summary>The same hue with a different brightness, a bit less saturated so dark tones do not get garish.</summary>
         public static Color Tone(Color accent, float saturation, float value)
         {
             Color.RGBToHSV(accent, out float h, out float s, out _);
             return Color.HSVToRGB(h, s * saturation, value);
+        }
+
+        // Filled part of a slider: pale or dark accents (pink, blue) are brought up to the level of the vivid ones.
+        private static Color Fill(Color accent)
+        {
+            Color.RGBToHSV(accent, out float h, out float s, out _);
+            float value = Mathf.Clamp(0.68f + (0.55f - accent.grayscale) * 0.5f, 0.62f, 0.85f);
+            return Color.HSVToRGB(h, Mathf.Clamp(Mathf.Max(s, 0.72f) * 0.95f, 0f, 0.9f), value);
         }
 
         /// <summary>Tints the controls of one window with its accent color. Safe to call on an inactive window.</summary>
@@ -46,11 +68,22 @@ namespace Gavi
                 // gradient sliders show their own colors
                 if (slider.GetComponentInParent<UiSliderGradient>(true) != null)
                     continue;
-                TintImage(slider.fillRect, Tone(accent, 0.8f, 0.5f));
-                TintImage(slider.handleRect, Tone(accent, 0.3f, 0.92f));
+                TintImage(slider.fillRect, Fill(accent));
+                TintImage(slider.handleRect, Tone(accent, 0.2f, 0.94f));
                 Transform background = slider.transform.Find("Background");
                 if (background != null)
-                    TintImage(background as RectTransform, Tone(accent, 0.55f, 0.75f));
+                    TintImage(background as RectTransform, Tone(accent, 0.6f, 0.8f));
+            }
+
+            // subheadings take a pale tone of the accent
+            foreach (TMP_Text text in group.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.name != "Subheading")
+                    continue;
+                Color.RGBToHSV(accent, out float h, out float s, out _);
+                Color pale = Color.HSVToRGB(h, s * 0.55f, 1f);
+                pale.a = 0.9f;
+                text.color = pale;
             }
 
             foreach (Button button in group.GetComponentsInChildren<Button>(true))
@@ -65,7 +98,8 @@ namespace Gavi
                 button.colors = colors;
             }
 
-            Transform arrow = group.transform.Find("Toggle - Header/Button - Fold/Image - Arrow");
+            UiGroupFold fold = group.GetComponent<UiGroupFold>();
+            Transform arrow = fold != null && fold.Arrow != null ? fold.Arrow : group.transform.Find("Toggle - Header/Button - Fold/Image - Arrow");
             Image arrowImage = arrow != null ? arrow.GetComponent<Image>() : null;
             if (arrowImage != null)
             {

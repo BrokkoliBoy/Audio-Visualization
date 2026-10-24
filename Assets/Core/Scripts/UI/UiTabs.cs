@@ -19,6 +19,12 @@ namespace Gavi
             public List<GameObject> Pages = new List<GameObject>();
             [Tooltip("Coming into this tab does not open its first window.")]
             public bool KeepFolded;
+            [Tooltip("Color the bar under the tab ends in. Transparent: the accent whose hue is furthest from the first window.")]
+            public Color BarEnd = new Color(0f, 0f, 0f, 0f);
+            [Tooltip("The accent hues of the windows are calculated from their order: the first window gets 'Hue From', the last 'Hue To', the others in between. Saturation and brightness stay as set on each stripe. The subheadings follow the accent in any case.")]
+            public bool AutoAccents;
+            [Range(0f, 1f)] public float HueFrom;
+            [Range(0f, 1f)] public float HueTo;
         }
 
         [SerializeField] private List<Tab> _tabs = new List<Tab>();
@@ -53,17 +59,15 @@ namespace Gavi
         {
             foreach (Tab tab in _tabs)
             {
+                if (tab.AutoAccents)
+                    AssignHues(tab);
                 List<Color> colors = new List<Color>();
-                foreach (GameObject page in tab.Pages)
+                foreach (GameObject page in OnScreenOrder(tab))
                 {
                     if (page == null)
                         continue;
                     UiGroupSwitch groupSwitch = page.GetComponent<UiGroupSwitch>();
-                    List<GameObject> groups = new List<GameObject>();
-                    if (groupSwitch != null)
-                        groups.AddRange(groupSwitch.Groups);
-                    else
-                        groups.Add(page);
+                    List<GameObject> groups = GroupsOf(page);
                     foreach (GameObject group in groups)
                     {
                         UiAccent.TintGroup(group);
@@ -74,8 +78,66 @@ namespace Gavi
                     }
                 }
                 if (tab.Indicator != null && colors.Count > 0)
-                    tab.Indicator.sprite = UiAccent.GradientSprite(colors);
+                    tab.Indicator.sprite = UiAccent.GradientSprite(new[] { colors[0], tab.BarEnd.a > 0f ? tab.BarEnd : MostDistinct(colors) });
             }
+        }
+
+        // the windows of a page: the page itself, or all windows that share its place (see UiGroupSwitch)
+        private static List<GameObject> GroupsOf(GameObject page)
+        {
+            List<GameObject> groups = new List<GameObject>();
+            UiGroupSwitch groupSwitch = page.GetComponent<UiGroupSwitch>();
+            if (groupSwitch != null)
+                groups.AddRange(groupSwitch.Groups);
+            else
+                groups.Add(page);
+            return groups;
+        }
+
+        // The pages as they appear on screen, top to bottom (the list in the inspector is in any order).
+        private static List<GameObject> OnScreenOrder(Tab tab)
+        {
+            List<GameObject> pages = new List<GameObject>();
+            foreach (GameObject page in tab.Pages)
+                if (page != null)
+                    pages.Add(page);
+            pages.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+            return pages;
+        }
+
+        // the hue of every window follows its place in the tab
+        private static void AssignHues(Tab tab)
+        {
+            List<GameObject> pages = OnScreenOrder(tab);
+            int count = pages.Count;
+            int index = 0;
+            foreach (GameObject page in pages)
+            {
+                float hue = Mathf.Lerp(tab.HueFrom, tab.HueTo, count > 1 ? index / (float)(count - 1) : 0f);
+                foreach (GameObject group in GroupsOf(page))
+                    UiAccent.SetHue(group, hue);
+                index++;
+            }
+        }
+
+        // the accent whose hue is furthest from the first one, so the bar of a tab shows a clear transition instead of the same color twice
+        private static Color MostDistinct(List<Color> colors)
+        {
+            Color.RGBToHSV(colors[0], out float baseHue, out _, out _);
+            Color best = colors[0];
+            float bestDistance = -1f;
+            foreach (Color color in colors)
+            {
+                Color.RGBToHSV(color, out float hue, out _, out _);
+                float distance = Mathf.Abs(hue - baseHue);
+                distance = Mathf.Min(distance, 1f - distance);
+                if (distance > bestDistance)
+                {
+                    bestDistance = distance;
+                    best = color;
+                }
+            }
+            return best;
         }
 
         private static void AddTrigger(EventTrigger trigger, EventTriggerType type, Action action)

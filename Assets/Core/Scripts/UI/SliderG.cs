@@ -89,6 +89,9 @@ namespace Gavi
         private void Awake()
         {
             _slider.onValueChanged.AddListener(OnValueChangedM);
+            if (_isInteger)
+                _slider.SetValueWithoutNotify(SnapToWhole(_slider.value));
+            _lastInt = Mathf.RoundToInt(PositionToValue(_slider.value));
             // The text saved in the scene is stale as long as the value never changes.
             ShowText(_slider.value);
         }
@@ -109,14 +112,30 @@ namespace Gavi
             SetText(_useDisplayRange ? Mathf.Lerp(_displayMin, _displayMax, Mathf.Clamp01(sliderValue)) : value);
         }
 
+        // An integer slider only rests on whole values: the handle snaps to the nearest one.
+        private float SnapToWhole(float sliderValue)
+        {
+            float snapped = ValueToPosition(Mathf.RoundToInt(PositionToValue(sliderValue)));
+            if (Mathf.Approximately(snapped, sliderValue))
+                return sliderValue;
+            _slider.SetValueWithoutNotify(snapped);
+            return snapped;
+        }
+
         private void OnValueChangedM(float sliderValue)
         {
+            if (_isInteger)
+                sliderValue = SnapToWhole(sliderValue);
             ShowText(sliderValue);
             float value = PositionToValue(sliderValue);
             if (_isInteger)
                 value = Mathf.RoundToInt(value);
+            bool changed = Mathf.RoundToInt(value) != _lastInt;
+            // no change event while the handle moves between the same two whole values
+            if (_isInteger && !changed)
+                return;
             OnValueChangedFloat.Invoke(value);
-            if (Mathf.RoundToInt(value) != _lastInt)
+            if (changed)
             {
                 OnValueChangedInt.Invoke(Mathf.RoundToInt(value));
                 _lastInt = Mathf.RoundToInt(value);
@@ -124,6 +143,9 @@ namespace Gavi
         }
 
         #region Mouse wheel
+        /// <summary>Holding Shift makes one wheel notch this many times larger.</summary>
+        private const float ShiftWheelFactor = 5f;
+
         /// <summary>Wheel forward = higher value, wheel back = lower value, in steps of the wheel step.</summary>
         public void OnScroll(PointerEventData eventData)
         {
@@ -134,18 +156,23 @@ namespace Gavi
                 return;
 
             int direction = wheel > 0f ? 1 : -1;
+            // Shift = large steps
+            float boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? ShiftWheelFactor : 1f;
+            // a short whole-number range has no use for larger steps
+            if (_isInteger && Range < 20f)
+                boost = 1f;
             if (_useDisplayRange)
             {
                 float span = Mathf.Abs(_displayMax - _displayMin);
                 if (span < 0.00001f)
                     return;
                 float shown = Mathf.Lerp(_displayMin, _displayMax, _slider.value);
-                float next = SteppedValue(shown, WheelStep(span, false), direction);
+                float next = SteppedValue(shown, WheelStep(span, false) * boost, direction);
                 _slider.value = Mathf.Clamp01(Mathf.InverseLerp(_displayMin, _displayMax, next));
             }
             else
             {
-                Value = SteppedValue(PositionToValue(_slider.value), WheelStep(Range, _isInteger), direction);
+                Value = SteppedValue(PositionToValue(_slider.value), WheelStep(Range, _isInteger) * boost, direction);
             }
             eventData.Use();
         }
