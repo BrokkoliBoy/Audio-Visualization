@@ -31,7 +31,7 @@ namespace Gavi
         private IEnumerator LoadFirstProfileNextFrame()
         {
             yield return null;
-            TerrainGroupUIProfiles.Instance.LoadFirstProfile();
+            TerrainGroupUIProfiles.Instance.LoadStartProfile();
         }
 
         public void ExportProfilesFromJson(TerrainSettingsProfile profile)

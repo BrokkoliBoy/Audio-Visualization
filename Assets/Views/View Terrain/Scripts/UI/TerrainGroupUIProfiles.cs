@@ -26,8 +26,18 @@ namespace Gavi
         [SerializeField] private Button _buttonResetTerrain;
 
         private const string DefaultProfileName = "Default";
+        private const string LastProfileKey = "TerrainProfiles.Last";
 
         private readonly List<TerrainSettingsProfile> _profiles = new List<TerrainSettingsProfile>();
+
+        // The terrain state at the last load or save, to tell whether the settings were changed since.
+        private string _savedSnapshot;
+        private string _baselineName;
+
+        /// <summary>True when the terrain settings differ from the profile that was last loaded or saved.</summary>
+        public bool HasUnsavedChanges => _savedSnapshot != null && JsonUtility.ToJson(CurrentProfile) != _savedSnapshot;
+        /// <summary>Name of the profile that was last loaded or saved.</summary>
+        public string BaselineProfileName => _baselineName;
 
         private TerrainSettingsProfile CurrentProfile => TerrainSettingsManager.Instance.CurrentProfile;
         private TerrainSettingsProfile ActiveProfile => _dropdownProfile.value >= _profiles.Count ? null : _profiles[_dropdownProfile.value];
@@ -62,14 +72,31 @@ namespace Gavi
                 TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(profile);
         }
 
-        /// <summary>Loads the first profile of the list, so the start state is what the dropdown shows.</summary>
-        public void LoadFirstProfile()
+        /// <summary>Loads the profile of the last session (the first one if there is none), so the start state is what the dropdown shows.</summary>
+        public void LoadStartProfile()
         {
             if (_profiles.Count == 0)
                 return;
-            _dropdownProfile.SetValueWithoutNotify(0);
+            string lastName = PlayerPrefs.GetString(LastProfileKey, "");
+            int index = _profiles.FindIndex(p => p.Name == lastName);
+            _dropdownProfile.SetValueWithoutNotify(Mathf.Max(index, 0));
             _dropdownProfile.RefreshShownValue();
             OnPressedLoad();
+        }
+
+        private void RememberBaseline(string profileName)
+        {
+            _baselineName = profileName;
+            if (!string.IsNullOrEmpty(profileName))
+                PlayerPrefs.SetString(LastProfileKey, profileName);
+        }
+
+        /// <summary>The loaded values reach the terrain and are read back within a frame or two (limits may adjust them), so the snapshot waits for that.</summary>
+        private IEnumerator SnapshotAfterSettle()
+        {
+            yield return null;
+            yield return null;
+            _savedSnapshot = JsonUtility.ToJson(CurrentProfile);
         }
 
         private void RemoveProfileAtIndex(int profileIndex)
@@ -96,7 +123,9 @@ namespace Gavi
             profile.CopyFromTerrainSettings();
             AddProfile(profile);
             _dropdownProfile.value = _dropdownProfile.options.Count - 1;
-            
+            RememberBaseline(profile.Name);
+            _savedSnapshot = JsonUtility.ToJson(CurrentProfile);
+
             // return profile;
         }
         #endregion
@@ -112,15 +141,22 @@ namespace Gavi
         private void OnPressedSave()
         {
             ActiveProfile?.CopyFromProfile(CurrentProfile);
-            if (ActiveProfile != null)
-                TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(ActiveProfile);
+            if (ActiveProfile == null)
+                return;
+            TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(ActiveProfile);
+            RememberBaseline(ActiveProfile.Name);
+            _savedSnapshot = JsonUtility.ToJson(CurrentProfile);
         }
-        
+
         private void OnPressedLoad()
         {
             CurrentProfile.CopyFromProfile(ActiveProfile);
             //CurrentProfile.ApplyProfileToTerrain();
             CurrentProfile.ApplyProfileToUI();
+            if (ActiveProfile == null)
+                return;
+            RememberBaseline(ActiveProfile.Name);
+            TerrainSettingsProfileManager.Instance.StartCoroutine(SnapshotAfterSettle());
         }
 
         /// <summary>Back to the Default profile (the code defaults if there is none). The profile list and the selection stay as they are.</summary>

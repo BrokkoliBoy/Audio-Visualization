@@ -61,7 +61,7 @@ namespace Gavi
 
         private void Update()
         {
-            if (!UiPointer.IsTyping && (Input.GetKeyDown(_keyCodeToggleMenu) || Input.GetKeyDown(_keyCodeToggleMenuAlternative)))
+            if (!UiPointer.IsTyping && !QuitConfirmation.BlocksHotkeys && (Input.GetKeyDown(_keyCodeToggleMenu) || Input.GetKeyDown(_keyCodeToggleMenuAlternative)))
                 ToggleMenu();
         }
         #endregion
