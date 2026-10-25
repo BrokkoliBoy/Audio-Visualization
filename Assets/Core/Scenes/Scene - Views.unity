@@ -84208,7 +84208,7 @@ MonoBehaviour:
   _perlinOffsetX: 0
   _perlinOffsetY: 0
   _perlinOffsetSpeed: {x: 0, y: -1}
-  _noiseZoom: 0.3
+  _noiseZoom: 0.09378473
   _heightZoomStrength: 0
   _noisePattern: 6
   _noiseInvert: 0
