@@ -43,6 +43,28 @@ namespace Gavi
             File.WriteAllText(folder + profile.Name + ".txt", json + "\n");
         }
         
+        /// <summary>Reads a profile from JSON (file or clipboard) and brings old formats up to date. Null when the text is no profile.</summary>
+        public static TerrainSettingsProfile ParseProfile(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json) || !json.TrimStart().StartsWith("{"))
+                return null;
+            TerrainSettingsProfile profile = JsonUtility.FromJson<TerrainSettingsProfile>(json);
+            if (profile == null || string.IsNullOrEmpty(profile.Name))
+                return null;
+            // Version 2: the menu intensity of the colors has its default at 3 instead of 1.
+            if (profile.FormatVersion < 2)
+            {
+                for (int c = 0; profile.ColorValues != null && c < profile.ColorValues.Count; c++)
+                {
+                    Vector3 color = profile.ColorValues[c];
+                    color.z = TerrainColorMapping.ConvertLegacyMenu(color.z);
+                    profile.ColorValues[c] = color;
+                }
+                profile.FormatVersion = 2;
+            }
+            return profile;
+        }
+
         private void ImportProfilesFromJson()
         {
             try
@@ -54,20 +76,9 @@ namespace Gavi
                     // A broken file must not stop the other profiles from loading.
                     try
                     {
-                        TerrainSettingsProfile profile = JsonUtility.FromJson<TerrainSettingsProfile>(File.ReadAllText(currentFile));
-                        if (profile == null || string.IsNullOrEmpty(profile.Name))
+                        TerrainSettingsProfile profile = ParseProfile(File.ReadAllText(currentFile));
+                        if (profile == null)
                             continue;
-                        // Version 2: the menu intensity of the colors has its default at 3 instead of 1.
-                        if (profile.FormatVersion < 2)
-                        {
-                            for (int c = 0; profile.ColorValues != null && c < profile.ColorValues.Count; c++)
-                            {
-                                Vector3 color = profile.ColorValues[c];
-                                color.z = TerrainColorMapping.ConvertLegacyMenu(color.z);
-                                profile.ColorValues[c] = color;
-                            }
-                            profile.FormatVersion = 2;
-                        }
                         profiles.RemoveAll(p => p.Name == profile.Name);
                         profiles.Add(profile);
                     }

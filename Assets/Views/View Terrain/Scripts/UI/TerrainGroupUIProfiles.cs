@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Gavi.Utility;
 using TMPro;
 using UnityEngine;
@@ -58,6 +59,14 @@ namespace Gavi
             if (Instance != null)
                 Debugger.LogInstanceError(GetType());
             Instance = this;
+            BuildShareRow();
+        }
+
+        private void Start()
+        {
+            UiGroupFold fold = GetComponent<UiGroupFold>();
+            if (fold != null)
+                fold.SetExtraOpenHeight(_shareRowHeight);
         }
         #endregion
 
@@ -167,9 +176,131 @@ namespace Gavi
             CurrentProfile.ApplyProfileToUI();
         }
 
+        #region Sharing
+        private GameObject _panelShare;
+        private float _shareRowHeight;
+        private TMP_Text _labelCopy;
+        private TMP_Text _labelPaste;
+
+        /// <summary>
+        /// Row under Save / Load: copies the current setup to the clipboard as text, and adds a setup from the clipboard as a new profile.
+        /// Made from a copy of the Save / Load row, so it looks the same.
+        /// </summary>
+        private void BuildShareRow()
+        {
+            Transform source = _panelButtonsProfileControl.transform;
+            _panelShare = Instantiate(_panelButtonsProfileControl, source.parent);
+            _panelShare.name = "Panel - Buttons Share";
+            _panelShare.transform.SetSiblingIndex(source.GetSiblingIndex() + 1);
+
+            // The rows of the group have fixed places: the new row takes the place of "New profile", which moves down one row,
+            // and the group grows by that row (see Start).
+            RectTransform newProfileRow = (RectTransform)_inputFieldNewProfile.transform.parent;
+            _shareRowHeight = ((RectTransform)source).anchoredPosition.y - newProfileRow.anchoredPosition.y;
+            ((RectTransform)_panelShare.transform).anchoredPosition = newProfileRow.anchoredPosition;
+            newProfileRow.anchoredPosition -= new Vector2(0f, _shareRowHeight);
+
+            Button[] buttons = _panelShare.GetComponentsInChildren<Button>(true);
+            for (int i = buttons.Length - 1; i >= 2; i--)
+                Destroy(buttons[i].gameObject);
+
+            // Two buttons instead of three share the row.
+            HorizontalLayoutGroup layout = _panelShare.GetComponent<HorizontalLayoutGroup>();
+            layout.childControlWidth = true;
+            layout.childForceExpandWidth = true;
+
+            _labelCopy = SetupShareButton(buttons[0], "Copy setup", OnPressedCopySetup);
+            _labelPaste = SetupShareButton(buttons[1], "Paste setup", OnPressedPasteSetup);
+        }
+
+        private static TMP_Text SetupShareButton(Button button, string text, UnityEngine.Events.UnityAction onClick)
+        {
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(onClick);
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            label.text = text;
+            return label;
+        }
+
+        private void SetShareRowActive(bool active)
+        {
+            if (_panelShare != null)
+                _panelShare.SetActive(active);
+        }
+
+        private void OnPressedCopySetup()
+        {
+            TerrainSettingsProfile profile = new TerrainSettingsProfile();
+            profile.CopyFromProfile(CurrentProfile);
+            profile.Name = string.IsNullOrEmpty(_baselineName) ? "Shared setup" : _baselineName;
+            profile.FormatVersion = TerrainSettingsProfile.CurrentFormatVersion;
+            GUIUtility.systemCopyBuffer = JsonUtility.ToJson(profile);
+            ShowFeedback(_labelCopy, "Copied!");
+        }
+
+        private void OnPressedPasteSetup()
+        {
+            TerrainSettingsProfile profile = null;
+            try
+            {
+                profile = TerrainSettingsProfileManager.ParseProfile(GUIUtility.systemCopyBuffer);
+            }
+            catch (ArgumentException)
+            {
+                // Text that looks like JSON but is none: handled like any other text.
+            }
+
+            if (profile == null)
+            {
+                ShowFeedback(_labelPaste, "No setup copied");
+                return;
+            }
+
+            profile.Name = UniqueProfileName(profile.Name);
+            AddProfile(profile);
+            _dropdownProfile.SetValueWithoutNotify(_profiles.Count - 1);
+            _dropdownProfile.RefreshShownValue();
+            OnPressedLoad();
+            ShowFeedback(_labelPaste, "Added!");
+        }
+
+        /// <summary>The name becomes a file name, so it loses characters a file name cannot have, and gets a number when it is taken.</summary>
+        private string UniqueProfileName(string name)
+        {
+            foreach (char invalid in Path.GetInvalidFileNameChars())
+                name = name.Replace(invalid.ToString(), "");
+            name = name.Trim();
+            if (name.Length > 40)
+                name = name.Substring(0, 40).Trim();
+            if (name.Length == 0)
+                name = "Shared setup";
+
+            string candidate = name;
+            for (int number = 2; _profiles.Exists(p => p.Name == candidate); number++)
+                candidate = name + " (" + number + ")";
+            return candidate;
+        }
+
+        private void ShowFeedback(TMP_Text label, string text)
+        {
+            TerrainSettingsProfileManager.Instance.StartCoroutine(FeedbackRoutine(label, text));
+        }
+
+        private IEnumerator FeedbackRoutine(TMP_Text label, string text)
+        {
+            string original = label == _labelCopy ? "Copy setup" : "Paste setup";
+            label.text = text;
+            yield return new WaitForSecondsRealtime(1.5f);
+            if (label != null)
+                label.text = original;
+        }
+        #endregion
+
+
         private void OnPressedAttemptRemove()
         {
             _panelButtonsProfileControl.SetActive(false);
+            SetShareRowActive(false);
             _labeledButtonRemove.SetActive(true);
             _dropdownProfile.interactable = false;
         }
@@ -178,6 +309,7 @@ namespace Gavi
         {
             RemoveProfileAtIndex(_dropdownProfile.value);
             _panelButtonsProfileControl.SetActive(true);
+            SetShareRowActive(true);
             _labeledButtonRemove.SetActive(false);
             _dropdownProfile.interactable = true;
         }
@@ -185,6 +317,7 @@ namespace Gavi
         private void OnPressedRejectRemove()
         {
             _panelButtonsProfileControl.SetActive(true);
+            SetShareRowActive(true);
             _labeledButtonRemove.SetActive(false);
             _dropdownProfile.interactable = true;
         }
