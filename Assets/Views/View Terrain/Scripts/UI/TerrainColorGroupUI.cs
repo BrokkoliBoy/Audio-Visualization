@@ -548,7 +548,27 @@ namespace Gavi
         #region Save and delete
         private void OnPressedSave()
         {
-            string name = _inputFieldName != null ? _inputFieldName.text.Trim() : "";
+            SavePalette(_inputFieldName != null ? _inputFieldName.text.Trim() : "");
+        }
+
+        /// <summary>
+        /// Called when a profile is saved or created: colors that are no saved palette (own mix, or a changed palette) are saved as a
+        /// palette named like the profile, so they show up in the palette list too. A saved palette that other colors do not
+        /// overwrite stays as it is; so does a different palette that already has the profile's name.
+        /// </summary>
+        public void SavePaletteForProfile(string profileName)
+        {
+            if (!_ready || string.IsNullOrEmpty(profileName))
+                return;
+            if (_baseName != null && !_modified)
+                return;
+            if (FindPalette(profileName) != null && _baseName != profileName)
+                return;
+            SavePalette(profileName);
+        }
+
+        private void SavePalette(string name)
+        {
             if (string.IsNullOrEmpty(name))
                 name = "My Palette";
             if (name == TerrainColorPalette.CustomName)

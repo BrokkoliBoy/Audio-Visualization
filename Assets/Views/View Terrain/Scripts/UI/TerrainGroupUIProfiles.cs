@@ -108,6 +108,17 @@ namespace Gavi
             _savedSnapshot = JsonUtility.ToJson(CurrentProfile);
         }
 
+        /// <summary>Saves changed colors as a palette named like the profile, then reads the whole menu state into the current profile.</summary>
+        private void SavePaletteForProfile(string profileName)
+        {
+            foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
+            {
+                if (group is TerrainColorGroupUI colors)
+                    colors.SavePaletteForProfile(profileName);
+            }
+            CurrentProfile.ExtractProfileFromUI();
+        }
+
         private void RemoveProfileAtIndex(int profileIndex)
         {
             if (profileIndex >= _profiles.Count || profileIndex < 0)
@@ -127,9 +138,11 @@ namespace Gavi
                     return;
             }
             
+            // Everything the menu shows goes into the profile, the colors too (the terrain alone does not know them).
+            SavePaletteForProfile(name);
             TerrainSettingsProfile profile = new TerrainSettingsProfile();
             profile.Name = name;
-            profile.CopyFromTerrainSettings();
+            profile.CopyFromProfile(CurrentProfile);
             AddProfile(profile);
             _dropdownProfile.value = _dropdownProfile.options.Count - 1;
             RememberBaseline(profile.Name);
@@ -149,9 +162,10 @@ namespace Gavi
 
         private void OnPressedSave()
         {
-            ActiveProfile?.CopyFromProfile(CurrentProfile);
             if (ActiveProfile == null)
                 return;
+            SavePaletteForProfile(ActiveProfile.Name);
+            ActiveProfile.CopyFromProfile(CurrentProfile);
             TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(ActiveProfile);
             RememberBaseline(ActiveProfile.Name);
             _savedSnapshot = JsonUtility.ToJson(CurrentProfile);
@@ -230,6 +244,7 @@ namespace Gavi
 
         private void OnPressedCopySetup()
         {
+            CurrentProfile.ExtractProfileFromUI();
             TerrainSettingsProfile profile = new TerrainSettingsProfile();
             profile.CopyFromProfile(CurrentProfile);
             profile.Name = string.IsNullOrEmpty(_baselineName) ? "Shared setup" : _baselineName;
