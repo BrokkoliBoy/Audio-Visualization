@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,6 +30,13 @@ public class TerrainShape
     private float _strength;
 
     public float Zoom { get => _shapeZoom; set => _shapeZoom = value; }
+    /// <summary>
+    /// The round shapes (circle, spiral, rings) fit the disc that touches the four sides of the terrain at zoom 1, so the zoom the menu
+    /// shows is multiplied by this factor (the distance to the corner is 1.414 times the distance to the side).
+    /// </summary>
+    public const float DiscZoom = 1.4142136f;
+    public static bool FitsDisc(AudioShape shape) => shape == AudioShape.Circle || shape == AudioShape.Spiral || shape == AudioShape.Rings;
+    private float EffectiveZoom => FitsDisc(_shape) ? _shapeZoom * DiscZoom : _shapeZoom;
     [Tooltip("Zoom of the shape. Will show more or less effect depending on the shape.")]
     [SerializeField] private float _shapeZoom = 1;
     
@@ -109,7 +116,7 @@ public class TerrainShape
             float distanceXNormalized = Mathf.Abs(0.5f - x);
             float distanceZNormalized = Mathf.Abs(0.5f - z);
             float distanceNormalized = Mathf.Sqrt(distanceXNormalized * distanceXNormalized + distanceZNormalized * distanceZNormalized);
-            indexNormalized = distanceNormalized / 0.7071067f * _shapeZoom;
+            indexNormalized = distanceNormalized / 0.7071067f * EffectiveZoom;
         }
         else if (_shape == AudioShape.AlignmentZ)
             indexNormalized = z;
@@ -142,6 +149,10 @@ public class TerrainShape
         float distanceNormalized = Mathf.Sqrt(dx * dx + dz * dz) / 0.7071067f;
         float angle = Mathf.Atan2(dz, dx);
 
+        // spiral and rings are a disc as well: the corners of the terrain are outside
+        if ((_shape == AudioShape.Spiral || _shape == AudioShape.Rings) && dx * dx + dz * dz > 0.25f)
+            return -1f;
+
         if (_shape == AudioShape.Rays)
         {
             // Folded twice around the middle: bass left and right, highs up and down.
@@ -151,7 +162,7 @@ public class TerrainShape
         }
         if (_shape == AudioShape.Spiral)
         {
-            float arm = angle / (2f * Mathf.PI) + distanceNormalized * 1.5f * _shapeZoom;
+            float arm = angle / (2f * Mathf.PI) + distanceNormalized * 1.5f * EffectiveZoom;
             return Mathf.Abs(2f * (arm - Mathf.Floor(arm)) - 1f);
         }
         if (_shape == AudioShape.Star)
@@ -163,7 +174,7 @@ public class TerrainShape
         }
         if (_shape == AudioShape.Rings)
         {
-            float ring = distanceNormalized * 2f * _shapeZoom;
+            float ring = distanceNormalized * 2f * EffectiveZoom;
             return 1f - Mathf.Abs(2f * (ring - Mathf.Floor(ring)) - 1f);
         }
         return 0f;

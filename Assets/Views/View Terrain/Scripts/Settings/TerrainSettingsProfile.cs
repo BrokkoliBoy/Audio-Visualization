@@ -8,7 +8,7 @@ namespace Gavi
     public class TerrainSettingsProfile
     {
         /// <summary>Version of the file format. 0 = files from before versions existed. Raise CurrentFormatVersion when a change needs old files to be converted.</summary>
-        public const int CurrentFormatVersion = 2;
+        public const int CurrentFormatVersion = 3;
         public int FormatVersion;
         public string Name = "Terrain Profile";
         
@@ -477,7 +477,7 @@ namespace Gavi
         {
             ApplyShape = true;
             Strength = 1;
-            Zoom = 1.41f;
+            Zoom = 1f;
             Operation = 3;
         }
         

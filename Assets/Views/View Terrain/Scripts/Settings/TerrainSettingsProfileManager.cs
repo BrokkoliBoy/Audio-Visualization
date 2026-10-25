@@ -62,6 +62,14 @@ namespace Gavi
                 }
                 profile.FormatVersion = 2;
             }
+            // Version 3: the round shapes (circle, spiral, rings) fit the disc at zoom 1, so their old zoom is divided by the factor.
+            if (profile.FormatVersion < 3)
+            {
+                foreach (TerrainShapeData shape in profile.Shapes)
+                    if (TerrainShape.FitsDisc((TerrainShape.AudioShape)shape.Shape))
+                        shape.Zoom /= TerrainShape.DiscZoom;
+                profile.FormatVersion = 3;
+            }
             return profile;
         }
 
