@@ -14,12 +14,12 @@ namespace Gavi
     /// </summary>
     public class TerrainBeatWave : MonoBehaviour
     {
-        /// <summary>What a wave does to the height: add its height, lift everything below it, or pull everything towards it.</summary>
-        public enum Mode { Add, Floor, Absorb }
+        /// <summary>What a wave does to the height: add its height, lift everything below it, pull everything towards it, subtract its height, or cut everything above it.</summary>
+        public enum Mode { Add, Floor, Absorb, Subtract, Minimum }
         /// <summary>Where a wave starts. Alternate switches between middle and edge with every wave. BassEdge starts where the bass bands end and runs outward.</summary>
         public enum Origin { Middle, Edge, Alternate, BassEdge }
 
-        public static readonly string[] ModeNames = { "Add", "Floor", "Absorb" };
+        public static readonly string[] ModeNames = { "Add", "Floor", "Absorb", "Subtract", "Minimum" };
         public static readonly string[] OriginNames = { "Middle", "Edge", "Alternate", "Bass edge" };
 
         public const bool DefaultEnabled = false;

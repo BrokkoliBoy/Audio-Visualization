@@ -1,67 +1,109 @@
 # Audio Visualization
 
-**Status:** Finished  |  **Built:** 2017 to 2019  |  **Role:** Solo developer
+**Status:** Active (Terrain view)  |  **Built:** 2017 to 2019, reworked 2026  |  **Role:** Solo developer, since 2026 together with Claude Code
 
-An audio-reactive visual effects sandbox I built on the side during my studies, around a small,
-hand-rolled node-based "pipeline" for routing live audio data into object properties. No code
-required per new effect.
+A sandbox music visualizer for Unity (HDRP): a glowing terrain that is shaped by the song that plays. Bass, mids and highs push
+the mesh up, a noise pattern keeps it moving, waves run over it on the beat, and everything can be tuned live in a slide-in menu
+with dozens of sliders.
+
+<!-- VIDEO 1 (hero, 20-30 s): one song, camera orbit, menu stays hidden. Upload as mp4 to GitHub and paste the link here. -->
+
+## What you do here
+
+There is no goal, no score and nothing to win. Put on a song (or the microphone), open the menu and play: pick a noise pattern,
+choose which part of the spectrum shapes which part of the terrain, send waves over it on the beat, bend the whole mesh into a
+planet, paint it with a palette. Think of it as an instrument for pictures. When you find a look you like, save it as a profile
+and come back to it. If you only want to watch, lean back and let a song run.
 
 ## Why I built this
 
-This started as a side quest: I wanted a wall in a different project to move along with whatever
-song was playing. I quickly realized the same idea could drive all kinds of visuals, so I split it
-off into its own dedicated project and just had fun seeing what I could build with it. It became a
-nice outlet for creativity beyond "does the gameplay work."
+This started as a side quest: I wanted a wall in a different project to move along with whatever song was playing. I quickly
+realized the same idea could drive all kinds of visuals, so I split it off into its own project and just had fun seeing what I
+could build with it. It became a nice outlet for creativity beyond "does the gameplay work", and it still is.
 
-## Concept
+## How it was built
 
-The core idea: pull a channel's float value out of Unity's audio spectrum sampler (e.g. the bass
-band), run it through a chain of small transform scripts (add, multiply, clamp, lerp, remap, ...),
-convert the type if needed (into a color, an animation curve, whatever the target expects), and hand
-the result to an "applicator" script that pushes it onto a real component property, for example a light's
-radius, an object's scale, a particle system's emission rate or a camera's field of view.
+The first version (2017 to 2019) is mine alone: the audio sampling, a small module pipeline for routing audio data into object
+properties, and the first visual scenes. In autumn 2026 I picked the project up again and turned it into the Terrain view you
+see here, and from that point on I build it with Claude Code. This is a conscious choice: I decided to vibe-code it.
 
-Every piece of that chain is a small, reusable `MonoBehaviour` you wire together by dragging
-components onto GameObjects. It works a bit like a lightweight visual scripting system built
-specifically for "audio in, property out."
+I work as the art director and product owner, Claude Code is the development team. I decide what the project should be and how
+it should look and feel, I test every change by eye and ear, and I do the fine tuning that gives it its character. Claude Code
+writes the code. That is why there are so many sliders: each one stands for a decision about what looks good, and I know what it
+does and when it matters.
 
 ## Features
 
-Two switchable visual scenarios ("views"), each with its own audio sampler. Only one of them was built with the pipeline system; the other is the very first thing I made in this project, from before the pipeline existed.
+- **Spectrum terrain.** Frequency bands are mapped onto up to three overlapping *audio shapes* (circle, stripes, rays, spiral,
+  star, rings and more), bass first. Each layer has its own strength, zoom, invert and blend mode.
+- **27 noise patterns** (Perlin, Domain warp, Voronoi, Hexagons, Cubes, Plasma, ...), up to three mixed into one terrain,
+  with speed and zoom per layer. "Flip beats" turns the whole pattern upside down on the beat, with a smooth morph.
+- **Beat waves.** Rings run over the terrain in time with the song's BPM. They start flat on every beat and grow when the bass
+  is strong, so quiet passages stay quiet.
+- **Mesh morph.** Bends the whole mesh into a planet, tube, dome, pringle, twist or flag, with a beat motion and a slow swing.
+- **Color and light.** HDR color palettes (save your own), a color curve with plateau tilt and slope shading so heights stay
+  readable, bloom, lens dirt that pulses on the beat, and a background that takes the hue of the terrain.
+- **Profiles.** Every setting except the test signal can be saved and loaded as a profile.
+- **Camera.** Orbit, move and zoom with the mouse, turn the terrain itself by dragging it, beat-synced zoom and sway.
+- **Test signal.** Replaces the song with a calm, fixed spectrum, so an effect can be judged without a moving song. A band
+  editor lets you raise and lower single bands with the mouse.
+- **Menu that follows your intent.** Windows open on hover, close again when you leave, and the menu slides in before the pointer
+  arrives when it moves fast towards the edge. Tick boxes and layer tabs can be switched by a quick dip of the pointer.
 
-Four free-to-use songs plus a 20 to 20,000 Hz test sweep and live microphone input, cycled from the menu or with the arrow keys.
+Four free-to-use songs, a 20 to 20,000 Hz test sweep and live microphone input, cycled from the player bar or with the arrow keys.
+The full list with status and planned ideas is in [docs/features.md](docs/features.md).
 
-Beat-synced camera zoom, driven by each song's BPM and an animation-curve "beatmap".
-
-Effects built purely by chaining modules in the Inspector: lights, scale, position, rotation, materials, VFX Graph particles, and camera field of view.
+<!-- VIDEO 2 (menu, 30-45 s): open the menu, change pattern, shape, palette, a wave. -->
+<!-- VIDEO 3 (optional, 15 s): test signal with band editor, or Mesh morph planet. -->
 
 ## Controls
 
-Everything can be done with the menu in the bottom right corner, which slides in and out. The keyboard shortcuts do the same:
+Everything can be done with the mouse. The menu on the right opens when the pointer touches the right edge, the player bar
+opens at the bottom. The keyboard shortcuts:
 
 | Key | Action |
 |---|---|
 | Left / Right | Previous / next song |
 | Up / Down | Volume (hold) |
-| Space or P | Pause and resume |
-| V / Shift+V | Next / previous view |
-| R | Restart the current view |
-| M or Esc | Show or hide the menu |
-| Tab | Show or hide the Terrain view settings (Terrain view only) |
+| Space or P | Pause and resume (the picture stays) |
+| R | Restart the song |
+| Tab | Show or hide the terrain menu |
+| M or Esc | Show or hide the small menu next to the player bar (HDR output, quit) |
+| T | Test signal on / off |
+| Left drag | Orbit the camera (on the terrain: turn the terrain) |
+| Right drag | Move the camera |
+| Mouse wheel | Zoom (on a slider: change the value, Shift = 5x steps) |
+| W A S D, Q E | Fly the camera |
+| C | Reset camera and terrain turn |
 
 ## Under the hood
 
-**A three-stage module pipeline.** Source (pull data out of the audio system), Transform (math operations, type conversions), Apply ("Modifiables" that push the final value onto a real Unity component property), with a consistent naming convention (`VoidToFloatModule`, `FloatToFloatModule`, ...) that makes the type flow of any chain readable at a glance.
+**Audio.** FFT bins from Unity's spectrum sampler are folded into frequency bands (logarithmic by default, which matches how we
+perceive pitch), with optional running-average normalization so quiet and loud tracks look comparable. Every song carries its
+own BPM and beat offset; beats are also detected from the bass, so waves and flips work without a map.
 
-**Configurable spectrum sampling.** FFT bins folded into frequency bands using one of several distribution strategies (constant, explicit per-band Hz values, a predefined 7-band table, or logarithmic, which matches how humans perceive pitch), plus optional running-average normalization so tracks with very different loudness still visualize at a comparable scale.
+**Burst jobs.** Heights, colors, dampening, waves, morph and noise run as Burst jobs on all cores. The mesh update at 115 x 115
+faces went from 13.6 ms to 0.7 ms, at 400 x 400 from 33 ms to 5 ms. Triangles and UVs are only rebuilt when they have to be.
+Settings like Max FPS, Efficiency (noise only every n-th update, spread over the frames) and the face count are in the menu, with
+a green-to-red background that shows what each one costs.
 
-**Beat-synced effects.** Each song carries its own BPM, beat offset, and an animation-curve "beatmap" describing how a beat should hit and decay.
+**Frame-rate independent smoothing.** Dampening is time-based, so 60 and 240 FPS look the same and nothing overshoots.
 
-**Independent views.** Each view has its own audio sampler instance and can be switched at runtime without unloading the scene.
+**Color pipeline.** Palette colors go through a glow scale (exposure steps), a saturation curve and a calculated color table
+instead of a plain gradient, so bright colors do not wash out and every height keeps a readable slope.
+
+**Data-driven.** Profiles and palettes are small JSON files in `StreamingAssets`; the builds ship them and new files go to the
+user's data folder.
+
+**Module pipeline (2017 to 2019).** The original source -> transform -> apply system (`VoidToFloatModule`,
+`FloatToFloatModule`, ...) is still in the project and still delivers the spectrum and the beat timing to the terrain.
+See [docs/architecture.md](docs/architecture.md).
 
 ## Where it stands
 
-Finished as a sandbox. The dumbbell scene is still in the project but switched off, because its lighting predates the move to HDRP and was never reworked. If I pick this back up, I'd rework that view for HDRP and put it back into the rotation, add more views and effect chains, and clean up the data flow in the module pipeline, which currently only runs one way.
+The Terrain view is the finished first release. The older scenes from before the rework are still in the project but switched
+off. Next up: more noise patterns and beat effects, a menu review, per-song audio settings, and long term importing your own
+music and recording video from inside the app. The ideas list is in [docs/features.md](docs/features.md).
 
 ## Credits
 

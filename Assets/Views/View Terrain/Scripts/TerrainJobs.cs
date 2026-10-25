@@ -205,6 +205,10 @@ namespace Gavi
                     y += level * weight;
                 else if (WaveMode == (int)TerrainBeatWave.Mode.Floor)
                     y = Mathf.Max(y, level * weight);
+                else if (WaveMode == (int)TerrainBeatWave.Mode.Subtract)
+                    y -= level * weight;
+                else if (WaveMode == (int)TerrainBeatWave.Mode.Minimum)
+                    y = Mathf.Min(y, level * weight);
                 else
                     y = Mathf.Lerp(y, level, weight * TerrainBeatWave.AbsorbShare);
             }

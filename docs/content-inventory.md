@@ -5,7 +5,7 @@ A reference of the songs and views currently wired into the scene.
 ## Songs
 
 Six clips live under `Game/Audio/Audio Clips/`, cycled independently of the current view with the
-Left / Right arrow keys or the on-screen menu (`SimpleControl`).
+Left / Right arrow keys or the player bar (`SimpleControl`).
 
 | Song | Artist | BPM |
 |---|---|---|
@@ -21,9 +21,11 @@ Credits section in the root README for the required attribution.
 
 ## Views
 
-Two views are in the active V / Shift+V rotation: **View Terrain** (first) and **View Intro**
-(`ViewType.Unity`). A third, **View Dumbbell**, exists fully intact in the scene but is intentionally
-excluded from the rotation for now (see gotchas.md). Restarting the current view's audio: R.
+One view is in the `ViewManager` list: **View Terrain**, the main content of the project (see
+features.md). The scene also holds **View Intro** and **View Unity** (both `ViewType.Unity`) and
+**View Dumbbell**, fully intact but deliberately not in the `ViewManager`, so they are never
+shown (decided 2026-10-21: the release is Terrain only; the Dumbbell's lighting predates HDRP, see
+gotchas.md). Restarting the song: R.
 
 Each view owns its own `SpectrumDataContainerModule` (independent audio sampling per view, not a
 shared global one).

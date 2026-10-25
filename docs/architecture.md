@@ -1,10 +1,13 @@
 # Architecture
 
-An audio-reactive visual effects sandbox from ~2017-2019. Its actual point is not any one visual
-effect, it's the pipeline system underneath: a lightweight, hand-rolled stand-in for visual
-scripting that lets you wire together "pull a float out of the audio spectrum, transform it, apply
-it to a component property" chains entirely by dragging components onto GameObjects, without
-writing new code for each new effect.
+A sandbox music visualizer. The current main content is the **Terrain view** (2026): a mesh whose
+heights come from a noise pattern, the audio spectrum and a few beat effects, tuned live in a
+slide-in menu. Underneath sits the hand-rolled **module pipeline** from 2017-2019, a lightweight
+stand-in for visual scripting that lets you wire together "pull a float out of the audio spectrum,
+transform it, apply it to a component property" chains by dragging components onto GameObjects.
+The terrain generator only uses the pipeline's audio entry point (`SpectrumDataContainerModule`)
+and the song's BPM; the camera beat zoom is still a pipeline chain. The Terrain view is described
+in the section "Terrain view"; the full feature list is in features.md.
 
 Namespace is `Gavi` throughout (same convention as PocketHealer), split into `Gavi.Audio`,
 `Gavi.Modules.*`, `Gavi.Modifiables`, `Gavi` (Views), `Gavi.Utility`, `Gavi.Events`.
@@ -88,18 +91,40 @@ needed, and hand it to a Modifiable that actually changes something visible.
   (`Assets/Core/Scripts/UI/SimpleControl.cs`) owns its own separate `List<AudioClipContainer>` and
   cycles it on Left / Right arrow (or the menu buttons), so any song can play under any view.
 
-## Menu
 
-`MainMenuUI` (`Assets/Core/Scripts/UI/MainMenuUI.cs`) is a slide-in uGUI panel (bottom right) that
-mirrors every hotkey as a button: song and view switching, restart, pause, a volume slider, and
-quit. M and Esc toggle it. It calls public methods on `SimpleControl` (`NextAudio`, `PreviousAudio`,
-`TogglePause`, `SetVolume`) and `ViewManager` (`NextView`, `PreviousView`, `RestartView`), so the
-buttons and the hotkeys share one code path. `Quit` calls `Application.Quit()` only. The old
-Esc help panel in `BasicUi` was removed. WebGL is not supported (HDRP).
+## Menus
+
+- **Player bar** (bottom): song, pause, volume and camera buttons; opens when the pointer reaches
+  the bottom edge.
+- **`MainMenuUI`** (`Assets/Core/Scripts/UI/MainMenuUI.cs`): small popup next to the player bar with
+  the HDR output toggle, a hotkey overview and quit. Opens on hover or pinned with M / Esc. Only one
+  of this popup and the Terrain settings menu is open at a time. `Quit` calls `Application.Quit()`
+  only. WebGL is not supported (HDRP).
+- **Terrain settings menu** (right edge, Tab toggles): see "Terrain view" below.
+
+## Terrain view
+
+Code lives in `Assets/Views/View Terrain/Scripts/`.
+
+- **`TerrainGenerator`** builds and updates the mesh every frame. Heights, colors, dampening, waves
+  and mesh morph run as Burst jobs on NativeArrays (`TerrainJobs.cs`); noise is calculated in
+  parallel (`TerrainNoise`, `TerrainNoiseLayer`, up to three layers). The band of every vertex per
+  audio shape is cached until a shape or the face count changes; triangles and UVs are only rebuilt
+  when needed.
+- **`TerrainBeatWave`** detects beats from the bass and the song's BPM and runs the ring waves.
+  **`TerrainLensDirt`** is the beat-pulsed lens dirt, **`TerrainRotator`** turns the terrain with the
+  mouse, **`TerrainBandPicker`** is the band editor of the test signal.
+- **Test signal** (`AudioTestSignal`, `Gavi.Audio`) replaces the spectrum with a fixed one; hotkey T.
+- **Settings and profiles** (`Settings/`): `TerrainSettingsProfile` holds every saved value,
+  profiles and color palettes are JSON files in `StreamingAssets/Profiles` (builds ship them, new
+  files go to the persistent data path). Old files load with defaults for newer fields.
+- **Menu UI** (`UI/`): one `TerrainGroupUI...` script per window, color mapping in
+  `TerrainColorMapping` / `TerrainColorGroupUI`. The shared menu behavior (hover opening, fold,
+  pin, dip and swipe, accent colors, wheel steps) lives in `Assets/Core/Scripts/UI/` (`SliderG`, `UiAccent`, `MenuNavigation`, ...).
+- **Camera** (`CameraControl`): orbit, move, zoom, keys, beat zoom and sway.
 
 ## Render pipeline
 
 HDRP (`com.unity.render-pipelines.high-definition`). See gotchas.md for the Unity 6.6 upgrade
 fallout (missing `com.unity.ugui`, the `AssetUsageDetector` plugin's EntityId migration, and the
-HDRP material migration wizard) and content-inventory.md for per-view render state (View Dumbbell
-is currently broken here, unrelated to this session's fixes).
+HDRP material migration wizard) and content-inventory.md for per-view render state.

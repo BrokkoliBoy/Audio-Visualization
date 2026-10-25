@@ -46,7 +46,7 @@ namespace Gavi
         public float WaveFade = TerrainBeatWave.DefaultFade;
         [Tooltip("A wave starts on every n-th beat (1-8).")]
         public int WaveEveryNthBeat = TerrainBeatWave.DefaultEveryNthBeat;
-        [Tooltip("TerrainBeatWave.Mode: 0 = Add, 1 = Floor, 2 = Absorb.")]
+        [Tooltip("TerrainBeatWave.Mode: 0 = Add, 1 = Floor, 2 = Absorb, 3 = Subtract, 4 = Minimum.")]
         public int WaveMode = TerrainBeatWave.DefaultMode;
         [Tooltip("TerrainBeatWave.Origin: 0 = Middle, 1 = Edge, 2 = Alternate, 3 = Bass edge.")]
         public int WaveOrigin = TerrainBeatWave.DefaultOrigin;
