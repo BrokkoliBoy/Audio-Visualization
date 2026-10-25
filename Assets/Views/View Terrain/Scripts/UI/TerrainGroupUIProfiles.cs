@@ -62,6 +62,16 @@ namespace Gavi
                 TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(profile);
         }
 
+        /// <summary>Loads the first profile of the list, so the start state is what the dropdown shows.</summary>
+        public void LoadFirstProfile()
+        {
+            if (_profiles.Count == 0)
+                return;
+            _dropdownProfile.SetValueWithoutNotify(0);
+            _dropdownProfile.RefreshShownValue();
+            OnPressedLoad();
+        }
+
         private void RemoveProfileAtIndex(int profileIndex)
         {
             if (profileIndex >= _profiles.Count || profileIndex < 0)

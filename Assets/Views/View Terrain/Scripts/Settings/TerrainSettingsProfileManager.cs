@@ -24,6 +24,14 @@ namespace Gavi
         private void Start()
         {
             ImportProfilesFromJson();
+            StartCoroutine(LoadFirstProfileNextFrame());
+        }
+
+        /// <summary>One frame later, so TerrainSettingsManager.Start has already read the scene values and does not overwrite the loaded profile.</summary>
+        private IEnumerator LoadFirstProfileNextFrame()
+        {
+            yield return null;
+            TerrainGroupUIProfiles.Instance.LoadFirstProfile();
         }
 
         public void ExportProfilesFromJson(TerrainSettingsProfile profile)
