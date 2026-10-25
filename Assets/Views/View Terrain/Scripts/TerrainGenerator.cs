@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Collections;
@@ -147,6 +147,18 @@ namespace Gavi
         [Range(0, 1)]
         [SerializeField] private float _colorBandGlow;
         public float ColorBandGlow { get => _colorBandGlow; set => _colorBandGlow = Mathf.Clamp01(value); }
+        [Tooltip("Same as the band sliders, but from the strength of the noise pattern at the vertex. Hue: 0 = the place in the gradient comes from the height (and the band), 1 = from the pattern.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorPatternHue;
+        public float ColorPatternHue { get => _colorPatternHue; set => _colorPatternHue = Mathf.Clamp01(value); }
+        [Tooltip("0 = the brightness stays as the gradient gives it, 1 = weak parts of the pattern are dark and strong parts bright.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorPatternBrightness;
+        public float ColorPatternBrightness { get => _colorPatternBrightness; set => _colorPatternBrightness = Mathf.Clamp01(value); }
+        [Tooltip("0 = no extra glow, 1 = strong parts of the pattern shine up to four times brighter, which the bloom turns into glow.")]
+        [Range(0, 1)]
+        [SerializeField] private float _colorPatternGlow;
+        public float ColorPatternGlow { get => _colorPatternGlow; set => _colorPatternGlow = Mathf.Clamp01(value); }
         [Tooltip("Evens out the colors between noise patterns. A pattern that is high on average would show only the upper colors, a low one only the lower. 0 = colors follow the height as it is, 1 = every pattern uses about the same part of the gradient.")]
         [Range(0, 1)]
         [SerializeField] private float _colorNoiseBalance = 1f;
@@ -166,10 +178,10 @@ namespace Gavi
         public bool ApplyMorph { get => _applyMorph; set => _applyMorph = value; }
         [SerializeField] private MorphShape _morphShape = MorphShape.Planet;
         /// <summary>The numbers are what profiles store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
-        public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7 }
+        public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7, Pillar = 8 }
         /// <summary>The shapes in the order of the menu.</summary>
-        public static readonly MorphShape[] MorphOrder = { MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Dome, MorphShape.Pringle, MorphShape.Flag };
-        public static readonly string[] MorphNames = { "Planet", "Twist", "Tube", "Dome", "Pringle", "Flag" };
+        public static readonly MorphShape[] MorphOrder = { MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Pillar, MorphShape.Dome, MorphShape.Pringle, MorphShape.Flag };
+        public static readonly string[] MorphNames = { "Planet", "Twist", "Tube", "Pillar", "Dome", "Pringle", "Flag" };
         /// <summary>The <see cref="MorphShape"/> as number. A number of a removed shape gives the dome.</summary>
         public int Morph { get => (int)_morphShape; set => _morphShape = System.Array.IndexOf(MorphOrder, (MorphShape)value) >= 0 ? (MorphShape)value : MorphShape.Dome; }
         [Tooltip("How far the mesh is bent. 0 = flat, 1 = fully bent.")]
@@ -736,6 +748,9 @@ namespace Gavi
                 ColorBandHue = _colorBandHue,
                 ColorBandBrightness = _colorBandBrightness,
                 ColorBandGlow = _colorBandGlow,
+                ColorPatternHue = _colorPatternHue,
+                ColorPatternBrightness = _colorPatternBrightness,
+                ColorPatternGlow = _colorPatternGlow,
                 ColorOutOfBounds = _colorOutOfBounds,
                 OutOfBoundsBrightness = _outOfBoundsBrightness,
                 OutOfAllShapes = _outOfAllShapes,

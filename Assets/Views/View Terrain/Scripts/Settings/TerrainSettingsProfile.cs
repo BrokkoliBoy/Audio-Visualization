@@ -104,6 +104,10 @@ namespace Gavi
         public float ColorBandHue = 0f;
         public float ColorBandBrightness = 0f;
         public float ColorBandGlow = 0f;
+        [Tooltip("Same from the strength of the noise pattern at the vertex: gradient position, brightness, glow. 0 = off.")]
+        public float ColorPatternHue = 0f;
+        public float ColorPatternBrightness = 0f;
+        public float ColorPatternGlow = 0f;
         [Tooltip("Evens out the colors between noise patterns. 0 = off.")]
         public float ColorNoiseBalance = 1f;
         [Tooltip("Soft end of the gradient for heights over 1. 0 = hard end.")]
@@ -217,6 +221,9 @@ namespace Gavi
             ColorBandHue = profile.ColorBandHue;
             ColorBandBrightness = profile.ColorBandBrightness;
             ColorBandGlow = profile.ColorBandGlow;
+            ColorPatternHue = profile.ColorPatternHue;
+            ColorPatternBrightness = profile.ColorPatternBrightness;
+            ColorPatternGlow = profile.ColorPatternGlow;
             ColorNoiseBalance = profile.ColorNoiseBalance;
             ColorHeadroom = profile.ColorHeadroom;
 
@@ -301,6 +308,9 @@ namespace Gavi
             ColorBandHue = terrain.ColorBandHue;
             ColorBandBrightness = terrain.ColorBandBrightness;
             ColorBandGlow = terrain.ColorBandGlow;
+            ColorPatternHue = terrain.ColorPatternHue;
+            ColorPatternBrightness = terrain.ColorPatternBrightness;
+            ColorPatternGlow = terrain.ColorPatternGlow;
             ColorNoiseBalance = terrain.ColorNoiseBalance;
             ColorHeadroom = terrain.ColorHeadroom;
 
@@ -394,6 +404,9 @@ namespace Gavi
             terrain.ColorBandHue = ColorBandHue;
             terrain.ColorBandBrightness = ColorBandBrightness;
             terrain.ColorBandGlow = ColorBandGlow;
+            terrain.ColorPatternHue = ColorPatternHue;
+            terrain.ColorPatternBrightness = ColorPatternBrightness;
+            terrain.ColorPatternGlow = ColorPatternGlow;
             terrain.ColorNoiseBalance = ColorNoiseBalance;
             terrain.ColorHeadroom = ColorHeadroom;
 

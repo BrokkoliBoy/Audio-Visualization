@@ -29,9 +29,9 @@ namespace Gavi
         private const int OperationMinimum = (int)TerrainShape.AudioShapeOperation.Minimum;
         private const int OperationAverage = (int)TerrainShape.AudioShapeOperation.Average;
         private const int OutOfBoundsOuterBand = (int)TerrainGenerator.OutOfBounds.OuterBand;
-        /// <summary>Quietest bands keep this share of the brightness when the brightness follows the band.</summary>
+        /// <summary>Quietest bands (or the weakest parts of the pattern) keep this share of the brightness when the brightness follows them.</summary>
         private const float MinBandBrightness = 0.2f;
-        /// <summary>Extra brightness of the strongest bands at full band glow (in addition to the normal color).</summary>
+        /// <summary>Extra brightness of the strongest bands (or pattern parts) at full glow (in addition to the normal color).</summary>
         private const float MaxBandGlow = 3f;
 
         // --- grid ---
@@ -95,6 +95,9 @@ namespace Gavi
         public float ColorBandHue;
         public float ColorBandBrightness;
         public float ColorBandGlow;
+        public float ColorPatternHue;
+        public float ColorPatternBrightness;
+        public float ColorPatternGlow;
         public bool ColorOutOfBounds;
         public float OutOfBoundsBrightness;
         [ReadOnly] public NativeArray<bool> OutOfAllShapes;
@@ -121,7 +124,7 @@ namespace Gavi
 
                 float y = GetY(x, z, index, noise, out float band);
                 Vertices[index] = new Vector3(x * ScaleX, y * ScaleY, z * ScaleZ);
-                Colors[index] = GetColor(y, band, ColorOutOfBounds && OutOfAllShapes[index]);
+                Colors[index] = GetColor(y, band, ApplyNoise ? 1f - noise : 1f, ColorOutOfBounds && OutOfAllShapes[index]);
                 LastYs[index] = y;
                 LastBands[index] = band;
             }
@@ -346,16 +349,22 @@ namespace Gavi
         #endregion
 
         #region Color
-        private Color GetColor(float y, float band, bool outsideAllShapes)
+        /// <summary>pattern: how strong the noise pattern is at the vertex (1 = the part of the pattern that stands highest, like the height it gives).</summary>
+        private Color GetColor(float y, float band, float pattern, bool outsideAllShapes)
         {
             if (!ApplyColor)
                 return Color.magenta;
 
-            Color color = ReadGradient(Mathf.Lerp(SoftEnd(y * ColorScale), band, ColorBandHue));
+            float position = Mathf.Lerp(SoftEnd(y * ColorScale), band, ColorBandHue);
+            Color color = ReadGradient(Mathf.Lerp(position, pattern, ColorPatternHue));
             if (ColorBandBrightness > 0f)
                 color = Scale(color, Mathf.Lerp(1f, MinBandBrightness + (1f - MinBandBrightness) * Mathf.Clamp01(band), ColorBandBrightness));
             if (ColorBandGlow > 0f)
                 color = Scale(color, 1f + ColorBandGlow * MaxBandGlow * Mathf.Clamp01(band));
+            if (ColorPatternBrightness > 0f)
+                color = Scale(color, Mathf.Lerp(1f, MinBandBrightness + (1f - MinBandBrightness) * Mathf.Clamp01(pattern), ColorPatternBrightness));
+            if (ColorPatternGlow > 0f)
+                color = Scale(color, 1f + ColorPatternGlow * MaxBandGlow * Mathf.Clamp01(pattern));
 
             if (outsideAllShapes)
             {
@@ -464,6 +473,8 @@ namespace Gavi
         public const float PlanetAngle = 0.75f * Mathf.PI;
         /// <summary>Angle (in radians) of the tube from its top to the left and right edge of the terrain at full amount: both edges meet at the bottom, a closed tube.</summary>
         public const float TubeAngle = Mathf.PI;
+        /// <summary>Size of the pillar at full amount compared to the flat terrain (the column is as tall as the terrain is wide, so it is scaled down to fit the picture).</summary>
+        public const float PillarFit = 0.5f;
         /// <summary>Largest height of dome, pringle and flag, as a share of half the terrain width.</summary>
         public const float BendHeight = 0.5f;
         public const float PringleHeight = 0.35f;
@@ -534,6 +545,25 @@ namespace Gavi
                     float angle = u * Amount * TubeAngle;
                     bent.x = CenterX + (tubeRadius + h) * Mathf.Sin(angle);
                     bent.y = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius + Lift;
+                    break;
+                }
+                case TerrainGenerator.MorphShape.Pillar:
+                {
+                    // the tube of above, which then stands up: the depth of the terrain becomes the height of the pillar (the near edge,
+                    // where the bass is, ends up at the bottom), the roll becomes the round of the pillar, the height of the terrain
+                    // becomes the distance from its axis. The stand-up turn is around the top of the tube, so nothing jumps at amount 0.
+                    float angle = u * Amount * TubeAngle;
+                    float tubeX = (tubeRadius + h) * Mathf.Sin(angle);
+                    float tubeY = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius;
+                    float stand = Amount * 0.5f * Mathf.PI;
+                    float sin = Mathf.Sin(stand), cos = Mathf.Cos(stand);
+                    // at full amount the tube has the radius Half / PI, the axis is moved into the middle of the terrain by that
+                    float axis = Half / Mathf.PI * sin;
+                    // the whole thing shrinks with the amount, so the standing column fits on the screen at the start zoom
+                    float fit = Mathf.Lerp(1f, PillarFit, Amount);
+                    bent.x = CenterX + tubeX * fit;
+                    bent.y = (tubeY * cos + dz * sin) * fit;
+                    bent.z = CenterZ + (dz * cos - tubeY * sin - axis) * fit;
                     break;
                 }
             }
