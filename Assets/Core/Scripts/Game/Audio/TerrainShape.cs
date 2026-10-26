@@ -16,7 +16,7 @@ public class TerrainShape
     public AudioShape Shape { get => _shape; set => _shape = value; }
     [Tooltip("Specifies the shape that the bands should be cast onto.")]
     [SerializeField] private AudioShape _shape;
-    /// <summary>New shapes are appended, profiles store the index.</summary>
+    /// <summary>New shapes are appended, presets store the index.</summary>
     public enum AudioShape { Circle, Square, Diamond, AlignmentX, AlignmentZ, MirrorX, MirrorZ, Rays, Spiral, Cross, Star, Rings }
     public static readonly string[] ShapeNames =
     {

@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace Gavi
 {
-    public class TerrainSettingsProfileContainer : MonoBehaviour
+    public class TerrainSettingsPresetContainer : MonoBehaviour
     {
         [SerializeField] private bool _export;
         
-        [SerializeField] private TerrainSettingsProfile _profile;
+        [SerializeField] private TerrainSettingsPreset _preset;
 
         private void OnDrawGizmosSelected()
         {
@@ -17,9 +17,9 @@ namespace Gavi
                 return;
             _export = false;
 
-            if (_profile == null)
+            if (_preset == null)
                 return;
-            TerrainSettingsProfileManager.Instance.ExportProfilesFromJson(_profile);
+            TerrainSettingsPresetManager.Instance.ExportPresetsFromJson(_preset);
         }
     }
 }

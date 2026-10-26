@@ -7,7 +7,7 @@ using Gavi.Audio;
 namespace Gavi
 {
     /// <summary>
-    /// Menu group of the <see cref="AudioTestSignal"/>. It is not part of the terrain profile, the test signal is only
+    /// Menu group of the <see cref="AudioTestSignal"/>. It is not part of the terrain preset, the test signal is only
     /// a tool to look at the effects and always starts switched off.
     /// </summary>
     public class AudioTestSignalUI : MonoBehaviour

@@ -18,20 +18,20 @@ namespace Gavi
             _dropdownExecutionPoint.onValueChanged.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ApplyTerrace = _toggleApplyTerraces.isOn;
-            profile.TerraceCount = _sliderTerraceCount.ValueInt;
-            profile.TerraceExecutionPoint = _dropdownExecutionPoint.value;
+            base.ExtractPreset(preset);
+            preset.ApplyTerrace = _toggleApplyTerraces.isOn;
+            preset.TerraceCount = _sliderTerraceCount.ValueInt;
+            preset.TerraceExecutionPoint = _dropdownExecutionPoint.value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _toggleApplyTerraces.isOn = profile.ApplyTerrace;
-            _sliderTerraceCount.ValueInt = profile.TerraceCount;
-            _dropdownExecutionPoint.value = profile.TerraceExecutionPoint;
+            base.ShowPreset(preset);
+            _toggleApplyTerraces.isOn = preset.ApplyTerrace;
+            _sliderTerraceCount.ValueInt = preset.TerraceCount;
+            _dropdownExecutionPoint.value = preset.TerraceExecutionPoint;
         }
     }
 }

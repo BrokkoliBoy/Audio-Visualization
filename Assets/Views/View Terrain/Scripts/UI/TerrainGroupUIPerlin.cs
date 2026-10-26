@@ -59,23 +59,23 @@ namespace Gavi
             if (_buttonPatternNext != null)
                 _buttonPatternNext.onClick.AddListener(() => StepPattern(1));
 
-            // The group can be switched off (closed tab) while the menu is filled with the profile. The dropdown has no options then,
-            // so the profile is shown again now.
+            // The group can be switched off (closed tab) while the menu is filled with the preset. The dropdown has no options then,
+            // so the preset is shown again now.
             _ready = true;
-            if (_shownProfile != null)
-                ShowProfile(_shownProfile);
+            if (_shownPreset != null)
+                ShowPreset(_shownPreset);
         }
 
         private bool _ready;
-        private TerrainSettingsProfile _shownProfile;
+        private TerrainSettingsPreset _shownPreset;
 
-        // before the group woke up the dropdown and the tick box are empty, the profile knows
+        // before the group woke up the dropdown and the tick box are empty, the preset knows
         public override string LayerLabel
         {
             get
             {
-                bool on = _ready || _shownProfile == null ? _toggleApplyPerlin.isOn : _shownProfile.ApplyPerlin;
-                int pattern = _ready || _shownProfile == null ? _dropdownPattern.value : _shownProfile.NoisePattern;
+                bool on = _ready || _shownPreset == null ? _toggleApplyPerlin.isOn : _shownPreset.ApplyPerlin;
+                int pattern = _ready || _shownPreset == null ? _dropdownPattern.value : _shownPreset.NoisePattern;
                 return on ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
             }
         }
@@ -108,63 +108,63 @@ namespace Gavi
             _dropdownPattern.value = (_dropdownPattern.value + direction + count) % count;
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
             // before the first Awake the dropdown is empty, its value says nothing
             if (!_ready)
                 return;
-            base.ExtractProfile(profile);
-            profile.ApplyPerlin = _toggleApplyPerlin.isOn;
-            profile.PerlinDepth = _sliderPerlinDepth.Value;
-            profile.PerlinZoom = _sliderPerlinZoom.Value;
-            profile.HeightZoomReference = _sliderPerlinZoom.ValueAtPosition(0.5f);
+            base.ExtractPreset(preset);
+            preset.ApplyPerlin = _toggleApplyPerlin.isOn;
+            preset.PerlinDepth = _sliderPerlinDepth.Value;
+            preset.PerlinZoom = _sliderPerlinZoom.Value;
+            preset.HeightZoomReference = _sliderPerlinZoom.ValueAtPosition(0.5f);
             if (_sliderHeightZoom != null)
-                profile.HeightZoomStrength = _sliderHeightZoom.Value;
+                preset.HeightZoomStrength = _sliderHeightZoom.Value;
             float speed = _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 1f;
-            profile.PerlinSpeedX = _speedDirection.x * speed;
-            profile.PerlinSpeedY = _speedDirection.y * speed;
+            preset.PerlinSpeedX = _speedDirection.x * speed;
+            preset.PerlinSpeedY = _speedDirection.y * speed;
             if (_dropdownPattern != null)
-                profile.NoisePattern = _dropdownPattern.value;
+                preset.NoisePattern = _dropdownPattern.value;
             if (_toggleInvert != null)
-                profile.NoiseInvert = _toggleInvert.isOn;
+                preset.NoiseInvert = _toggleInvert.isOn;
             if (_toggleInvertAll != null)
-                profile.NoiseInvertAll = _toggleInvertAll.isOn;
+                preset.NoiseInvertAll = _toggleInvertAll.isOn;
             if (_sliderFlipBeats != null)
-                profile.NoiseFlipBeats = _sliderFlipBeats.ValueInt;
+                preset.NoiseFlipBeats = _sliderFlipBeats.ValueInt;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            _shownProfile = profile;
+            _shownPreset = preset;
             if (!_ready)
                 return;
-            base.ShowProfile(profile);
-            _toggleApplyPerlin.isOn = profile.ApplyPerlin;
-            _sliderPerlinDepth.Value = profile.PerlinDepth;
+            base.ShowPreset(preset);
+            _toggleApplyPerlin.isOn = preset.ApplyPerlin;
+            _sliderPerlinDepth.Value = preset.PerlinDepth;
             if (_sliderHeightZoom != null)
-                _sliderHeightZoom.Value = profile.HeightZoomStrength;
+                _sliderHeightZoom.Value = preset.HeightZoomStrength;
             if (_sliderPerlinSpeed != null)
             {
                 // the length of the stored speed along the direction of the menu
                 float length = Mathf.Max(0.0001f, _speedDirection.magnitude);
-                _sliderPerlinSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(profile.PerlinSpeedX, profile.PerlinSpeedY), _speedDirection) / (length * length));
+                _sliderPerlinSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(preset.PerlinSpeedX, preset.PerlinSpeedY), _speedDirection) / (length * length));
             }
-            _shownPattern = Mathf.Clamp(profile.NoisePattern, 0, TerrainNoise.Names.Length - 1);
+            _shownPattern = Mathf.Clamp(preset.NoisePattern, 0, TerrainNoise.Names.Length - 1);
             if (_dropdownPattern != null)
             {
                 _dropdownPattern.SetValueWithoutNotify(_shownPattern);
                 _dropdownPattern.RefreshShownValue();
             }
             TerrainNoise.ApplyZoomScale(_sliderPerlinZoom, _shownPattern, false);
-            _sliderPerlinZoom.Value = profile.PerlinZoom;
-            // the profile only knows the invert option of its own pattern
-            _invertByPattern[_shownPattern] = profile.NoiseInvert;
+            _sliderPerlinZoom.Value = preset.PerlinZoom;
+            // the preset only knows the invert option of its own pattern
+            _invertByPattern[_shownPattern] = preset.NoiseInvert;
             if (_toggleInvert != null)
-                _toggleInvert.isOn = profile.NoiseInvert;
+                _toggleInvert.isOn = preset.NoiseInvert;
             if (_toggleInvertAll != null)
-                _toggleInvertAll.isOn = profile.NoiseInvertAll;
+                _toggleInvertAll.isOn = preset.NoiseInvertAll;
             if (_sliderFlipBeats != null)
-                _sliderFlipBeats.Value = profile.NoiseFlipBeats;
+                _sliderFlipBeats.Value = preset.NoiseFlipBeats;
         }
     }
 }

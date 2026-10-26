@@ -17,8 +17,8 @@ namespace Gavi
         [SerializeField] private List<TerrainGroupUI> _groups;
         public List<TerrainGroupUI> Groups => _groups;
 
-        public TerrainSettingsProfile CurrentProfile => _currentProfile;
-        private TerrainSettingsProfile _currentProfile = new TerrainSettingsProfile();
+        public TerrainSettingsPreset CurrentPreset => _currentPreset;
+        private TerrainSettingsPreset _currentPreset = new TerrainSettingsPreset();
 
 
         #region Mono
@@ -31,8 +31,8 @@ namespace Gavi
 
         private void Start()
         {
-            _currentProfile.CopyFromTerrainSettings();
-            _currentProfile.ApplyProfileToUI();
+            _currentPreset.CopyFromTerrainSettings();
+            _currentPreset.ApplyPresetToUI();
         }
 
         private void LateUpdate()
@@ -40,8 +40,8 @@ namespace Gavi
             if (!_uiChanged)
                 return;
             _uiChanged = false;
-            _currentProfile.ExtractProfileFromUI();
-            _currentProfile.ApplyProfileToTerrain();
+            _currentPreset.ExtractPresetFromUI();
+            _currentPreset.ApplyPresetToTerrain();
         }
         #endregion
 
@@ -54,7 +54,7 @@ namespace Gavi
         #endregion
 
 
-        #region Profiles
+        #region Presets
         #endregion
     }
 }

@@ -7,12 +7,12 @@ namespace Gavi
 {
     public class TerrainGroupUI : MonoBehaviour
     {
-        public virtual void ExtractProfile(TerrainSettingsProfile profile)
+        public virtual void ExtractPreset(TerrainSettingsPreset preset)
         {
             
         }
         
-        public virtual void ShowProfile(TerrainSettingsProfile profile)
+        public virtual void ShowPreset(TerrainSettingsPreset preset)
         {
             
         }

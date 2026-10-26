@@ -7,14 +7,14 @@ namespace Gavi
 {
     /// <summary>
     /// A saved color look of the terrain: four colors (hue, saturation, menu intensity), the overall intensity and the
-    /// bloom (glow) settings. Stored as a small json file next to the terrain profiles.
+    /// bloom (glow) settings. Stored as a small json file next to the terrain presets.
     /// </summary>
     [Serializable]
     public class TerrainColorPalette
     {
         /// <summary>The palette that is selected when nothing else is chosen. It is a normal file like every other palette.</summary>
         public const string DefaultName = "Lava";
-        /// <summary>Name that profiles saved before the rename use for the default palette.</summary>
+        /// <summary>Name that presets saved before the rename use for the default palette.</summary>
         public const string LegacyDefaultName = "Default";
         /// <summary>Shown when the colors do not come from a saved palette.</summary>
         public const string CustomName = "Custom";

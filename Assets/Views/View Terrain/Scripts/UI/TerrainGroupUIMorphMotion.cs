@@ -18,7 +18,7 @@ namespace Gavi
         [SerializeField] private SliderG _sliderWaveBeats;
 
         private bool _ready;
-        private TerrainSettingsProfile _shownProfile;
+        private TerrainSettingsPreset _shownPreset;
 
         private void Awake()
         {
@@ -29,15 +29,15 @@ namespace Gavi
             _sliderWaveDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderWaveBeats.OnValueChangedFloat.AddListener(OnUIValueChanged);
 
-            // one switch for the whole window: the copy in this tab sets the real one, which is the one the profile reads
+            // one switch for the whole window: the copy in this tab sets the real one, which is the one the preset reads
             if (_toggleMirror != null)
                 _toggleMirror.onValueChanged.AddListener(isOn => { if (_toggleMorph.isOn != isOn) _toggleMorph.isOn = isOn; });
             _toggleMorph.onValueChanged.AddListener(_ => SyncMirror());
 
-            // The group is switched off while the other tab of the window is shown, so it can be filled with a profile before it wakes up.
+            // The group is switched off while the other tab of the window is shown, so it can be filled with a preset before it wakes up.
             _ready = true;
-            if (_shownProfile != null)
-                ShowProfile(_shownProfile);
+            if (_shownPreset != null)
+                ShowPreset(_shownPreset);
         }
 
         private void OnEnable()
@@ -52,32 +52,32 @@ namespace Gavi
                 _toggleMirror.SetIsOnWithoutNotify(_toggleMorph.isOn);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            // before the first Awake the sliders say nothing, the profile keeps its values
+            // before the first Awake the sliders say nothing, the preset keeps its values
             if (!_ready)
                 return;
-            base.ExtractProfile(profile);
-            profile.MotionBeat = _sliderBeat.Value;
-            profile.MotionAttack = _sliderAttack.Value;
-            profile.MotionRelease = _sliderRelease.Value;
-            profile.MotionBounce = _sliderBounce.Value;
-            profile.MotionWaveDepth = _sliderWaveDepth.Value;
-            profile.MotionWaveBeats = _sliderWaveBeats.Value;
+            base.ExtractPreset(preset);
+            preset.MotionBeat = _sliderBeat.Value;
+            preset.MotionAttack = _sliderAttack.Value;
+            preset.MotionRelease = _sliderRelease.Value;
+            preset.MotionBounce = _sliderBounce.Value;
+            preset.MotionWaveDepth = _sliderWaveDepth.Value;
+            preset.MotionWaveBeats = _sliderWaveBeats.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            _shownProfile = profile;
+            _shownPreset = preset;
             if (!_ready)
                 return;
-            base.ShowProfile(profile);
-            _sliderBeat.Value = profile.MotionBeat;
-            _sliderAttack.Value = profile.MotionAttack;
-            _sliderRelease.Value = profile.MotionRelease;
-            _sliderBounce.Value = profile.MotionBounce;
-            _sliderWaveDepth.Value = profile.MotionWaveDepth;
-            _sliderWaveBeats.Value = profile.MotionWaveBeats;
+            base.ShowPreset(preset);
+            _sliderBeat.Value = preset.MotionBeat;
+            _sliderAttack.Value = preset.MotionAttack;
+            _sliderRelease.Value = preset.MotionRelease;
+            _sliderBounce.Value = preset.MotionBounce;
+            _sliderWaveDepth.Value = preset.MotionWaveDepth;
+            _sliderWaveBeats.Value = preset.MotionWaveBeats;
             SyncMirror();
         }
     }

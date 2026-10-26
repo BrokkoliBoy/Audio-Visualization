@@ -15,16 +15,16 @@ namespace Gavi
             _toggleApplySmoothing.onValueChanged.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ApplySmoothing = _toggleApplySmoothing.isOn;
+            base.ExtractPreset(preset);
+            preset.ApplySmoothing = _toggleApplySmoothing.isOn;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _toggleApplySmoothing.isOn = profile.ApplySmoothing;
+            base.ShowPreset(preset);
+            _toggleApplySmoothing.isOn = preset.ApplySmoothing;
         }
     }
 }

@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Gavi
 {
     /// <summary>
-    /// Where terrain profiles and color palettes live on disk.
-    /// Shipped presets are in Assets/StreamingAssets/Profiles/..., so they are copied into every build.
+    /// Where terrain presets and color palettes live on disk.
+    /// Shipped presets are in Assets/StreamingAssets/Presets/..., so they are copied into every build.
     /// In the Editor new files are written there too, so they become part of the project and of the next build.
     /// In a build the game folder may be read only (e.g. Program Files), so new files go to the persistent data path instead.
     /// </summary>
@@ -14,7 +14,7 @@ namespace Gavi
     {
         public static string PresetFolder(string subFolder)
         {
-            return Application.streamingAssetsPath + "/Profiles/" + subFolder + "/";
+            return Application.streamingAssetsPath + "/Presets/" + subFolder + "/";
         }
 
         public static string WriteFolder(string subFolder)
@@ -22,7 +22,7 @@ namespace Gavi
 #if UNITY_EDITOR
             return PresetFolder(subFolder);
 #else
-            return Application.persistentDataPath + "/Profiles/" + subFolder + "/";
+            return Application.persistentDataPath + "/Presets/" + subFolder + "/";
 #endif
         }
 

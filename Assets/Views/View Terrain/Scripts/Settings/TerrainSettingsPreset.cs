@@ -5,12 +5,12 @@ using UnityEngine;
 namespace Gavi
 {
     [System.Serializable]
-    public class TerrainSettingsProfile
+    public class TerrainSettingsPreset
     {
         /// <summary>Version of the file format. 0 = files from before versions existed. Raise CurrentFormatVersion when a change needs old files to be converted.</summary>
-        public const int CurrentFormatVersion = 3;
+        public const int CurrentFormatVersion = 4;
         public int FormatVersion;
-        public string Name = "Terrain Profile";
+        public string Name = "Terrain Preset";
         
         #region Settings Variables
         [Header("- Terrain -")]
@@ -27,7 +27,7 @@ namespace Gavi
         public float HeightZoomStrength;
         public float PerlinSpeedX = 0;
         public float PerlinSpeedY = 1;
-        [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old profiles.")]
+        [Tooltip("Index of the pattern (TerrainNoise.Pattern). 0 = Perlin, also for old presets.")]
         public int NoisePattern = (int)TerrainNoise.Pattern.DomainWarp;
         public bool NoiseInvert = false;
         [Tooltip("Turns the whole noise (all layers mixed) upside down.")]
@@ -76,7 +76,7 @@ namespace Gavi
         public List<TerrainShapeData> Shapes = new List<TerrainShapeData>() { new TerrainShapeData() };
 
         [Header("- Color -")]
-        [Tooltip("Name of the palette the colors come from, or Custom. Profiles without color data use the default palette.")]
+        [Tooltip("Name of the palette the colors come from, or Custom. Presets without color data use the default palette.")]
         public string ColorPaletteName = TerrainColorPalette.DefaultName;
         [Tooltip("Per color: x = hue (0-360), y = saturation (0-1), z = menu intensity. Empty means the palette of ColorPaletteName.")]
         public List<Vector3> ColorValues = new List<Vector3>();
@@ -135,116 +135,116 @@ namespace Gavi
         
         
         #region Constructor
-        public static TerrainSettingsProfile ImportProfile(string path)
+        public static TerrainSettingsPreset ImportPreset(string path)
         {
-            TerrainSettingsProfile profile = new TerrainSettingsProfile();
+            TerrainSettingsPreset preset = new TerrainSettingsPreset();
             
-            return profile;
+            return preset;
         }
         #endregion
 
 
         #region Reading
-        public void CopyFromProfile(TerrainSettingsProfile profile)
+        public void CopyFromPreset(TerrainSettingsPreset preset)
         {
-            if (profile == null)
+            if (preset == null)
                 return;
             
             // Terrain
-            FaceCountX = profile.FaceCountX;
-            FaceCountY = profile.FaceCountY;
-            TerrainHeight = profile.TerrainHeight;
+            FaceCountX = preset.FaceCountX;
+            FaceCountY = preset.FaceCountY;
+            TerrainHeight = preset.TerrainHeight;
             
             // Perlin
-            ApplyPerlin = profile.ApplyPerlin;
-            PerlinDepth = profile.PerlinDepth;
-            PerlinZoom = profile.PerlinZoom;
-            HeightZoomReference = profile.HeightZoomReference;
-            HeightZoomStrength = profile.HeightZoomStrength;
-            PerlinSpeedX = profile.PerlinSpeedX;
-            PerlinSpeedY = profile.PerlinSpeedY;
-            NoisePattern = profile.NoisePattern;
-            NoiseInvert = profile.NoiseInvert;
-            NoiseInvertAll = profile.NoiseInvertAll;
-            NoiseLayer2.CopyFrom(profile.NoiseLayer2);
-            NoiseLayer3.CopyFrom(profile.NoiseLayer3);
-            NoiseFlipBeats = profile.NoiseFlipBeats;
-            ApplyWave = profile.ApplyWave;
-            WaveStrength = profile.WaveStrength;
-            WaveSpeed = profile.WaveSpeed;
-            WaveWidth = profile.WaveWidth;
-            WaveFade = profile.WaveFade;
-            WaveEveryNthBeat = profile.WaveEveryNthBeat;
-            WaveMode = profile.WaveMode;
-            WaveOrigin = profile.WaveOrigin;
-            WaveUseNoise = profile.WaveUseNoise;
+            ApplyPerlin = preset.ApplyPerlin;
+            PerlinDepth = preset.PerlinDepth;
+            PerlinZoom = preset.PerlinZoom;
+            HeightZoomReference = preset.HeightZoomReference;
+            HeightZoomStrength = preset.HeightZoomStrength;
+            PerlinSpeedX = preset.PerlinSpeedX;
+            PerlinSpeedY = preset.PerlinSpeedY;
+            NoisePattern = preset.NoisePattern;
+            NoiseInvert = preset.NoiseInvert;
+            NoiseInvertAll = preset.NoiseInvertAll;
+            NoiseLayer2.CopyFrom(preset.NoiseLayer2);
+            NoiseLayer3.CopyFrom(preset.NoiseLayer3);
+            NoiseFlipBeats = preset.NoiseFlipBeats;
+            ApplyWave = preset.ApplyWave;
+            WaveStrength = preset.WaveStrength;
+            WaveSpeed = preset.WaveSpeed;
+            WaveWidth = preset.WaveWidth;
+            WaveFade = preset.WaveFade;
+            WaveEveryNthBeat = preset.WaveEveryNthBeat;
+            WaveMode = preset.WaveMode;
+            WaveOrigin = preset.WaveOrigin;
+            WaveUseNoise = preset.WaveUseNoise;
 
             // Smoothing
-            ApplySmoothing = profile.ApplySmoothing;
-            SmoothWithOutOfBounds = profile.SmoothWithOutOfBounds;
-            SmoothWithOutOfBoundsCompletely = profile.SmoothWithOutOfBoundsCompletely;
+            ApplySmoothing = preset.ApplySmoothing;
+            SmoothWithOutOfBounds = preset.SmoothWithOutOfBounds;
+            SmoothWithOutOfBoundsCompletely = preset.SmoothWithOutOfBoundsCompletely;
 
             // Dampening
-            ApplyDampening = profile.ApplyDampening;
-            DampenUp = profile.DampenUp;
-            DampenDown = profile.DampenDown;
+            ApplyDampening = preset.ApplyDampening;
+            DampenUp = preset.DampenUp;
+            DampenDown = preset.DampenDown;
 
             // Out of Bounds
-            OutOfBoundsOperation = profile.OutOfBoundsOperation;
-            OutOfBoundsMultiplier = profile.OutOfBoundsMultiplier;
-            NeverTopHighestBand = profile.NeverTopHighestBand;
+            OutOfBoundsOperation = preset.OutOfBoundsOperation;
+            OutOfBoundsMultiplier = preset.OutOfBoundsMultiplier;
+            NeverTopHighestBand = preset.NeverTopHighestBand;
 
             // Terrace
-            ApplyTerrace = profile.ApplyTerrace;
-            TerraceCount = profile.TerraceCount;
-            TerraceExecutionPoint = profile.TerraceExecutionPoint;
+            ApplyTerrace = preset.ApplyTerrace;
+            TerraceCount = preset.TerraceCount;
+            TerraceExecutionPoint = preset.TerraceExecutionPoint;
 
             // Color
-            ColorPaletteName = profile.ColorPaletteName;
-            ColorValues = new List<Vector3>(profile.ColorValues ?? new List<Vector3>());
-            ColorOverallIntensity = profile.ColorOverallIntensity;
-            TiltDirection = profile.TiltDirection;
-            FloorShare = profile.FloorShare;
-            ColorShift = profile.ColorShift;
-            ColorHold = profile.ColorHold;
-            PlateauTilt = profile.PlateauTilt;
-            ReliefStrength = profile.ReliefStrength;
-            HueBalance = profile.HueBalance;
-            BloomThreshold = profile.BloomThreshold;
-            BloomIntensity = profile.BloomIntensity;
-            BloomScatter = profile.BloomScatter;
-            BloomEnabled = profile.BloomEnabled;
-            DirtEnabled = profile.DirtEnabled;
-            DirtStrength = profile.DirtStrength;
-            DirtBeat = profile.DirtBeat;
-            TintBackground = profile.TintBackground;
-            ColorBandHue = profile.ColorBandHue;
-            ColorBandBrightness = profile.ColorBandBrightness;
-            ColorBandGlow = profile.ColorBandGlow;
-            ColorPatternHue = profile.ColorPatternHue;
-            ColorPatternBrightness = profile.ColorPatternBrightness;
-            ColorPatternGlow = profile.ColorPatternGlow;
-            ColorNoiseBalance = profile.ColorNoiseBalance;
-            ColorHeadroom = profile.ColorHeadroom;
+            ColorPaletteName = preset.ColorPaletteName;
+            ColorValues = new List<Vector3>(preset.ColorValues ?? new List<Vector3>());
+            ColorOverallIntensity = preset.ColorOverallIntensity;
+            TiltDirection = preset.TiltDirection;
+            FloorShare = preset.FloorShare;
+            ColorShift = preset.ColorShift;
+            ColorHold = preset.ColorHold;
+            PlateauTilt = preset.PlateauTilt;
+            ReliefStrength = preset.ReliefStrength;
+            HueBalance = preset.HueBalance;
+            BloomThreshold = preset.BloomThreshold;
+            BloomIntensity = preset.BloomIntensity;
+            BloomScatter = preset.BloomScatter;
+            BloomEnabled = preset.BloomEnabled;
+            DirtEnabled = preset.DirtEnabled;
+            DirtStrength = preset.DirtStrength;
+            DirtBeat = preset.DirtBeat;
+            TintBackground = preset.TintBackground;
+            ColorBandHue = preset.ColorBandHue;
+            ColorBandBrightness = preset.ColorBandBrightness;
+            ColorBandGlow = preset.ColorBandGlow;
+            ColorPatternHue = preset.ColorPatternHue;
+            ColorPatternBrightness = preset.ColorPatternBrightness;
+            ColorPatternGlow = preset.ColorPatternGlow;
+            ColorNoiseBalance = preset.ColorNoiseBalance;
+            ColorHeadroom = preset.ColorHeadroom;
 
             // Morph
-            ApplyMorph = profile.ApplyMorph;
-            MorphShape = profile.MorphShape;
-            MorphAmount = profile.MorphAmount;
-            MotionBeat = profile.MotionBeat;
-            MotionAttack = profile.MotionAttack;
-            MotionRelease = profile.MotionRelease;
-            MotionBounce = profile.MotionBounce;
-            MotionWaveDepth = profile.MotionWaveDepth;
-            MotionWaveBeats = profile.MotionWaveBeats;
+            ApplyMorph = preset.ApplyMorph;
+            MorphShape = preset.MorphShape;
+            MorphAmount = preset.MorphAmount;
+            MotionBeat = preset.MotionBeat;
+            MotionAttack = preset.MotionAttack;
+            MotionRelease = preset.MotionRelease;
+            MotionBounce = preset.MotionBounce;
+            MotionWaveDepth = preset.MotionWaveDepth;
+            MotionWaveBeats = preset.MotionWaveBeats;
 
             // Performance
-            NoiseInterval = profile.NoiseInterval;
-            NoiseSpread = profile.NoiseSpread;
+            NoiseInterval = preset.NoiseInterval;
+            NoiseSpread = preset.NoiseSpread;
 
             // Shape
             Shapes.Clear();
-            foreach (TerrainShapeData shapeData in profile.Shapes)
+            foreach (TerrainShapeData shapeData in preset.Shapes)
                 Shapes.Add(new TerrainShapeData(shapeData));
         }
         
@@ -335,16 +335,16 @@ namespace Gavi
                 Shapes.Add(new TerrainShapeData(shapeSettings));
         }
         
-        public void ExtractProfileFromUI()
+        public void ExtractPresetFromUI()
         {
             foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
-                group.ExtractProfile(this); 
+                group.ExtractPreset(this); 
         }
         #endregion
         
         
         #region Writing
-        public void ApplyProfileToTerrain()
+        public void ApplyPresetToTerrain()
         {
             TerrainGenerator terrain = TerrainSettingsManager.Instance.Terrain;
             terrain.RequestRefresh();
@@ -438,25 +438,25 @@ namespace Gavi
             for (int i = 0; i < Shapes.Count; i++)
             {
                 TerrainShape terrainShape = terrain.Shapes[i];
-                TerrainShapeData profileShape = Shapes[i];
+                TerrainShapeData presetShape = Shapes[i];
 
-                terrainShape.ApplyShape = profileShape.ApplyShape;
-                // old profiles can still hold one of the removed corner shapes
-                terrainShape.Shape = System.Enum.IsDefined(typeof(TerrainShape.AudioShape), (int)profileShape.Shape)
-                    ? (TerrainShape.AudioShape)profileShape.Shape
+                terrainShape.ApplyShape = presetShape.ApplyShape;
+                // old presets can still hold one of the removed corner shapes
+                terrainShape.Shape = System.Enum.IsDefined(typeof(TerrainShape.AudioShape), (int)presetShape.Shape)
+                    ? (TerrainShape.AudioShape)presetShape.Shape
                     : TerrainShape.AudioShape.Circle;
-                terrainShape.Strength = profileShape.Strength;
-                terrainShape.Zoom = profileShape.Zoom;
-                terrainShape.Invert = profileShape.Invert;
-                terrainShape.Operation = (TerrainShape.AudioShapeOperation)profileShape.Operation;
-                terrainShape.ApplyCustomAudioBandWidth = profileShape.BroadenInnerBands;
+                terrainShape.Strength = presetShape.Strength;
+                terrainShape.Zoom = presetShape.Zoom;
+                terrainShape.Invert = presetShape.Invert;
+                terrainShape.Operation = (TerrainShape.AudioShapeOperation)presetShape.Operation;
+                terrainShape.ApplyCustomAudioBandWidth = presetShape.BroadenInnerBands;
             }
         }
         
-        public void ApplyProfileToUI()
+        public void ApplyPresetToUI()
         {
             foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
-                group.ShowProfile(this); 
+                group.ShowPreset(this); 
         }
         #endregion
     }
@@ -481,26 +481,26 @@ namespace Gavi
             Operation = 3;
         }
         
-        public TerrainShapeData(TerrainShape profile)
+        public TerrainShapeData(TerrainShape preset)
         {
-            ApplyShape = profile.ApplyShape;
-            Shape = (int)profile.Shape;
-            Strength = profile.Strength;
-            Zoom = profile.Zoom;
-            Invert = profile.Invert;
-            Operation = (int) profile.Operation;
-            BroadenInnerBands = profile.ApplyCustomAudioBandWidth;
+            ApplyShape = preset.ApplyShape;
+            Shape = (int)preset.Shape;
+            Strength = preset.Strength;
+            Zoom = preset.Zoom;
+            Invert = preset.Invert;
+            Operation = (int) preset.Operation;
+            BroadenInnerBands = preset.ApplyCustomAudioBandWidth;
         }
         
-        public TerrainShapeData(TerrainShapeData profile)
+        public TerrainShapeData(TerrainShapeData preset)
         {
-            ApplyShape = profile.ApplyShape;
-            Shape = profile.Shape;
-            Strength = profile.Strength;
-            Zoom = profile.Zoom;
-            Invert = profile.Invert;
-            Operation = profile.Operation;
-            BroadenInnerBands = profile.BroadenInnerBands;
+            ApplyShape = preset.ApplyShape;
+            Shape = preset.Shape;
+            Strength = preset.Strength;
+            Zoom = preset.Zoom;
+            Invert = preset.Invert;
+            Operation = preset.Operation;
+            BroadenInnerBands = preset.BroadenInnerBands;
         }
     }
 }

@@ -23,16 +23,16 @@ namespace Gavi
         [SerializeField] private Toggle _toggleBroadenInnerBands;
 
         private bool _ready;
-        private TerrainSettingsProfile _shownProfile;
+        private TerrainSettingsPreset _shownPreset;
 
-        // before the group woke up the dropdown is empty, the profile knows
+        // before the group woke up the dropdown is empty, the preset knows
         public override string LayerLabel
         {
             get
             {
                 int shape = _dropdownShape.value;
-                if (!_ready && _shownProfile != null && _shownProfile.Shapes != null && _layerIndex < _shownProfile.Shapes.Count)
-                    shape = _shownProfile.Shapes[_layerIndex].Shape;
+                if (!_ready && _shownPreset != null && _shownPreset.Shapes != null && _layerIndex < _shownPreset.Shapes.Count)
+                    shape = _shownPreset.Shapes[_layerIndex].Shape;
                 return _toggleEnabled.isOn ? TerrainShape.ShapeNames[Mathf.Clamp(shape, 0, TerrainShape.ShapeNames.Length - 1)] : LayerOffLabel;
             }
         }
@@ -53,11 +53,11 @@ namespace Gavi
             _buttonShapePrevious.onClick.AddListener(() => StepShape(-1));
             _buttonShapeNext.onClick.AddListener(() => StepShape(1));
 
-            // The group can be switched off (closed tab) while the menu is filled with the profile. The dropdown has no options then,
-            // so the profile is shown again now.
+            // The group can be switched off (closed tab) while the menu is filled with the preset. The dropdown has no options then,
+            // so the preset is shown again now.
             _ready = true;
-            if (_shownProfile != null)
-                ShowProfile(_shownProfile);
+            if (_shownPreset != null)
+                ShowPreset(_shownPreset);
         }
 
         /// <summary>Selects the next or previous shape and wraps around at the ends of the list.</summary>
@@ -67,19 +67,19 @@ namespace Gavi
             _dropdownShape.value = (_dropdownShape.value + direction + count) % count;
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
             // before the first Awake the dropdown is empty, its value says nothing
             if (!_ready)
                 return;
-            base.ExtractProfile(profile);
-            profile.Shapes ??= new List<TerrainShapeData>();
-            // layers that were never used are off; a profile from before the layers can hold more shapes than the menu shows
-            while (profile.Shapes.Count <= _layerIndex)
-                profile.Shapes.Add(new TerrainShapeData { ApplyShape = false });
-            if (profile.Shapes.Count > LayerCount)
-                profile.Shapes.RemoveRange(LayerCount, profile.Shapes.Count - LayerCount);
-            TerrainShapeData shape = profile.Shapes[_layerIndex];
+            base.ExtractPreset(preset);
+            preset.Shapes ??= new List<TerrainShapeData>();
+            // layers that were never used are off; a preset from before the layers can hold more shapes than the menu shows
+            while (preset.Shapes.Count <= _layerIndex)
+                preset.Shapes.Add(new TerrainShapeData { ApplyShape = false });
+            if (preset.Shapes.Count > LayerCount)
+                preset.Shapes.RemoveRange(LayerCount, preset.Shapes.Count - LayerCount);
+            TerrainShapeData shape = preset.Shapes[_layerIndex];
             shape.ApplyShape = _toggleEnabled.isOn;
             shape.Shape = _dropdownShape.value;
             shape.Strength = _sliderStrength.Value;
@@ -89,18 +89,18 @@ namespace Gavi
             shape.BroadenInnerBands = _toggleBroadenInnerBands.isOn;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            _shownProfile = profile;
+            _shownPreset = preset;
             // the on switch is shown even before the group woke up, the tab of the layer is dimmed by it
             if (!_ready)
             {
-                _toggleEnabled.SetIsOnWithoutNotify(profile.Shapes != null && _layerIndex < profile.Shapes.Count && profile.Shapes[_layerIndex].ApplyShape);
+                _toggleEnabled.SetIsOnWithoutNotify(preset.Shapes != null && _layerIndex < preset.Shapes.Count && preset.Shapes[_layerIndex].ApplyShape);
                 return;
             }
-            base.ShowProfile(profile);
-            bool stored = profile.Shapes != null && _layerIndex < profile.Shapes.Count;
-            TerrainShapeData shape = stored ? profile.Shapes[_layerIndex] : new TerrainShapeData { ApplyShape = false };
+            base.ShowPreset(preset);
+            bool stored = preset.Shapes != null && _layerIndex < preset.Shapes.Count;
+            TerrainShapeData shape = stored ? preset.Shapes[_layerIndex] : new TerrainShapeData { ApplyShape = false };
             _toggleEnabled.isOn = shape.ApplyShape;
             _dropdownShape.SetValueWithoutNotify(Mathf.Clamp(shape.Shape, 0, TerrainShape.ShapeNames.Length - 1));
             _dropdownShape.RefreshShownValue();

@@ -28,26 +28,26 @@ namespace Gavi
             _sliderPatternGlow.OnValueChangedFloat.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ColorBandHue = _sliderHue.Value;
-            profile.ColorBandBrightness = _sliderBrightness.Value;
-            profile.ColorBandGlow = _sliderGlow.Value;
-            profile.ColorPatternHue = _sliderPatternHue.Value;
-            profile.ColorPatternBrightness = _sliderPatternBrightness.Value;
-            profile.ColorPatternGlow = _sliderPatternGlow.Value;
+            base.ExtractPreset(preset);
+            preset.ColorBandHue = _sliderHue.Value;
+            preset.ColorBandBrightness = _sliderBrightness.Value;
+            preset.ColorBandGlow = _sliderGlow.Value;
+            preset.ColorPatternHue = _sliderPatternHue.Value;
+            preset.ColorPatternBrightness = _sliderPatternBrightness.Value;
+            preset.ColorPatternGlow = _sliderPatternGlow.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _sliderHue.Value = profile.ColorBandHue;
-            _sliderBrightness.Value = profile.ColorBandBrightness;
-            _sliderGlow.Value = profile.ColorBandGlow;
-            _sliderPatternHue.Value = profile.ColorPatternHue;
-            _sliderPatternBrightness.Value = profile.ColorPatternBrightness;
-            _sliderPatternGlow.Value = profile.ColorPatternGlow;
+            base.ShowPreset(preset);
+            _sliderHue.Value = preset.ColorBandHue;
+            _sliderBrightness.Value = preset.ColorBandBrightness;
+            _sliderGlow.Value = preset.ColorBandGlow;
+            _sliderPatternHue.Value = preset.ColorPatternHue;
+            _sliderPatternBrightness.Value = preset.ColorPatternBrightness;
+            _sliderPatternGlow.Value = preset.ColorPatternGlow;
         }
     }
 }

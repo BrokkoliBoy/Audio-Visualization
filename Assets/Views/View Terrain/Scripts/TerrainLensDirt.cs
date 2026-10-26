@@ -7,7 +7,7 @@ namespace Gavi
 {
     /// <summary>
     /// Lens dirt of the terrain glow. The dirt texture only lights up where the bloom is, its strength is a fixed
-    /// part plus a part that pulses with the beat. Both values are part of the terrain profile, the texture is a
+    /// part plus a part that pulses with the beat. Both values are part of the terrain preset, the texture is a
     /// setting of the view.
     /// </summary>
     public class TerrainLensDirt : MonoBehaviour

@@ -37,7 +37,7 @@ namespace Gavi
         [Tooltip("Spectrum the bass level is taken from (the lowest bands).")]
         [SerializeField] private SpectrumDataContainerModule _spectrum;
 
-        [Header("--- Settings (part of the terrain profile) ---")]
+        [Header("--- Settings (part of the terrain preset) ---")]
         [Tooltip("Waves only run when this is on.")]
         [SerializeField] private bool _enabled = DefaultEnabled;
         [Tooltip("Height of the wave in terrain heights. 0 = off.")]

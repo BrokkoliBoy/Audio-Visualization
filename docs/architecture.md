@@ -115,8 +115,8 @@ Code lives in `Assets/Views/View Terrain/Scripts/`.
   **`TerrainLensDirt`** is the beat-pulsed lens dirt, **`TerrainRotator`** turns the terrain with the
   mouse, **`TerrainBandPicker`** is the band editor of the test signal.
 - **Test signal** (`AudioTestSignal`, `Gavi.Audio`) replaces the spectrum with a fixed one; hotkey T.
-- **Settings and profiles** (`Settings/`): `TerrainSettingsProfile` holds every saved value,
-  profiles and color palettes are JSON files in `StreamingAssets/Profiles` (builds ship them, new
+- **Settings and presets** (`Settings/`): `TerrainSettingsPreset` holds every saved value,
+  presets and color palettes are JSON files in `StreamingAssets/Presets` (builds ship them, new
   files go to the persistent data path). Old files load with defaults for newer fields.
 - **Menu UI** (`UI/`): one `TerrainGroupUI...` script per window, color mapping in
   `TerrainColorMapping` / `TerrainColorGroupUI`. The shared menu behavior (hover opening, fold,

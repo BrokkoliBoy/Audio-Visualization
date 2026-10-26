@@ -43,7 +43,8 @@ namespace Gavi
 
         // --- noise: the raw pattern per vertex, blended between the last two calculations ---
         public bool ApplyNoise;
-        public float PerlinStrength;
+        /// <summary>The deepest carve a single pattern layer reaches (at least a small value). A pattern turned upside down on the beat flows within it, and the colors scale with it.</summary>
+        public float CarveReference;
         public float InvertEased;
         /// <summary>The noise is calculated again every NoiseInterval updates, per vertex in the update of its slot. NoiseTick is the current update.</summary>
         public int NoiseInterval;
@@ -119,12 +120,12 @@ namespace Gavi
                 if (ApplyNoise)
                 {
                     noise = ReadNoise(index);
-                    noise = Mathf.Lerp(noise, 1f - noise, InvertEased);
+                    noise = Mathf.Lerp(noise, Mathf.Max(0f, CarveReference - noise), InvertEased);
                 }
 
                 float y = GetY(x, z, index, noise, out float band);
                 Vertices[index] = new Vector3(x * ScaleX, y * ScaleY, z * ScaleZ);
-                Colors[index] = GetColor(y, band, ApplyNoise ? 1f - noise : 1f, ColorOutOfBounds && OutOfAllShapes[index]);
+                Colors[index] = GetColor(y, band, ApplyNoise ? 1f - Mathf.Clamp01(noise / CarveReference) : 1f, ColorOutOfBounds && OutOfAllShapes[index]);
                 LastYs[index] = y;
                 LastBands[index] = band;
             }
@@ -151,7 +152,7 @@ namespace Gavi
             float noiseFactor = 1f;
             if (ApplyNoise)
             {
-                noiseFactor = 1f - PerlinStrength * noise;
+                noiseFactor = 1f - Mathf.Clamp01(noise);
                 y *= noiseFactor;
             }
             if (TerracePoint == 0)

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Gavi
 {
-    /// <summary>An extra pattern layer on top of the main pattern: its own pattern, zoom, speed and invert, and how it is mixed with the layers below.</summary>
+    /// <summary>An extra pattern layer on top of the main pattern: its own pattern, depth, zoom, speed and invert, and how it is mixed (operation and mix) with the layers below.</summary>
     public class TerrainGroupUINoiseLayer : TerrainGroupUI
     {
         [Tooltip("0 = layer 2, 1 = layer 3.")]
@@ -16,7 +16,10 @@ namespace Gavi
         [SerializeField] private Button _buttonPatternNext;
         [SerializeField] private TMP_Dropdown _dropdownOperation;
         [SerializeField] private Toggle _toggleInvert;
+        [Tooltip("How far the lowest point of the layer lies under the terrain height.")]
         [SerializeField] private SliderG _sliderDepth;
+        [Tooltip("How much of the mixed result is used, 0 = the layers below stay as they are.")]
+        [SerializeField] private SliderG _sliderMix;
         [SerializeField] private SliderG _sliderZoom;
         [SerializeField] private SliderG _sliderSpeed;
         [Tooltip("Direction of the pattern movement. The speed slider is the length of this direction.")]
@@ -32,6 +35,7 @@ namespace Gavi
             _toggleEnabled.onValueChanged.AddListener(OnUIValueChanged);
             _toggleInvert.onValueChanged.AddListener(OnUIValueChanged);
             _sliderDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
+            _sliderMix.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderSpeed.OnValueChangedFloat.AddListener(OnUIValueChanged);
 
@@ -45,22 +49,22 @@ namespace Gavi
             _buttonPatternPrevious.onClick.AddListener(() => StepPattern(-1));
             _buttonPatternNext.onClick.AddListener(() => StepPattern(1));
 
-            // The group can be switched off (closed tab) while the menu is filled with the profile. The dropdowns have no options then,
-            // so the profile is shown again now.
+            // The group can be switched off (closed tab) while the menu is filled with the preset. The dropdowns have no options then,
+            // so the preset is shown again now.
             _ready = true;
-            if (_shownProfile != null)
-                ShowProfile(_shownProfile);
+            if (_shownPreset != null)
+                ShowPreset(_shownPreset);
         }
 
         private bool _ready;
-        private TerrainSettingsProfile _shownProfile;
+        private TerrainSettingsPreset _shownPreset;
 
-        // before the group woke up the dropdown is empty, the profile knows
+        // before the group woke up the dropdown is empty, the preset knows
         public override string LayerLabel
         {
             get
             {
-                int pattern = _ready || _shownProfile == null ? _dropdownPattern.value : Layer(_shownProfile).Pattern;
+                int pattern = _ready || _shownPreset == null ? _dropdownPattern.value : Layer(_shownPreset).Pattern;
                 return _toggleEnabled.isOn ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
             }
         }
@@ -79,39 +83,40 @@ namespace Gavi
             _dropdownPattern.value = (_dropdownPattern.value + direction + count) % count;
         }
 
-        private TerrainNoiseLayerData Layer(TerrainSettingsProfile profile)
+        private TerrainNoiseLayerData Layer(TerrainSettingsPreset preset)
         {
-            return _layerIndex == 0 ? profile.NoiseLayer2 : profile.NoiseLayer3;
+            return _layerIndex == 0 ? preset.NoiseLayer2 : preset.NoiseLayer3;
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
             // before the first Awake the dropdowns are empty, their values say nothing
             if (!_ready)
                 return;
-            base.ExtractProfile(profile);
-            TerrainNoiseLayerData layer = Layer(profile);
+            base.ExtractPreset(preset);
+            TerrainNoiseLayerData layer = Layer(preset);
             layer.Enabled = _toggleEnabled.isOn;
             layer.Pattern = _dropdownPattern.value;
             layer.Operation = _dropdownOperation.value;
             layer.Invert = _toggleInvert.isOn;
             layer.Depth = _sliderDepth.Value;
+            layer.Mix = _sliderMix.Value;
             layer.Zoom = _sliderZoom.Value;
             layer.SpeedX = _speedDirection.x * _sliderSpeed.Value;
             layer.SpeedY = _speedDirection.y * _sliderSpeed.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            _shownProfile = profile;
+            _shownPreset = preset;
             // the on switch is shown even before the group woke up, the tab of the layer is dimmed by it
             if (!_ready)
             {
-                _toggleEnabled.SetIsOnWithoutNotify(Layer(profile).Enabled);
+                _toggleEnabled.SetIsOnWithoutNotify(Layer(preset).Enabled);
                 return;
             }
-            base.ShowProfile(profile);
-            TerrainNoiseLayerData layer = Layer(profile);
+            base.ShowPreset(preset);
+            TerrainNoiseLayerData layer = Layer(preset);
             _toggleEnabled.isOn = layer.Enabled;
             _dropdownPattern.SetValueWithoutNotify(Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1));
             _dropdownPattern.RefreshShownValue();
@@ -121,6 +126,7 @@ namespace Gavi
             _dropdownOperation.RefreshShownValue();
             _toggleInvert.isOn = layer.Invert;
             _sliderDepth.Value = layer.Depth;
+            _sliderMix.Value = layer.Mix;
             // the length of the stored speed along the direction of the menu
             float length = Mathf.Max(0.0001f, _speedDirection.magnitude);
             _sliderSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(layer.SpeedX, layer.SpeedY), _speedDirection) / (length * length));

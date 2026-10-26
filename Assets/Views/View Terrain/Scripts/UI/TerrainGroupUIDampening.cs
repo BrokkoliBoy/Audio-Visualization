@@ -29,20 +29,20 @@ namespace Gavi
             _sliderDampeningDown.OnValueChangedFloat.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ApplyDampening = _toggleApplyDampening.isOn;
-            profile.DampenUp = _sliderDampeningUp.Value;
-            profile.DampenDown = _sliderDampeningDown.Value;
+            base.ExtractPreset(preset);
+            preset.ApplyDampening = _toggleApplyDampening.isOn;
+            preset.DampenUp = _sliderDampeningUp.Value;
+            preset.DampenDown = _sliderDampeningDown.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _toggleApplyDampening.isOn = profile.ApplyDampening;
-            _sliderDampeningUp.Value = profile.DampenUp;
-            _sliderDampeningDown.Value = profile.DampenDown;
+            base.ShowPreset(preset);
+            _toggleApplyDampening.isOn = preset.ApplyDampening;
+            _sliderDampeningUp.Value = preset.DampenUp;
+            _sliderDampeningDown.Value = preset.DampenDown;
         }
     }
 }

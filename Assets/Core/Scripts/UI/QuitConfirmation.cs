@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>
-    /// Asks before the app closes while the terrain settings differ from the loaded or saved profile.
+    /// Asks before the app closes while the terrain settings differ from the loaded or saved preset.
     /// Hooks Application.wantsToQuit, so the Quit button, Alt+F4 and the window close button are all covered.
     /// The dialog builds itself in code and appears only when it is needed.
     /// </summary>
@@ -42,8 +42,8 @@ namespace Gavi
             if (_allowQuit)
                 return true;
 
-            TerrainGroupUIProfiles profiles = TerrainGroupUIProfiles.Instance;
-            if (profiles == null || !profiles.HasUnsavedChanges)
+            TerrainGroupUIPresets presets = TerrainGroupUIPresets.Instance;
+            if (presets == null || !presets.HasUnsavedChanges)
                 return true;
 
             if (_instance == null)
@@ -51,7 +51,7 @@ namespace Gavi
                 _instance = new GameObject("QuitConfirmation").AddComponent<QuitConfirmation>();
                 _instance.Build();
             }
-            _instance.Open(profiles.BaselineProfileName);
+            _instance.Open(presets.BaselinePresetName);
             return false;
         }
         #endregion
@@ -64,11 +64,11 @@ namespace Gavi
                 Close();
         }
 
-        private void Open(string profileName)
+        private void Open(string presetName)
         {
-            _message.text = string.IsNullOrEmpty(profileName)
-                ? "The terrain settings have changed and are not saved in a profile."
-                : "The terrain settings have changed since the profile \"" + profileName + "\" was loaded or saved.";
+            _message.text = string.IsNullOrEmpty(presetName)
+                ? "The terrain settings have changed and are not saved in a preset."
+                : "The terrain settings have changed since the preset \"" + presetName + "\" was loaded or saved.";
             _root.SetActive(true);
         }
 

@@ -9,7 +9,7 @@ namespace Gavi
     /// </summary>
     public static class TerrainNoise
     {
-        /// <summary>Appended only, profiles store the index.</summary>
+        /// <summary>Appended only, presets store the index.</summary>
         public enum Pattern
         {
             Perlin, Simplex, Value, Fractal, Ridged, Billow, DomainWarp,
@@ -73,60 +73,48 @@ namespace Gavi
                 slider.NotifyValue();
         }
 
+        /// <summary>How a pattern layer is mixed with the layers below it. Appended only, presets store the index.</summary>
+        public enum LayerOperation { Replace, Add, Subtract, Highest, Lowest, Multiply, Difference }
+
+        public static readonly string[] OperationNames = { "Replace", "Add", "Subtract", "Highest", "Lowest", "Multiply", "Difference" };
+
         /// <summary>
-        /// Patterns whose shapes (cells, tiles, bricks ...) are meant to stand up from the ground. The terrain is
-        /// lowered where the pattern is high, so these are turned upside down before the invert option is applied.
+        /// The layer on top of the layers below it. A pattern is a height (1 = as high as the terrain height); the depth of a layer is how far
+        /// its lowest point lies under it. Everything is calculated as carve (how much of the terrain height is taken away, 0 = nothing).
         /// </summary>
-        public static bool InvertedByDefault(Pattern pattern)
+        /// <param name="carveBelow">Carve of the layers below.</param>
+        /// <param name="pattern">Pattern value of the layer, 1 = high (already inverted when the layer is).</param>
+        /// <param name="depth">Largest carve of this layer alone, in terrain heights.</param>
+        /// <param name="mix">How much of the result is used (0 = the layers below stay as they are).</param>
+        public static float Combine(float carveBelow, float pattern, float depth, int operation, float mix)
         {
-            switch (pattern)
-            {
-                case Pattern.Voronoi:
-                case Pattern.Hexagons:
-                case Pattern.Bricks:
-                case Pattern.Dots:
-                case Pattern.Pyramids:
-                case Pattern.Tiles:
-                case Pattern.Cracks:
-                case Pattern.Triangles:
-                case Pattern.Cubes:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        /// <summary>How a pattern layer is mixed with the layers below it. Appended only, profiles store the index.</summary>
-        public enum LayerOperation { Override, Add, Multiply, Maximum, Minimum, Difference }
-
-        public static readonly string[] OperationNames = { "Override", "Add", "Multiply", "Maximum", "Minimum", "Difference" };
-
-        /// <summary>The layer on top of the layers below it. The depth is how much of the result is used (0 = the layers below stay as they are).</summary>
-        public static float Combine(float below, float layer, int operation, float depth)
-        {
+            float carve = depth * (1f - pattern);
             float result;
             switch ((LayerOperation)operation)
             {
                 case LayerOperation.Add:
-                    result = Mathf.Clamp01(below + layer);
+                    result = Mathf.Max(0f, carveBelow - depth * pattern);
+                    break;
+                case LayerOperation.Subtract:
+                    result = Mathf.Min(1f, carveBelow + carve);
+                    break;
+                case LayerOperation.Highest:
+                    result = Mathf.Min(carveBelow, carve);
+                    break;
+                case LayerOperation.Lowest:
+                    result = Mathf.Max(carveBelow, carve);
                     break;
                 case LayerOperation.Multiply:
-                    result = below * layer;
-                    break;
-                case LayerOperation.Maximum:
-                    result = Mathf.Max(below, layer);
-                    break;
-                case LayerOperation.Minimum:
-                    result = Mathf.Min(below, layer);
+                    result = carveBelow + carve - carveBelow * carve;
                     break;
                 case LayerOperation.Difference:
-                    result = Mathf.Abs(below - layer);
+                    result = Mathf.Abs(carveBelow - carve);
                     break;
                 default:
-                    result = layer;
+                    result = carve;
                     break;
             }
-            return Mathf.Lerp(below, result, Mathf.Clamp01(depth));
+            return Mathf.Lerp(carveBelow, result, Mathf.Clamp01(mix));
         }
 
         /// <summary>Center of the reference terrain, the middle of the radial patterns.</summary>

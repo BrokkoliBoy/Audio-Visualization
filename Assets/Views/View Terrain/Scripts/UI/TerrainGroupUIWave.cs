@@ -40,36 +40,36 @@ namespace Gavi
             dropdown.onValueChanged.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ApplyWave = _toggleApplyWave.isOn;
-            profile.WaveStrength = _sliderWaveHeight.Value;
-            profile.WaveSpeed = _sliderWaveSpeed.Value;
-            profile.WaveWidth = _sliderWaveWidth.Value;
-            profile.WaveFade = _sliderWaveFade.Value;
+            base.ExtractPreset(preset);
+            preset.ApplyWave = _toggleApplyWave.isOn;
+            preset.WaveStrength = _sliderWaveHeight.Value;
+            preset.WaveSpeed = _sliderWaveSpeed.Value;
+            preset.WaveWidth = _sliderWaveWidth.Value;
+            preset.WaveFade = _sliderWaveFade.Value;
             if (_sliderEveryNthBeat != null)
-                profile.WaveEveryNthBeat = _sliderEveryNthBeat.ValueInt;
-            profile.WaveMode = _dropdownWaveMode.value;
-            profile.WaveOrigin = _dropdownWaveOrigin.value;
+                preset.WaveEveryNthBeat = _sliderEveryNthBeat.ValueInt;
+            preset.WaveMode = _dropdownWaveMode.value;
+            preset.WaveOrigin = _dropdownWaveOrigin.value;
             if (_toggleUseNoise != null)
-                profile.WaveUseNoise = _toggleUseNoise.isOn;
+                preset.WaveUseNoise = _toggleUseNoise.isOn;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _toggleApplyWave.isOn = profile.ApplyWave;
-            _sliderWaveHeight.Value = profile.WaveStrength;
-            _sliderWaveSpeed.Value = profile.WaveSpeed;
-            _sliderWaveWidth.Value = profile.WaveWidth;
-            _sliderWaveFade.Value = profile.WaveFade;
+            base.ShowPreset(preset);
+            _toggleApplyWave.isOn = preset.ApplyWave;
+            _sliderWaveHeight.Value = preset.WaveStrength;
+            _sliderWaveSpeed.Value = preset.WaveSpeed;
+            _sliderWaveWidth.Value = preset.WaveWidth;
+            _sliderWaveFade.Value = preset.WaveFade;
             if (_sliderEveryNthBeat != null)
-                _sliderEveryNthBeat.Value = profile.WaveEveryNthBeat;
-            ShowDropdown(_dropdownWaveMode, profile.WaveMode, TerrainBeatWave.ModeNames.Length);
-            ShowDropdown(_dropdownWaveOrigin, profile.WaveOrigin, TerrainBeatWave.OriginNames.Length);
+                _sliderEveryNthBeat.Value = preset.WaveEveryNthBeat;
+            ShowDropdown(_dropdownWaveMode, preset.WaveMode, TerrainBeatWave.ModeNames.Length);
+            ShowDropdown(_dropdownWaveOrigin, preset.WaveOrigin, TerrainBeatWave.OriginNames.Length);
             if (_toggleUseNoise != null)
-                _toggleUseNoise.isOn = profile.WaveUseNoise;
+                _toggleUseNoise.isOn = preset.WaveUseNoise;
         }
 
         private void ShowDropdown(TMP_Dropdown dropdown, int value, int optionCount)

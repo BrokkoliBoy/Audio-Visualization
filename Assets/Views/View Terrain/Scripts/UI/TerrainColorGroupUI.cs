@@ -13,7 +13,7 @@ namespace Gavi
     /// color areas are tilted so the height stays readable. The gradient of the scene is only the template for the key times (which color owns which stretch)
     /// and for the dark start key.
     /// The bloom (glow) of the terrain volume is part of the look and saved with the palette.
-    /// Palettes can be saved to disk and are part of the terrain profiles.
+    /// Palettes can be saved to disk and are part of the terrain presets.
     /// </summary>
     public class TerrainColorGroupUI : TerrainGroupUI
     {
@@ -47,14 +47,14 @@ namespace Gavi
         [Tooltip("Optional. Track of the bloom strength slider: the Base color, bleaching out with more bloom.")]
         [SerializeField] private UiSliderGradient _gradientBloomIntensity;
         [SerializeField] private SliderG _sliderBloomScatter;
-        [Tooltip("Optional. Header toggle of the glow group: the whole bloom on or off (part of the profile).")]
+        [Tooltip("Optional. Header toggle of the glow group: the whole bloom on or off (part of the preset).")]
         [SerializeField] private Toggle _toggleBloom;
 
         [Header("--- Background ---")]
         [Tooltip("How far the sky of the bloom volume takes the hue of the base color (the first one): 0 = untinted dark gray, 1 = fully tinted. Brightness and saturation come from the sky colors in the volume.")]
         [SerializeField] private SliderG _sliderTintBackground;
 
-        [Header("--- Lens dirt (part of the profile, not of the palette) ---")]
+        [Header("--- Lens dirt (part of the preset, not of the palette) ---")]
         [SerializeField] private TerrainLensDirt _lensDirt;
         [Tooltip("Optional. Toggle in the lens dirt heading: the whole lens dirt on or off. The tinted background is not affected.")]
         [SerializeField] private Toggle _toggleDirt;
@@ -254,72 +254,72 @@ namespace Gavi
         #endregion
 
 
-        #region Profile
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        #region Preset
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
+            base.ExtractPreset(preset);
             if (!_ready)
                 return;
 
-            profile.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
-            profile.ColorOverallIntensity = OverallIntensity;
-            profile.TiltDirection = (int)Mode;
-            profile.FloorShare = FloorShare;
-            profile.ColorShift = ColorShift;
-            profile.ColorHold = ColorHold;
-            profile.PlateauTilt = PlateauTilt;
-            profile.ReliefStrength = Relief;
-            profile.HueBalance = HueBalance;
-            profile.ColorNoiseBalance = PatternBalance;
-            profile.ColorHeadroom = Headroom;
-            profile.BloomThreshold = BloomThreshold;
-            profile.BloomIntensity = BloomIntensity;
-            profile.BloomScatter = BloomScatter;
-            profile.BloomEnabled = BloomOn;
-            profile.DirtEnabled = DirtOn;
-            profile.DirtStrength = DirtStrength;
-            profile.DirtBeat = DirtBeat;
-            profile.TintBackground = TintBackground;
-            profile.ColorValues = new List<Vector3>();
+            preset.ColorPaletteName = _baseName ?? TerrainColorPalette.CustomName;
+            preset.ColorOverallIntensity = OverallIntensity;
+            preset.TiltDirection = (int)Mode;
+            preset.FloorShare = FloorShare;
+            preset.ColorShift = ColorShift;
+            preset.ColorHold = ColorHold;
+            preset.PlateauTilt = PlateauTilt;
+            preset.ReliefStrength = Relief;
+            preset.HueBalance = HueBalance;
+            preset.ColorNoiseBalance = PatternBalance;
+            preset.ColorHeadroom = Headroom;
+            preset.BloomThreshold = BloomThreshold;
+            preset.BloomIntensity = BloomIntensity;
+            preset.BloomScatter = BloomScatter;
+            preset.BloomEnabled = BloomOn;
+            preset.DirtEnabled = DirtOn;
+            preset.DirtStrength = DirtStrength;
+            preset.DirtBeat = DirtBeat;
+            preset.TintBackground = TintBackground;
+            preset.ColorValues = new List<Vector3>();
             foreach (TerrainColorEntryUI entry in _entries)
-                profile.ColorValues.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
+                preset.ColorValues.Add(new Vector3(entry.Hue, entry.Saturation, entry.MenuIntensity));
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
+            base.ShowPreset(preset);
             if (!_ready)
                 return;
 
-            // The lens dirt belongs to the profile whether or not the profile carries its own color values.
-            SetDirtSliders(profile.DirtStrength, profile.DirtBeat);
+            // The lens dirt belongs to the preset whether or not the preset carries its own color values.
+            SetDirtSliders(preset.DirtStrength, preset.DirtBeat);
             if (_sliderTintBackground != null)
-                _sliderTintBackground.Value = profile.TintBackground;
+                _sliderTintBackground.Value = preset.TintBackground;
             if (_toggleBloom != null)
-                _toggleBloom.SetIsOnWithoutNotify(profile.BloomEnabled);
+                _toggleBloom.SetIsOnWithoutNotify(preset.BloomEnabled);
             if (_toggleDirt != null)
-                _toggleDirt.SetIsOnWithoutNotify(profile.DirtEnabled);
+                _toggleDirt.SetIsOnWithoutNotify(preset.DirtEnabled);
             ApplyBloom();
             if (_sliderPatternBalance != null)
             {
                 bool wasSuppressed = _suppress;
                 _suppress = true;
-                _sliderPatternBalance.Value = profile.ColorNoiseBalance;
+                _sliderPatternBalance.Value = preset.ColorNoiseBalance;
                 if (_sliderHeadroom != null)
-                    _sliderHeadroom.Value = profile.ColorHeadroom;
+                    _sliderHeadroom.Value = preset.ColorHeadroom;
                 _suppress = wasSuppressed;
             }
             ApplyDirt();
 
-            string name = profile.ColorPaletteName;
+            string name = preset.ColorPaletteName;
             if (string.IsNullOrEmpty(name) || name == TerrainColorPalette.LegacyDefaultName)
                 name = TerrainColorPalette.DefaultName;
             TerrainColorPalette palette = FindPalette(name);
-            bool hasValues = profile.ColorValues != null && profile.ColorValues.Count == _entries.Count;
+            bool hasValues = preset.ColorValues != null && preset.ColorValues.Count == _entries.Count;
 
             if (!hasValues)
             {
-                // Profiles without own color values use the palette of their name.
+                // Presets without own color values use the palette of their name.
                 if (palette != null)
                     ApplyPalette(palette);
                 else
@@ -329,38 +329,38 @@ namespace Gavi
             }
 
             _suppress = true;
-            SetSliders(profile.ColorOverallIntensity, profile.BloomThreshold, profile.BloomIntensity, profile.BloomScatter);
-            SetCurveLook(profile.TiltDirection, profile.FloorShare, profile.ColorShift, profile.ColorHold, profile.PlateauTilt, profile.ReliefStrength, profile.HueBalance);
+            SetSliders(preset.ColorOverallIntensity, preset.BloomThreshold, preset.BloomIntensity, preset.BloomScatter);
+            SetCurveLook(preset.TiltDirection, preset.FloorShare, preset.ColorShift, preset.ColorHold, preset.PlateauTilt, preset.ReliefStrength, preset.HueBalance);
             for (int c = 0; c < _entries.Count; c++)
-                _entries[c].SetValues(profile.ColorValues[c].x, profile.ColorValues[c].y, profile.ColorValues[c].z);
+                _entries[c].SetValues(preset.ColorValues[c].x, preset.ColorValues[c].y, preset.ColorValues[c].z);
             _suppress = false;
 
             _baseName = palette != null ? palette.Name : null;
-            _modified = palette != null && !Matches(palette, profile);
+            _modified = palette != null && !Matches(palette, preset);
             ShowNameInInputField();
             ApplyColors();
             ApplyBloom();
             RebuildDropdown();
         }
 
-        private static bool Matches(TerrainColorPalette palette, TerrainSettingsProfile profile)
+        private static bool Matches(TerrainColorPalette palette, TerrainSettingsPreset preset)
         {
-            if (palette.Colors.Count != profile.ColorValues.Count)
+            if (palette.Colors.Count != preset.ColorValues.Count)
                 return false;
             for (int c = 0; c < palette.Colors.Count; c++)
-                if ((palette.Colors[c] - profile.ColorValues[c]).magnitude > 0.001f)
+                if ((palette.Colors[c] - preset.ColorValues[c]).magnitude > 0.001f)
                     return false;
-            return Mathf.Abs(palette.OverallIntensity - profile.ColorOverallIntensity) < 0.001f
-                && Mathf.Abs(palette.BloomThreshold - profile.BloomThreshold) < 0.001f
-                && Mathf.Abs(palette.BloomIntensity - profile.BloomIntensity) < 0.001f
-                && Mathf.Abs(palette.BloomScatter - profile.BloomScatter) < 0.001f
-                && palette.TiltDirection == profile.TiltDirection
-                && Mathf.Abs(palette.FloorShare - profile.FloorShare) < 0.001f
-                && Mathf.Abs(palette.ColorShift - profile.ColorShift) < 0.001f
-                && Mathf.Abs(palette.ColorHold - profile.ColorHold) < 0.001f
-                && Mathf.Abs(palette.PlateauTilt - profile.PlateauTilt) < 0.001f
-                && Mathf.Abs(palette.ReliefStrength - profile.ReliefStrength) < 0.001f
-                && Mathf.Abs(palette.HueBalance - profile.HueBalance) < 0.001f;
+            return Mathf.Abs(palette.OverallIntensity - preset.ColorOverallIntensity) < 0.001f
+                && Mathf.Abs(palette.BloomThreshold - preset.BloomThreshold) < 0.001f
+                && Mathf.Abs(palette.BloomIntensity - preset.BloomIntensity) < 0.001f
+                && Mathf.Abs(palette.BloomScatter - preset.BloomScatter) < 0.001f
+                && palette.TiltDirection == preset.TiltDirection
+                && Mathf.Abs(palette.FloorShare - preset.FloorShare) < 0.001f
+                && Mathf.Abs(palette.ColorShift - preset.ColorShift) < 0.001f
+                && Mathf.Abs(palette.ColorHold - preset.ColorHold) < 0.001f
+                && Mathf.Abs(palette.PlateauTilt - preset.PlateauTilt) < 0.001f
+                && Mathf.Abs(palette.ReliefStrength - preset.ReliefStrength) < 0.001f
+                && Mathf.Abs(palette.HueBalance - preset.HueBalance) < 0.001f;
         }
         #endregion
 
@@ -552,19 +552,19 @@ namespace Gavi
         }
 
         /// <summary>
-        /// Called when a profile is saved or created: colors that are no saved palette (own mix, or a changed palette) are saved as a
-        /// palette named like the profile, so they show up in the palette list too. A saved palette that other colors do not
-        /// overwrite stays as it is; so does a different palette that already has the profile's name.
+        /// Called when a preset is saved or created: colors that are no saved palette (own mix, or a changed palette) are saved as a
+        /// palette named like the preset, so they show up in the palette list too. A saved palette that other colors do not
+        /// overwrite stays as it is; so does a different palette that already has the preset's name.
         /// </summary>
-        public void SavePaletteForProfile(string profileName)
+        public void SavePaletteForPreset(string presetName)
         {
-            if (!_ready || string.IsNullOrEmpty(profileName))
+            if (!_ready || string.IsNullOrEmpty(presetName))
                 return;
             if (_baseName != null && !_modified)
                 return;
-            if (FindPalette(profileName) != null && _baseName != profileName)
+            if (FindPalette(presetName) != null && _baseName != presetName)
                 return;
-            SavePalette(profileName);
+            SavePalette(presetName);
         }
 
         private void SavePalette(string name)

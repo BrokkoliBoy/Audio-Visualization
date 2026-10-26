@@ -18,7 +18,7 @@ namespace Gavi
         [Tooltip("Copy of the detail slider of the Terrain window (same settings). Both always show the same value.")]
         [SerializeField] private SliderG _sliderDetail;
         [SerializeField] private SliderG _sliderDetailMain;
-        [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a profile.")]
+        [Tooltip("Frame rate limit of the whole app, from 30 up to the refresh rate of the monitor. Saved on this computer, not part of a preset.")]
         [SerializeField] private SliderG _sliderMaxFps;
         [SerializeField] private TextMeshProUGUI _textReadout;
 
@@ -81,7 +81,7 @@ namespace Gavi
             if (_sliderDetailMain != null)
                 _sliderDetailMain.OnValueChangedInt.AddListener(_ => _readoutDirty = true);
 
-            // The limit belongs to the computer, so it does not go through the profile.
+            // The limit belongs to the computer, so it does not go through the preset.
             _sliderMaxFps.SetRange(FrameRateSettings.MinFps, FrameRateSettings.MonitorHz);
             _sliderMaxFps.ValueInt = FrameRateSettings.MaxFps;
             _sliderMaxFps.OnValueChangedInt.AddListener(value => FrameRateSettings.MaxFps = value);
@@ -276,22 +276,22 @@ namespace Gavi
         private Color CostColor(float cost, Color costly) => cost < 0.5f ? Color.Lerp(_cheapColor, _midColor, cost * 2f) : Color.Lerp(_midColor, costly, (cost - 0.5f) * 2f);
         #endregion
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
+            base.ExtractPreset(preset);
             if (_sliderNoiseInterval != null)
-                profile.NoiseInterval = _sliderNoiseInterval.ValueInt;
+                preset.NoiseInterval = _sliderNoiseInterval.ValueInt;
             if (_toggleNoiseSpread != null)
-                profile.NoiseSpread = _toggleNoiseSpread.isOn;
+                preset.NoiseSpread = _toggleNoiseSpread.isOn;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
+            base.ShowPreset(preset);
             if (_sliderNoiseInterval != null)
-                _sliderNoiseInterval.ValueInt = profile.NoiseInterval;
+                _sliderNoiseInterval.ValueInt = preset.NoiseInterval;
             if (_toggleNoiseSpread != null)
-                _toggleNoiseSpread.isOn = profile.NoiseSpread;
+                _toggleNoiseSpread.isOn = preset.NoiseSpread;
         }
     }
 }

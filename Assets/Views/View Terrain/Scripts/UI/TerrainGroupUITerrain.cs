@@ -19,19 +19,19 @@ namespace Gavi
             _sliderTerrainHeight.OnValueChangedFloat.AddListener(OnUIValueChanged);
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.FaceCountX = _sliderFaceCount.ValueInt;
-            profile.FaceCountY = _sliderFaceCount.ValueInt;
-            profile.TerrainHeight = _sliderTerrainHeight.Value;
+            base.ExtractPreset(preset);
+            preset.FaceCountX = _sliderFaceCount.ValueInt;
+            preset.FaceCountY = _sliderFaceCount.ValueInt;
+            preset.TerrainHeight = _sliderTerrainHeight.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _sliderFaceCount.ValueInt = profile.FaceCountX;
-            _sliderTerrainHeight.Value = profile.TerrainHeight;
+            base.ShowPreset(preset);
+            _sliderFaceCount.ValueInt = preset.FaceCountX;
+            _sliderTerrainHeight.Value = preset.TerrainHeight;
         }
     }
 }

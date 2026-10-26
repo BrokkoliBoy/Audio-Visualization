@@ -34,25 +34,25 @@ namespace Gavi
             _dropdownShape.value = (_dropdownShape.value + direction + count) % count;
         }
 
-        public override void ExtractProfile(TerrainSettingsProfile profile)
+        public override void ExtractPreset(TerrainSettingsPreset preset)
         {
-            base.ExtractProfile(profile);
-            profile.ApplyMorph = _toggleApplyMorph.isOn;
-            profile.MorphShape = (int)TerrainGenerator.MorphOrder[_dropdownShape.value];
-            profile.MorphAmount = _sliderAmount.Value;
+            base.ExtractPreset(preset);
+            preset.ApplyMorph = _toggleApplyMorph.isOn;
+            preset.MorphShape = (int)TerrainGenerator.MorphOrder[_dropdownShape.value];
+            preset.MorphAmount = _sliderAmount.Value;
         }
 
-        public override void ShowProfile(TerrainSettingsProfile profile)
+        public override void ShowPreset(TerrainSettingsPreset preset)
         {
-            base.ShowProfile(profile);
-            _toggleApplyMorph.isOn = profile.ApplyMorph;
-            // a profile of a removed shape shows the dome, which is also what the terrain draws
-            int index = System.Array.IndexOf(TerrainGenerator.MorphOrder, (TerrainGenerator.MorphShape)profile.MorphShape);
+            base.ShowPreset(preset);
+            _toggleApplyMorph.isOn = preset.ApplyMorph;
+            // a preset of a removed shape shows the dome, which is also what the terrain draws
+            int index = System.Array.IndexOf(TerrainGenerator.MorphOrder, (TerrainGenerator.MorphShape)preset.MorphShape);
             if (index < 0)
                 index = System.Array.IndexOf(TerrainGenerator.MorphOrder, TerrainGenerator.MorphShape.Dome);
             _dropdownShape.SetValueWithoutNotify(index);
             _dropdownShape.RefreshShownValue();
-            _sliderAmount.Value = profile.MorphAmount;
+            _sliderAmount.Value = preset.MorphAmount;
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Gavi
     /// Maps the color menu values (hue, saturation, intensity) to HDR colors.
     /// Menu intensity 3 is the default Unity color intensity of 0 (color x 1). Menu 0 is <see cref="MinIntensity"/> (nearly black),
     /// menu 10 is <see cref="MaxIntensity"/>. Unity intensity is an exposure value: color x 2^intensity.
-    /// Before palette and profile format version 2 the default sat at menu 1 and menu 0 was intensity -1,
+    /// Before palette and preset format version 2 the default sat at menu 1 and menu 0 was intensity -1,
     /// <see cref="ConvertLegacyMenu"/> turns such values into the current scale.
     /// </summary>
     public static class TerrainColorMapping

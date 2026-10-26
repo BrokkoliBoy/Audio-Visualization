@@ -36,7 +36,7 @@ namespace Gavi
         [Tooltip("When true, applies perlin noise with the specified settings.")]
         [SerializeField] private bool _applyPerlinNoise;
         public bool ApplyPerlinNoise { get => _applyPerlinNoise; set => _applyPerlinNoise = value; }
-        [Tooltip("Amount of deformation in respect to the terrains height.")]
+        [Tooltip("Depth of the main pattern: how far its lowest point lies under the terrain height (1 = down to the ground).")]
         [SerializeField] private float _perlinStrength = 0.5f;
         public float PerlinStrength { get => _perlinStrength; set => _perlinStrength = value; }
         [Tooltip("Offset x of perlin noise.")]
@@ -53,7 +53,7 @@ namespace Gavi
         [Range(0f, 1f)]
         [SerializeField] private float _heightZoomStrength;
         public float HeightZoomStrength { get => _heightZoomStrength; set => _heightZoomStrength = Mathf.Clamp01(value); }
-        /// <summary>The noise zoom at the middle of the zoom slider of the main pattern (shown as 5), where the height is the set terrain height. Travels with the profile (TerrainSettingsProfile.HeightZoomReference), so it changes in the same frame as the zoom.</summary>
+        /// <summary>The noise zoom at the middle of the zoom slider of the main pattern (shown as 5), where the height is the set terrain height. Travels with the preset (TerrainSettingsPreset.HeightZoomReference), so it changes in the same frame as the zoom.</summary>
         [System.NonSerialized] public float HeightZoomReference = 0.354f;
         private const float HeightZoomMinFactor = 0.35f;
         private const float HeightZoomMaxFactor = 2.5f;
@@ -67,7 +67,7 @@ namespace Gavi
         [Tooltip("Pattern that shapes the height with the settings above. Perlin is the original.")]
         [SerializeField] private TerrainNoise.Pattern _noisePattern = TerrainNoise.Pattern.Perlin;
         public int NoisePattern { get => (int)_noisePattern; set => _noisePattern = (TerrainNoise.Pattern)Mathf.Clamp(value, 0, TerrainNoise.Names.Length - 1); }
-        [Tooltip("Turns the main pattern upside down: high becomes low and low becomes high. Some patterns (Voronoi, Hexagons ...) are upside down by themselves, this turns them back.")]
+        [Tooltip("Turns the main pattern upside down: high becomes low and low becomes high.")]
         [SerializeField] private bool _noiseInvert;
         public bool NoiseInvert { get => _noiseInvert; set => _noiseInvert = value; }
         [Tooltip("Turns the whole noise (all pattern layers mixed) upside down.")]
@@ -79,7 +79,7 @@ namespace Gavi
         /// <summary>Seconds the pattern needs to flow to the other state at most (shorter when the beats are faster).</summary>
         private const float InvertFlowSeconds = 0.4f;
 
-        // Extra pattern layers on top of the main pattern. Their settings come from the terrain profile.
+        // Extra pattern layers on top of the main pattern. Their settings come from the terrain preset.
         private readonly TerrainNoiseLayerData[] _extraLayers = { new TerrainNoiseLayerData(), new TerrainNoiseLayerData() };
         /// <summary>Settings of the extra pattern layer (0 = layer 2, 1 = layer 3).</summary>
         public TerrainNoiseLayerData GetExtraLayer(int index) => _extraLayers[index];
@@ -177,7 +177,7 @@ namespace Gavi
         [SerializeField] private bool _applyMorph;
         public bool ApplyMorph { get => _applyMorph; set => _applyMorph = value; }
         [SerializeField] private MorphShape _morphShape = MorphShape.Planet;
-        /// <summary>The numbers are what profiles store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
+        /// <summary>The numbers are what presets store, so they stay as they were when a shape was removed (0 was Bowl, 4 Halfpipe).</summary>
         public enum MorphShape { Dome = 1, Planet = 2, Tube = 3, Pringle = 5, Flag = 6, Twist = 7, Pillar = 8 }
         /// <summary>The shapes in the order of the menu.</summary>
         public static readonly MorphShape[] MorphOrder = { MorphShape.Planet, MorphShape.Twist, MorphShape.Tube, MorphShape.Pillar, MorphShape.Dome, MorphShape.Pringle, MorphShape.Flag };
@@ -239,7 +239,7 @@ namespace Gavi
         [Tooltip("Handles vertices that are out of the shapes bounds. For example, a circle does contain vertices at normalized coordinates (1/1) but the mesh does.")]
         [SerializeField] private OutOfBounds _outOfBoundsOperation = OutOfBounds.InnerBand;
         public OutOfBounds OutOfBoundsOperation { get => _outOfBoundsOperation; set => _outOfBoundsOperation = value; }
-        [Tooltip("Flat: out of bounds vertices stay at the bottom (height 0). Appended last so that existing profiles keep their meaning.")]
+        [Tooltip("Flat: out of bounds vertices stay at the bottom (height 0). Appended last so that existing presets keep their meaning.")]
         public enum OutOfBounds { Constant, OuterBand, InnerBand, Average, Flat }
         [Tooltip("Factor to apply to the out of bounds vertices height.")]
         [SerializeField] private float _outOfBoundsFactor = 0.3f;
@@ -278,7 +278,7 @@ namespace Gavi
         [SerializeField] private float _dampenLerpFactorUp = 0.5f;
         public float DampenLerpFactorUp { get => _dampenLerpFactorUp; set => _dampenLerpFactorUp = value; }
 
-        [Header("--- Performance (part of the terrain profile) ---")]
+        [Header("--- Performance (part of the terrain preset) ---")]
         [Tooltip("The noise pattern is calculated again only every this many mesh updates. In between it flows smoothly from the last result to the next one. 1 = every update.")]
         [SerializeField] private int _noiseInterval = DefaultNoiseInterval;
         [Tooltip("Only meaningful with a noise interval above 1. Off: the whole pattern is calculated in one update every n-th update. On: every update calculates a different n-th of the points, so the work is the same in every frame and no part of the pattern flows in step with the others.")]
@@ -341,7 +341,7 @@ namespace Gavi
         private float _noiseMean = ColorReferenceNoise;
         private float _colorScale = 1f;
         private bool _colorScaleKnown;
-        /// <summary>Average noise value of a typical pattern (over all patterns it is 0.52), the colors of other patterns are moved towards it.</summary>
+        /// <summary>Average carve of a typical pattern as a share of the deepest carve of a layer (over all patterns about 0.5), the colors of other patterns are moved towards it.</summary>
         private const float ColorReferenceNoise = 0.5f;
         /// <summary>Share of the way per reference step (240 per second) the color scale moves to its goal, so a pattern change glides.</summary>
         private const float ColorScaleSmoothing = 0.01f;
@@ -699,7 +699,7 @@ namespace Gavi
                 ScaleZ = _terrainSizeZ / _faceCountZ,
 
                 ApplyNoise = _applyPerlinNoise,
-                PerlinStrength = _perlinStrength,
+                CarveReference = CarveReference(),
                 InvertEased = _invertEased,
                 NoiseInterval = _noiseIntervalUsed,
                 NoiseTick = _noiseAge,
@@ -917,8 +917,9 @@ namespace Gavi
             _noiseLayerData[layerCount++] = new TerrainNoiseLayerJobData
             {
                 Pattern = (int)_noisePattern,
-                Operation = (int)TerrainNoise.LayerOperation.Override,
-                Depth = 1f,
+                Operation = (int)TerrainNoise.LayerOperation.Replace,
+                Depth = _perlinStrength,
+                Mix = 1f,
                 Zoom = _noiseZoom,
                 OffsetX = _perlinOffsetX,
                 OffsetZ = _perlinOffsetY,
@@ -934,6 +935,7 @@ namespace Gavi
                     Pattern = Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1),
                     Operation = layer.Operation,
                     Depth = layer.Depth,
+                    Mix = layer.Mix,
                     Zoom = layer.Zoom,
                     OffsetX = _extraOffsetX[i],
                     OffsetZ = _extraOffsetZ[i],
@@ -960,6 +962,16 @@ namespace Gavi
         }
 
 
+        /// <summary>The deepest carve a single pattern layer reaches, at least a small value so it can be divided by.</summary>
+        private float CarveReference()
+        {
+            float reference = _perlinStrength;
+            foreach (TerrainNoiseLayerData layer in _extraLayers)
+                if (layer.Enabled)
+                    reference = Mathf.Max(reference, layer.Depth);
+            return Mathf.Max(0.05f, reference);
+        }
+
         /// <summary>Average of at most 2048 evenly spread points, enough to tell a high pattern from a low one.</summary>
         private static float SampleMean(NativeArray<float> values)
         {
@@ -980,9 +992,10 @@ namespace Gavi
             float target = 1f;
             if (_applyPerlinNoise && _colorNoiseBalance > 0f)
             {
-                float mean = Mathf.Lerp(_noiseMean, 1f - _noiseMean, _invertEased);
-                float factor = Mathf.Max(0.05f, 1f - _perlinStrength * mean);
-                float reference = 1f - _perlinStrength * ColorReferenceNoise;
+                float carveReference = CarveReference();
+                float mean = Mathf.Lerp(_noiseMean, Mathf.Max(0f, carveReference - _noiseMean), _invertEased);
+                float factor = Mathf.Max(0.05f, 1f - mean);
+                float reference = 1f - carveReference * ColorReferenceNoise;
                 target = Mathf.Lerp(1f, Mathf.Clamp(reference / factor, 0.5f, 3f), _colorNoiseBalance);
             }
             _colorScale = _colorScaleKnown ? Mathf.Lerp(_colorScale, target, Utility.Utility.Smooth(ColorScaleSmoothing, _fpsEqualizer)) : target;
@@ -1012,11 +1025,11 @@ namespace Gavi
             float seconds = Mathf.Clamp(0.8f * beatInterval, 0.1f, InvertFlowSeconds);
 
             _invertMoving = false;
-            MoveInvert(0, (int)_noisePattern, TerrainNoise.InvertedByDefault(_noisePattern) ^ _noiseInvert, seconds);
+            MoveInvert(0, (int)_noisePattern, _noiseInvert, seconds);
             for (int i = 0; i < _extraLayers.Length; i++)
             {
                 TerrainNoise.Pattern pattern = (TerrainNoise.Pattern)Mathf.Clamp(_extraLayers[i].Pattern, 0, TerrainNoise.Names.Length - 1);
-                MoveInvert(1 + i, (int)pattern, TerrainNoise.InvertedByDefault(pattern) ^ _extraLayers[i].Invert, seconds);
+                MoveInvert(1 + i, (int)pattern, _extraLayers[i].Invert, seconds);
             }
             MoveInvert(InvertAll, 0, _beatFlipped, seconds); // "Invert all" was dropped from the menu
             _invertEased = _invertEasedSlots[InvertAll];

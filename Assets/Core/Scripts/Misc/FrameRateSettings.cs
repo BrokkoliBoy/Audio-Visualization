@@ -4,7 +4,7 @@ namespace Gavi.Game
 {
     /// <summary>
     /// The frame rate limit of the app. It reaches from <see cref="MinFps"/> to the refresh rate of the monitor and is saved on this
-    /// computer, not in a profile. Without a saved value the limit is the refresh rate.
+    /// computer, not in a preset. Without a saved value the limit is the refresh rate.
     /// </summary>
     public static class FrameRateSettings
     {
