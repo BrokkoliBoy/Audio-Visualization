@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 namespace Gavi
 {
-    /// <summary>An extra pattern layer on top of the main pattern: its own pattern, depth, zoom, speed and invert, and how it is mixed (operation and mix) with the layers below.</summary>
-    public class TerrainGroupUINoiseLayer : TerrainGroupUI
+    /// <summary>An extra pattern layer on top of the main pattern: its own pattern, depth, zoom, speed (x and y) and invert, and how it is mixed (operation and mix) with the layers below.</summary>
+    public class TerrainGroupUINoiseLayer : TerrainGroupUI, IPatternSpeed
     {
         [Tooltip("0 = layer 2, 1 = layer 3.")]
         [SerializeField] private int _layerIndex;
@@ -21,14 +21,31 @@ namespace Gavi
         [Tooltip("How much of the mixed result is used, 0 = the layers below stay as they are.")]
         [SerializeField] private SliderG _sliderMix;
         [SerializeField] private SliderG _sliderZoom;
-        [SerializeField] private SliderG _sliderSpeed;
-        [Tooltip("Direction of the pattern movement. The speed slider is the length of this direction.")]
-        [SerializeField] private Vector2 _speedDirection = new Vector2(0f, -1f);
+        [Tooltip("Speed along x and along y, from -10 to 10 with 0 in the middle (see TerrainPatternSpeed).")]
+        [SerializeField] private SliderG _sliderSpeedX;
+        [SerializeField] private SliderG _sliderSpeedY;
 
-        /// <summary>Speed of the pattern as the slider shows it, 0 while the layer is off.</summary>
-        public float ActiveSpeed => _toggleEnabled != null && _toggleEnabled.isOn && _sliderSpeed != null ? _sliderSpeed.Value : 0f;
-        public SliderG SpeedSlider => _sliderSpeed;
+        /// <summary>Length of the speed as the sliders show it, 0 while the layer is off.</summary>
+        public float ActiveSpeed => SpeedOn ? SpeedLength : 0f;
         public bool SpeedOn => _toggleEnabled != null && _toggleEnabled.isOn;
+        // before the group woke up (closed tab) its sliders show nothing, the preset knows the speed
+        private bool SpeedInPreset => !_ready && _shownPreset != null;
+        public float SpeedLength => SpeedInPreset ? new Vector2(Layer(_shownPreset).SpeedX, Layer(_shownPreset).SpeedY).magnitude : TerrainPatternSpeed.Length(_sliderSpeedX, _sliderSpeedY);
+
+        public void SetSpeedLength(float length)
+        {
+            if (!SpeedInPreset)
+            {
+                TerrainPatternSpeed.SetLength(_sliderSpeedX, _sliderSpeedY, length);
+                return;
+            }
+            TerrainNoiseLayerData layer = Layer(_shownPreset);
+            Vector2 speed = TerrainPatternSpeed.WithLength(new Vector2(layer.SpeedX, layer.SpeedY), length);
+            layer.SpeedX = speed.x;
+            layer.SpeedY = speed.y;
+            OnSpeedChanged(length);
+        }
+        public event System.Action SpeedChanged;
 
         private void Awake()
         {
@@ -37,7 +54,8 @@ namespace Gavi
             _sliderDepth.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderMix.OnValueChangedFloat.AddListener(OnUIValueChanged);
             _sliderZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
-            _sliderSpeed.OnValueChangedFloat.AddListener(OnUIValueChanged);
+            _sliderSpeedX.OnValueChangedFloat.AddListener(OnSpeedChanged);
+            _sliderSpeedY.OnValueChangedFloat.AddListener(OnSpeedChanged);
 
             _dropdownPattern.ClearOptions();
             _dropdownPattern.AddOptions(new List<string>(TerrainNoise.Names));
@@ -67,6 +85,12 @@ namespace Gavi
                 int pattern = _ready || _shownPreset == null ? _dropdownPattern.value : Layer(_shownPreset).Pattern;
                 return _toggleEnabled.isOn ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
             }
+        }
+
+        private void OnSpeedChanged(float _)
+        {
+            OnUIValueChanged();
+            SpeedChanged?.Invoke();
         }
 
         private void OnPatternChanged(int pattern)
@@ -102,8 +126,9 @@ namespace Gavi
             layer.Depth = _sliderDepth.Value;
             layer.Mix = _sliderMix.Value;
             layer.Zoom = _sliderZoom.Value;
-            layer.SpeedX = _speedDirection.x * _sliderSpeed.Value;
-            layer.SpeedY = _speedDirection.y * _sliderSpeed.Value;
+            Vector2 speed = TerrainPatternSpeed.Stored(_sliderSpeedX, _sliderSpeedY);
+            layer.SpeedX = speed.x;
+            layer.SpeedY = speed.y;
         }
 
         public override void ShowPreset(TerrainSettingsPreset preset)
@@ -127,9 +152,7 @@ namespace Gavi
             _toggleInvert.isOn = layer.Invert;
             _sliderDepth.Value = layer.Depth;
             _sliderMix.Value = layer.Mix;
-            // the length of the stored speed along the direction of the menu
-            float length = Mathf.Max(0.0001f, _speedDirection.magnitude);
-            _sliderSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(layer.SpeedX, layer.SpeedY), _speedDirection) / (length * length));
+            TerrainPatternSpeed.Show(_sliderSpeedX, _sliderSpeedY, layer.SpeedX, layer.SpeedY);
         }
     }
 }

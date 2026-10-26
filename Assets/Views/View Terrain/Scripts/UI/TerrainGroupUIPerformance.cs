@@ -22,7 +22,7 @@ namespace Gavi
         [SerializeField] private SliderG _sliderMaxFps;
         [SerializeField] private TextMeshProUGUI _textReadout;
 
-        [Header("--- Speed of the patterns (copies of the speed sliders) ---")]
+        [Header("--- Speed of the patterns (copies of the speed, x and y together) ---")]
         [Tooltip("The pattern speeds next to the settings that decide the frame rate, so it is clear which speeds matter. Index 0 is the main pattern, then the layers.")]
         [SerializeField] private TerrainGroupUIPerlin _perlin;
         [SerializeField] private TerrainGroupUINoiseLayer[] _layers;
@@ -128,7 +128,7 @@ namespace Gavi
         #region Speed copies and cost colors
         private int PatternCount => 1 + (_layers != null ? _layers.Length : 0);
 
-        private SliderG SourceSlider(int index) => index == 0 ? (_perlin != null ? _perlin.SpeedSlider : null) : _layers[index - 1].SpeedSlider;
+        private IPatternSpeed Source(int index) => index == 0 ? (IPatternSpeed)_perlin : _layers[index - 1];
         private bool SourceOn(int index) => index == 0 ? _perlin != null && _perlin.SpeedOn : _layers[index - 1].SpeedOn;
 
         private void SetUpSpeedMirrors()
@@ -143,15 +143,15 @@ namespace Gavi
             for (int i = 0; i < count; i++)
             {
                 SliderG mirror = _speedMirrors[i];
-                SliderG source = SourceSlider(i);
+                IPatternSpeed source = Source(i);
                 if (mirror == null || source == null)
                     continue;
                 _rowBaseY[i] = ((RectTransform)mirror.transform).anchoredPosition.y;
                 _mirrorFade[i] = mirror.GetComponent<CanvasGroup>();
 
-                // Both sliders have the same range, setting the value the other one already has changes nothing, so the pair settles at once.
-                mirror.OnValueChangedFloat.AddListener(value => CopyValue(value, source));
-                source.OnValueChangedFloat.AddListener(value => CopyValue(value, mirror));
+                // The copy shows the length of the speed of the pattern (x and y together). Moving it scales the speed and keeps its direction.
+                mirror.OnValueChangedFloat.AddListener(value => ScaleSpeed(value, source));
+                source.SpeedChanged += () => CopyValue(source.SpeedLength, mirror);
             }
             _belowBaseY = new float[_rowsBelow != null ? _rowsBelow.Length : 0];
             for (int i = 0; i < _belowBaseY.Length; i++)
@@ -167,15 +167,24 @@ namespace Gavi
             _syncing = false;
         }
 
+        private void ScaleSpeed(float length, IPatternSpeed target)
+        {
+            if (_syncing || Mathf.Approximately(target.SpeedLength, length))
+                return;
+            _syncing = true;
+            target.SetSpeedLength(length);
+            _syncing = false;
+        }
+
         private void SyncMirrorsFromSources()
         {
             if (_shown == null)
                 return;
             for (int i = 0; i < _shown.Length; i++)
             {
-                SliderG source = SourceSlider(i);
+                IPatternSpeed source = Source(i);
                 if (_speedMirrors[i] != null && source != null)
-                    CopyValue(source.Value, _speedMirrors[i]);
+                    CopyValue(source.SpeedLength, _speedMirrors[i]);
             }
         }
 

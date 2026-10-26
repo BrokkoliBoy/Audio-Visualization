@@ -35,6 +35,10 @@ namespace Gavi
         [Tooltip("Gives small values more room: the curve value sits in the middle of the slider.")]
         [SerializeField] private bool _useCurve;
         [SerializeField] private float _curveMidValue = 0.1f;
+        [Tooltip("The curve runs from the middle of the slider outward, to both sides: the middle of the slider is the middle of the range (0 for -10..10), the curve value sits half way between the middle and each end.")]
+        [SerializeField] private bool _curveFromMiddle;
+        [Tooltip("Only with the curve from the middle: this share of each half of the slider (0-1) rests on the middle value exactly, so zero is easy to hit.")]
+        [SerializeField] private float _middlePlateau = 0.03f;
 
         [Header("--- Display range (optional) ---")]
         [Tooltip("The text shows a simple number from the display minimum (slider far left) to the display maximum (far right) instead of the value. The value itself is unchanged.")]
@@ -282,7 +286,15 @@ namespace Gavi
         private float BasePositionToValue(float position)
         {
             if (!UseSnap(out float p1, out float a, out float b, out float d))
-                return UseCurve(out float exponent) ? RangeMin + Range * Mathf.Pow(Mathf.Clamp01(position), exponent) : RangeMin + position * Range;
+            {
+                if (!UseCurve(out float exponent))
+                    return RangeMin + position * Range;
+                if (!_curveFromMiddle)
+                    return RangeMin + Range * Mathf.Pow(Mathf.Clamp01(position), exponent);
+                float offset = (Mathf.Clamp01(position) - 0.5f) * 2f;
+                float outward = Mathf.Clamp01((Mathf.Abs(offset) - MiddlePlateau) / (1f - MiddlePlateau));
+                return RangeMin + Range * 0.5f + Mathf.Sign(offset) * Range * 0.5f * Mathf.Pow(outward, exponent);
+            }
 
             float dp = position - p1;
             float sign = Mathf.Sign(dp);
@@ -304,7 +316,15 @@ namespace Gavi
             if (!UseSnap(out float p1, out float a, out float b, out float d))
             {
                 float linear = Utility.Utility.MapValuePercent(RangeMin, RangeMax, value, true);
-                return UseCurve(out float exponent) ? Mathf.Pow(linear, 1f / exponent) : linear;
+                if (!UseCurve(out float exponent))
+                    return linear;
+                if (!_curveFromMiddle)
+                    return Mathf.Pow(linear, 1f / exponent);
+                float offset = (linear - 0.5f) * 2f;
+                if (Mathf.Approximately(offset, 0f))
+                    return 0.5f;
+                float outward = Mathf.Pow(Mathf.Abs(offset), 1f / exponent);
+                return 0.5f + Mathf.Sign(offset) * 0.5f * (MiddlePlateau + (1f - MiddlePlateau) * outward);
             }
 
             float dv = value - _snapValue;
@@ -338,11 +358,18 @@ namespace Gavi
                 && delta < _snapValue - RangeMin && delta < RangeMax - _snapValue;
         }
 
-        /// <summary>Power curve value = min + range * position^exponent, with the exponent chosen so that the curve value sits at position 0.5.</summary>
+        private float MiddlePlateau => Mathf.Clamp(_middlePlateau, 0f, 0.5f);
+
+        /// <summary>
+        /// Power curve value = min + range * position^exponent, with the exponent chosen so that the curve value sits at position 0.5.
+        /// From the middle: the same curve on both sides of the middle value, the curve value is the distance from the middle half way to the end.
+        /// </summary>
         private bool UseCurve(out float exponent)
         {
-            float middle = (_curveMidValue - RangeMin) / Range;
-            exponent = middle > 0f && middle < 1f ? Mathf.Log(middle) / Mathf.Log(0.5f) : 1f;
+            float middle = _curveFromMiddle ? _curveMidValue / (Range * 0.5f) : (_curveMidValue - RangeMin) / Range;
+            // the curve value is reached half way between the middle and an end; the plateau shortens the way there
+            float halfWay = _curveFromMiddle ? (0.5f - MiddlePlateau) / (1f - MiddlePlateau) : 0.5f;
+            exponent = middle > 0f && middle < 1f ? Mathf.Log(middle) / Mathf.Log(halfWay) : 1f;
             return _useCurve && !_useSnap && middle > 0f && middle < 1f;
         }
         #endregion

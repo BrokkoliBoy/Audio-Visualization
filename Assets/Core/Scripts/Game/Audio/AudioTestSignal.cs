@@ -25,7 +25,7 @@ namespace Gavi.Audio
         [SerializeField] private Signal _signal = Signal.Flat;
         [Tooltip("Level of the bands (0-3). Above 1 the bands overdrive like loud songs do.")]
         [Range(0f, 3f)]
-        [SerializeField] private float _level = 0.6f;
+        [SerializeField] private float _level = DefaultLevel;
         [Tooltip("How far the bands jump up on every beat (added on top of the level). The bass jumps the most, the outer bands much less. 0 = the bands stay calm.")]
         [Range(0f, 1f)]
         [SerializeField] private float _beatStrength;
@@ -60,6 +60,7 @@ namespace Gavi.Audio
         public bool Enabled { get => _enabled; set => _enabled = value; }
         public int SignalIndex { get => (int)_signal; set => _signal = (Signal)Mathf.Clamp(value, 0, SignalNames.Length - 1); }
         public const float MaxLevel = 3f;
+        public const float DefaultLevel = 0.6f;
         public float Level { get => _level; set => _level = Mathf.Clamp(value, 0f, MaxLevel); }
         public float BeatStrength { get => _beatStrength; set => _beatStrength = Mathf.Clamp01(value); }
         public bool BeatStrengthFromSong { get => _beatStrengthFromSong; set => _beatStrengthFromSong = value; }

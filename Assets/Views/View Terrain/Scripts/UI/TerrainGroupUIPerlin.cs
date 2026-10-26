@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace Gavi
 {
     /// <summary>Noise pattern of the terrain height (Perlin and others).</summary>
-    public class TerrainGroupUIPerlin : TerrainGroupUI
+    public class TerrainGroupUIPerlin : TerrainGroupUI, IPatternSpeed
     {
         [SerializeField] private Toggle _toggleApplyPerlin;
         [SerializeField] private TMP_Dropdown _dropdownPattern;
@@ -21,16 +21,32 @@ namespace Gavi
         [SerializeField] private SliderG _sliderPerlinZoom;
         [Tooltip("Optional: how strongly the terrain height follows the zoom (0 = off), so zooming out keeps the shapes instead of making them steeper.")]
         [SerializeField] private SliderG _sliderHeightZoom;
-        [SerializeField] private SliderG _sliderPerlinSpeed;
+        [Tooltip("Speed along x and along y, from -10 to 10 with 0 in the middle (see TerrainPatternSpeed).")]
+        [SerializeField] private SliderG _sliderSpeedX;
+        [SerializeField] private SliderG _sliderSpeedY;
         [Tooltip("Optional: the pattern is turned upside down on the beat every this many beats, 0 = off.")]
         [SerializeField] private SliderG _sliderFlipBeats;
-        [Tooltip("Direction of the noise movement. The speed slider is the length of this direction (radial patterns move outward with a negative y).")]
-        [SerializeField] private Vector2 _speedDirection = new Vector2(0f, -1f);
 
-        /// <summary>Speed of the pattern as the slider shows it, 0 while the pattern is off.</summary>
-        public float ActiveSpeed => (_toggleApplyPerlin == null || _toggleApplyPerlin.isOn) && _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 0f;
-        public SliderG SpeedSlider => _sliderPerlinSpeed;
-        public bool SpeedOn => _toggleApplyPerlin == null || _toggleApplyPerlin.isOn;
+        /// <summary>Length of the speed as the sliders show it, 0 while the pattern is off.</summary>
+        public float ActiveSpeed => SpeedOn ? SpeedLength : 0f;
+        public bool SpeedOn => SpeedInPreset ? _shownPreset.ApplyPerlin : _toggleApplyPerlin == null || _toggleApplyPerlin.isOn;
+        // before the group woke up (closed tab) its sliders show nothing, the preset knows the speed
+        private bool SpeedInPreset => !_ready && _shownPreset != null;
+        public float SpeedLength => SpeedInPreset ? new Vector2(_shownPreset.PerlinSpeedX, _shownPreset.PerlinSpeedY).magnitude : TerrainPatternSpeed.Length(_sliderSpeedX, _sliderSpeedY);
+
+        public void SetSpeedLength(float length)
+        {
+            if (!SpeedInPreset)
+            {
+                TerrainPatternSpeed.SetLength(_sliderSpeedX, _sliderSpeedY, length);
+                return;
+            }
+            Vector2 speed = TerrainPatternSpeed.WithLength(new Vector2(_shownPreset.PerlinSpeedX, _shownPreset.PerlinSpeedY), length);
+            _shownPreset.PerlinSpeedX = speed.x;
+            _shownPreset.PerlinSpeedY = speed.y;
+            OnSpeedChanged(length);
+        }
+        public event System.Action SpeedChanged;
 
         private void Awake()
         {
@@ -39,8 +55,10 @@ namespace Gavi
             _sliderPerlinZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
             if (_sliderHeightZoom != null)
                 _sliderHeightZoom.OnValueChangedFloat.AddListener(OnUIValueChanged);
-            if (_sliderPerlinSpeed != null)
-                _sliderPerlinSpeed.OnValueChangedFloat.AddListener(OnUIValueChanged);
+            if (_sliderSpeedX != null)
+                _sliderSpeedX.OnValueChangedFloat.AddListener(OnSpeedChanged);
+            if (_sliderSpeedY != null)
+                _sliderSpeedY.OnValueChangedFloat.AddListener(OnSpeedChanged);
             if (_sliderFlipBeats != null)
                 _sliderFlipBeats.OnValueChangedFloat.AddListener(OnUIValueChanged);
             if (_toggleInvert != null)
@@ -78,6 +96,12 @@ namespace Gavi
                 int pattern = _ready || _shownPreset == null ? _dropdownPattern.value : _shownPreset.NoisePattern;
                 return on ? TerrainNoise.Names[Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1)] : LayerOffLabel;
             }
+        }
+
+        private void OnSpeedChanged(float _)
+        {
+            OnUIValueChanged();
+            SpeedChanged?.Invoke();
         }
 
         /// <summary>The invert option belongs to the pattern: it is remembered per pattern while the menu is open, off at first.</summary>
@@ -120,9 +144,9 @@ namespace Gavi
             preset.HeightZoomReference = _sliderPerlinZoom.ValueAtPosition(0.5f);
             if (_sliderHeightZoom != null)
                 preset.HeightZoomStrength = _sliderHeightZoom.Value;
-            float speed = _sliderPerlinSpeed != null ? _sliderPerlinSpeed.Value : 1f;
-            preset.PerlinSpeedX = _speedDirection.x * speed;
-            preset.PerlinSpeedY = _speedDirection.y * speed;
+            Vector2 speed = TerrainPatternSpeed.Stored(_sliderSpeedX, _sliderSpeedY);
+            preset.PerlinSpeedX = speed.x;
+            preset.PerlinSpeedY = speed.y;
             if (_dropdownPattern != null)
                 preset.NoisePattern = _dropdownPattern.value;
             if (_toggleInvert != null)
@@ -143,12 +167,7 @@ namespace Gavi
             _sliderPerlinDepth.Value = preset.PerlinDepth;
             if (_sliderHeightZoom != null)
                 _sliderHeightZoom.Value = preset.HeightZoomStrength;
-            if (_sliderPerlinSpeed != null)
-            {
-                // the length of the stored speed along the direction of the menu
-                float length = Mathf.Max(0.0001f, _speedDirection.magnitude);
-                _sliderPerlinSpeed.Value = Mathf.Max(0f, Vector2.Dot(new Vector2(preset.PerlinSpeedX, preset.PerlinSpeedY), _speedDirection) / (length * length));
-            }
+            TerrainPatternSpeed.Show(_sliderSpeedX, _sliderSpeedY, preset.PerlinSpeedX, preset.PerlinSpeedY);
             _shownPattern = Mathf.Clamp(preset.NoisePattern, 0, TerrainNoise.Names.Length - 1);
             if (_dropdownPattern != null)
             {

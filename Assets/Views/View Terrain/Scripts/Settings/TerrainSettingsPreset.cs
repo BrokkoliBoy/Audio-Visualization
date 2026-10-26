@@ -1,3 +1,4 @@
+using Gavi.Audio;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -131,6 +132,14 @@ namespace Gavi
         public int NoiseInterval = TerrainGenerator.DefaultNoiseInterval;
         [Tooltip("The noise work is spread over the updates instead of done all at once every n-th update.")]
         public bool NoiseSpread = TerrainGenerator.DefaultNoiseSpread;
+
+        [Header("- Test signal -")]
+        [Tooltip("AudioTestSignal.Signal: 0 = Flat, 1 = Bass only, 2 = Falling, 3 = Rising, 4 = Every other band. Whether the test signal is on is not saved, it always starts off.")]
+        public int TestSignal = 0;
+        public float TestSignalLevel = AudioTestSignal.DefaultLevel;
+        public float TestSignalBeatStrength = 0f;
+        public bool TestSignalBeatFromSong = false;
+        public bool TestSignalFreezeNoise = false;
         #endregion
         
         
@@ -242,6 +251,13 @@ namespace Gavi
             NoiseInterval = preset.NoiseInterval;
             NoiseSpread = preset.NoiseSpread;
 
+            // Test signal
+            TestSignal = preset.TestSignal;
+            TestSignalLevel = preset.TestSignalLevel;
+            TestSignalBeatStrength = preset.TestSignalBeatStrength;
+            TestSignalBeatFromSong = preset.TestSignalBeatFromSong;
+            TestSignalFreezeNoise = preset.TestSignalFreezeNoise;
+
             // Shape
             Shapes.Clear();
             foreach (TerrainShapeData shapeData in preset.Shapes)
@@ -328,6 +344,16 @@ namespace Gavi
             // Performance
             NoiseInterval = terrain.NoiseInterval;
             NoiseSpread = terrain.NoiseSpread;
+
+            // Test signal
+            if (AudioTestSignal.Instance != null)
+            {
+                TestSignal = AudioTestSignal.Instance.SignalIndex;
+                TestSignalLevel = AudioTestSignal.Instance.Level;
+                TestSignalBeatStrength = AudioTestSignal.Instance.BeatStrength;
+                TestSignalBeatFromSong = AudioTestSignal.Instance.BeatStrengthFromSong;
+                TestSignalFreezeNoise = AudioTestSignal.Instance.FreezeNoise;
+            }
 
             // Shape
             Shapes = new List<TerrainShapeData>();

@@ -36,14 +36,14 @@ does and when it matters.
 
 - **Spectrum terrain.** Frequency bands are mapped onto up to three overlapping *audio shapes* (circle, stripes, rays, spiral,
   star, rings and more), bass first. Each layer has its own strength, zoom, invert and blend mode.
-- **27 noise patterns** (Perlin, Domain warp, Voronoi, Hexagons, Cubes, Plasma, ...), up to three mixed into one terrain,
-  with depth, speed and zoom per layer. "Flip beats" turns the whole pattern upside down on the beat, with a smooth morph.
+- **32 noise patterns** (Perlin, Domain warp, Voronoi, Hexagons, Cubes, Plasma, ...), up to three mixed into one terrain,
+  with depth, speed (x and y) and zoom per layer. "Flip beats" turns the whole pattern upside down on the beat, with a smooth morph.
 - **Beat waves.** Rings run over the terrain in time with the song's BPM. They start flat on every beat and grow when the bass
   is strong, so quiet passages stay quiet.
 - **Mesh morph.** Bends the whole mesh into a planet, tube, dome, pringle, twist or flag, with a beat motion and a slow swing.
 - **Color and light.** HDR color palettes (save your own), a color curve with plateau tilt and slope shading so heights stay
   readable, bloom, lens dirt that pulses on the beat, and a background that takes the hue of the terrain.
-- **Presets.** Every setting except the test signal can be saved and loaded as a preset.
+- **Presets.** Every setting, the test signal settings included, can be saved and loaded as a preset.
 - **Camera.** Orbit, move and zoom with the mouse, turn the terrain itself by dragging it, beat-synced zoom and sway.
 - **Test signal.** Replaces the song with a calm, fixed spectrum, so an effect can be judged without a moving song. A band
   editor lets you raise and lower single bands with the mouse.
