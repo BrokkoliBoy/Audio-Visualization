@@ -15,7 +15,8 @@ namespace Gavi
             Perlin, Simplex, Value, Fractal, Ridged, Billow, DomainWarp,
             Voronoi, Mosaic, Cracks, Rings, Interference, Spiral, Waffle, Hexagons,
             Bricks, Dots, Pyramids, Flower, Zigzag, Plasma, Tiles,
-            Triangles, Checker, Steps, Cubes, Honeycomb
+            Triangles, Checker, Steps, Cubes, Honeycomb,
+            Waves, Ocean, Ripples, Waveform, Cymatics
         }
 
         public static readonly string[] Names =
@@ -23,7 +24,8 @@ namespace Gavi
             "Perlin", "Simplex", "Value", "Fractal", "Ridged", "Billow", "Domain warp",
             "Voronoi", "Mosaic", "Cracks", "Rings", "Interference", "Spiral", "Waffle", "Hexagons",
             "Bricks", "Dots", "Pyramids", "Flower", "Zigzag", "Plasma", "Tiles",
-            "Triangles", "Checker", "Steps", "Cubes", "Honeycomb"
+            "Triangles", "Checker", "Steps", "Cubes", "Honeycomb",
+            "Waves", "Ocean", "Ripples", "Waveform", "Cymatics"
         };
 
         /// <summary>
@@ -60,6 +62,11 @@ namespace Gavi
             new Vector3(5.9f, 3.2f, 8.7f),   // Steps
             new Vector3(4.9f, 2.9f, 8.2f),   // Cubes
             new Vector3(4.3f, 2.2f, 9.0f),   // Honeycomb
+            new Vector3(4.5f, 2.0f, 9.0f),   // Waves
+            new Vector3(4.5f, 2.2f, 8.0f),   // Ocean
+            new Vector3(4.5f, 2.5f, 8.0f),   // Ripples
+            new Vector3(4.5f, 2.2f, 8.5f),   // Waveform
+            new Vector3(4.5f, 2.5f, 8.0f),   // Cymatics
         };
 
         /// <summary>Gives a zoom slider the range of a pattern; the value is kept unless <paramref name="toDefault"/> is set.</summary>
@@ -207,6 +214,19 @@ namespace Gavi
                     return Cubes(u * 0.5f, v * 0.5f);
                 case Pattern.Honeycomb:
                     return Honeycomb(u * 0.6f, v * 0.6f);
+                case Pattern.Waves:
+                    return 0.5f + 0.5f * Mathf.Sin(Tau * v * 0.2f);
+                case Pattern.Ocean:
+                    return Ocean(u, v);
+                case Pattern.Ripples:
+                    return Ripples(x, z, offsetZ, zoom);
+                case Pattern.Waveform:
+                    return Waveform(u, v);
+                case Pattern.Cymatics:
+                {
+                    float p = Tau * u * 0.07f, q = Tau * v * 0.07f;
+                    return Mathf.Clamp01(0.5f + 0.25f * (Mathf.Sin(2f * p) * Mathf.Sin(3f * q) + Mathf.Sin(3f * p) * Mathf.Sin(2f * q)));
+                }
                 default:
                     return Perlin(u, v);
             }
@@ -486,6 +506,42 @@ namespace Gavi
                 sum += Mathf.Sin(Tau * (d + offsetZ) * frequency);
             }
             return Mathf.Clamp01(0.5f + sum / 5f);
+        }
+
+        /// <summary>Three swells from different directions with sharp crests and round troughs, like water.</summary>
+        private static float Ocean(float u, float v)
+        {
+            float sum = 0f;
+            sum += 1.00f * Crest(v * 0.20f);
+            sum += 0.60f * Crest((0.62f * u + 0.78f * v) * 0.31f);
+            sum += 0.35f * Crest((-0.64f * u + 0.77f * v) * 0.47f);
+            return Mathf.Clamp01((sum / 1.95f - 0.06f) / 0.7f);
+        }
+
+        /// <summary>One period per 1 of the phase: 1 on the sharp crest, 0 in the round trough.</summary>
+        private static float Crest(float phase)
+        {
+            return 1f - Mathf.Abs(Mathf.Sin(Mathf.PI * phase));
+        }
+
+        /// <summary>
+        /// Drops at the points of the cells (the cell size grows with smaller zoom), rings run outward from each drop
+        /// and cancel out where two cells meet. The drops stay in place, the rings move with the offset like the rings of the other radial patterns.
+        /// </summary>
+        private static float Ripples(float x, float z, float offsetZ, float zoom)
+        {
+            float cell = zoom * 0.2f;
+            Cellular(x * cell, z * cell, out float f1, out float f2, out _);
+            float rings = Mathf.Cos(Tau * 2.5f * (f1 + offsetZ * cell));
+            return 0.5f + 0.5f * rings * Smooth((f2 - f1) * 4f);
+        }
+
+        /// <summary>Rows of lines that follow a sine curve, like the traces of an oscilloscope.</summary>
+        private static float Waveform(float u, float v)
+        {
+            float row = v * 0.2f + 0.4f * Mathf.Sin(Tau * u * 0.09f);
+            float distance = Mathf.Abs(Mathf.Repeat(row, 1f) - 0.5f) * 2f;
+            return Smooth(1f - distance / 0.55f);
         }
         #endregion
     }
