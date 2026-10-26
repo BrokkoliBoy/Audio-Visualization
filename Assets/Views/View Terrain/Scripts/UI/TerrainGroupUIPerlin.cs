@@ -113,14 +113,16 @@ namespace Gavi
 
         private void OnPatternChanged(int pattern)
         {
+            int previous = _shownPattern;
             _shownPattern = Mathf.Clamp(pattern, 0, _invertByPattern.Length - 1);
-            TerrainNoise.ApplyZoomScale(_sliderPerlinZoom, _shownPattern, true);
+            _zoomMemory.Switch(_sliderPerlinZoom, previous, _shownPattern);
             if (_toggleInvert != null)
                 _toggleInvert.SetIsOnWithoutNotify(_invertByPattern[_shownPattern]);
             OnUIValueChanged(pattern);
         }
 
         private readonly bool[] _invertByPattern = new bool[TerrainNoise.Names.Length];
+        private readonly TerrainNoise.ZoomMemory _zoomMemory = new TerrainNoise.ZoomMemory();
         private int _shownPattern;
 
         /// <summary>Selects the next or previous pattern and wraps around at the ends of the list.</summary>
@@ -176,6 +178,7 @@ namespace Gavi
             }
             TerrainNoise.ApplyZoomScale(_sliderPerlinZoom, _shownPattern, false);
             _sliderPerlinZoom.Value = preset.PerlinZoom;
+            _zoomMemory.Remember(_shownPattern, _sliderPerlinZoom.Value);
             // the preset only knows the invert option of its own pattern
             _invertByPattern[_shownPattern] = preset.NoiseInvert;
             if (_toggleInvert != null)

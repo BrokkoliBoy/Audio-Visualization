@@ -80,6 +80,37 @@ namespace Gavi
                 slider.NotifyValue();
         }
 
+        /// <summary>Remembers the zoom of every pattern for as long as the menu is open: going back to a pattern brings back the zoom it had, a pattern not used yet starts at its default zoom.</summary>
+        public sealed class ZoomMemory
+        {
+            private readonly float[] _zoom;
+
+            public ZoomMemory()
+            {
+                _zoom = new float[Names.Length];
+                for (int i = 0; i < _zoom.Length; i++)
+                    _zoom[i] = float.NaN;
+            }
+
+            public void Remember(int pattern, float zoom)
+            {
+                _zoom[Mathf.Clamp(pattern, 0, _zoom.Length - 1)] = zoom;
+            }
+
+            /// <summary>The pattern of a zoom slider changes: the zoom of the old pattern is kept, the slider takes the range and the remembered (or default) zoom of the new one.</summary>
+            public void Switch(SliderG slider, int from, int to)
+            {
+                if (slider == null)
+                    return;
+                Remember(from, slider.Value);
+                to = Mathf.Clamp(to, 0, _zoom.Length - 1);
+                bool known = !float.IsNaN(_zoom[to]);
+                ApplyZoomScale(slider, to, !known);
+                if (known)
+                    slider.Value = _zoom[to];
+            }
+        }
+
         /// <summary>How a pattern layer is mixed with the layers below it. Appended only, presets store the index.</summary>
         public enum LayerOperation { Replace, Add, Subtract, Highest, Lowest, Multiply, Difference }
 

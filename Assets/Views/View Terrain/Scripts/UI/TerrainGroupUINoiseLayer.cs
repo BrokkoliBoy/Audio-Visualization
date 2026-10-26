@@ -75,6 +75,8 @@ namespace Gavi
         }
 
         private bool _ready;
+        private int _shownPattern;
+        private readonly TerrainNoise.ZoomMemory _zoomMemory = new TerrainNoise.ZoomMemory();
         private TerrainSettingsPreset _shownPreset;
 
         // before the group woke up the dropdown is empty, the preset knows
@@ -95,8 +97,10 @@ namespace Gavi
 
         private void OnPatternChanged(int pattern)
         {
-            // each pattern has its own zoom range, a new pattern starts at its default zoom
-            TerrainNoise.ApplyZoomScale(_sliderZoom, pattern, true);
+            // each pattern has its own zoom range and remembers its zoom, a pattern not used yet starts at its default zoom
+            pattern = Mathf.Clamp(pattern, 0, TerrainNoise.Names.Length - 1);
+            _zoomMemory.Switch(_sliderZoom, _shownPattern, pattern);
+            _shownPattern = pattern;
             OnUIValueChanged(pattern);
         }
 
@@ -145,8 +149,10 @@ namespace Gavi
             _toggleEnabled.isOn = layer.Enabled;
             _dropdownPattern.SetValueWithoutNotify(Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1));
             _dropdownPattern.RefreshShownValue();
-            TerrainNoise.ApplyZoomScale(_sliderZoom, layer.Pattern, false);
+            _shownPattern = Mathf.Clamp(layer.Pattern, 0, TerrainNoise.Names.Length - 1);
+            TerrainNoise.ApplyZoomScale(_sliderZoom, _shownPattern, false);
             _sliderZoom.Value = layer.Zoom;
+            _zoomMemory.Remember(_shownPattern, _sliderZoom.Value);
             _dropdownOperation.SetValueWithoutNotify(Mathf.Clamp(layer.Operation, 0, TerrainNoise.OperationNames.Length - 1));
             _dropdownOperation.RefreshShownValue();
             _toggleInvert.isOn = layer.Invert;
