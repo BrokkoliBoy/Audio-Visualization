@@ -1,1 +1,0 @@
-{"FormatVersion":1,"Name":"Pink Neon","Colors":[{"x":358.0,"y":1.0,"z":1.0},{"x":329.0,"y":1.0,"z":5.324612617492676},{"x":239.0,"y":1.0,"z":1.0},{"x":199.0,"y":1.0,"z":3.999999761581421}],"OverallIntensity":1.0,"BloomThreshold":0.5,"BloomIntensity":0.6000000238418579,"BloomScatter":0.699999988079071}
