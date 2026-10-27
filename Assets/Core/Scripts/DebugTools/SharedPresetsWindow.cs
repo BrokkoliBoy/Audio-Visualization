@@ -68,10 +68,12 @@ namespace Gavi
         #region Mono
         private IEnumerator Start()
         {
+            ProjectPresets.WriteEditorPath();
             // The menu loads the preset of the last session a frame after the scene started; a shared version of that preset replaces it.
+            // Not when the menu works in the project files: those are the truth then, an older shared file must not replace them.
             yield return new WaitForSecondsRealtime(1f);
             string baseline = TerrainGroupUIPresets.Instance != null ? TerrainGroupUIPresets.Instance.BaselinePresetName : null;
-            if (!SharedPresets.DebugOn || Current == null || string.IsNullOrEmpty(baseline))
+            if (!SharedPresets.DebugOn || ProjectPresets.Root != null || Current == null || string.IsNullOrEmpty(baseline))
                 yield break;
             TerrainSettingsPreset shared = SharedPresets.TryLoad(baseline);
             if (shared != null)
@@ -284,6 +286,9 @@ namespace Gavi
             GUILayout.EndHorizontal();
 
             GUILayout.Space(6f);
+            DrawProjectFiles();
+
+            GUILayout.Space(6f);
             GUILayout.Label("Live link between Editor and build");
             LiveMode mode = (LiveMode)GUILayout.Toolbar((int)_live, new[] { "Off", "Send my changes", "Receive" });
             if (mode != _live)
@@ -312,6 +317,38 @@ namespace Gavi
             if (_status.Length > 0)
                 GUILayout.Label(_status);
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 22f));
+        }
+
+        /// <summary>The switch between the preset files of this build and those of the Unity project (applies at the next start).</summary>
+        private void DrawProjectFiles()
+        {
+            GUILayout.Label("Preset files of the menu (Save, Load, Delete)");
+            if (Application.isEditor)
+            {
+                GUILayout.Label("Editor: the menu already works in the project files.");
+                return;
+            }
+
+            bool wanted = ProjectPresets.Wanted;
+            int choice = GUILayout.Toolbar(wanted ? 1 : 0, new[] { "This build", "Unity project" });
+            if ((choice == 1) != wanted)
+            {
+                wanted = choice == 1;
+                ProjectPresets.SetWanted(wanted);
+            }
+
+            string active = ProjectPresets.Root;
+            if (wanted && active == null)
+            {
+                string found = ProjectPresets.Find();
+                GUILayout.Label(found == null
+                    ? "Unity project not found. Build into the project folder, or press Play in the Editor once. Applies after a restart."
+                    : "Applies after a restart. Project: " + found);
+            }
+            else if (!wanted && active != null)
+                GUILayout.Label("Applies after a restart. Right now: " + active);
+            else
+                GUILayout.Label(active != null ? "Now in the project: " + active : "Now in the files of this build.");
         }
 
         private void DrawEntry(SharedPresets.Entry entry)

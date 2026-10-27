@@ -9,12 +9,13 @@ namespace Gavi
     /// Shipped presets are in Assets/StreamingAssets/Presets/..., so they are copied into every build.
     /// In the Editor new files are written there too, so they become part of the project and of the next build.
     /// In a build the game folder may be read only (e.g. Program Files), so new files go to the persistent data path instead.
+    /// Exception: a build in debug mode that was switched to the project files (see <see cref="ProjectPresets"/>) reads and writes the project's folder like the Editor.
     /// </summary>
     public static class TerrainUserFiles
     {
         public static string PresetFolder(string subFolder)
         {
-            return Application.streamingAssetsPath + "/Presets/" + subFolder + "/";
+            return (ProjectPresets.Root ?? Application.streamingAssetsPath) + "/Presets/" + subFolder + "/";
         }
 
         public static string WriteFolder(string subFolder)
@@ -22,7 +23,7 @@ namespace Gavi
 #if UNITY_EDITOR
             return PresetFolder(subFolder);
 #else
-            return Application.persistentDataPath + "/Presets/" + subFolder + "/";
+            return ProjectPresets.Root != null ? PresetFolder(subFolder) : Application.persistentDataPath + "/Presets/" + subFolder + "/";
 #endif
         }
 
@@ -32,7 +33,8 @@ namespace Gavi
             var files = new List<string>();
             AddFiles(files, PresetFolder(subFolder));
 #if !UNITY_EDITOR
-            AddFiles(files, WriteFolder(subFolder));
+            if (ProjectPresets.Root == null)
+                AddFiles(files, WriteFolder(subFolder));
 #endif
             return files;
         }
