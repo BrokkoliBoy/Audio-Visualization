@@ -1,23 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 namespace Gavi
 {
     /// <summary>
-    /// The shared space: one folder on the disk that the Editor and every build of this project read and write, so a preset saved in one of them
-    /// is there in the other. The folder is in the persistent data path (same for the Editor and a build, outside the repository).
+    /// Debug mode and the shared folder for the live link: one folder on the disk that the Editor and every build of this project read and write.
+    /// The folder is in the persistent data path (same for the Editor and a build, outside the repository).
     /// Everything that uses it is only active in debug mode (see <see cref="DebugOn"/>).
     /// </summary>
     public static class SharedPresets
     {
-        public struct Entry
-        {
-            public string Name;
-            public DateTime Time;
-        }
-
         private const string DebugKey = "Debug.SharedPresets";
         private const string LiveFile = "_live.json";
 
@@ -32,63 +25,6 @@ namespace Gavi
             PlayerPrefs.SetInt(DebugKey, PlayerPrefs.GetInt(DebugKey, 0) == 1 ? 0 : 1);
             PlayerPrefs.Save();
         }
-
-
-        #region Presets
-        private static string FileOf(string name)
-        {
-            foreach (char invalid in Path.GetInvalidFileNameChars())
-                name = name.Replace(invalid.ToString(), "");
-            return Path.Combine(Folder, name.Trim() + ".txt");
-        }
-
-        public static bool Exists(string name) => File.Exists(FileOf(name));
-
-        public static DateTime StampOf(string name)
-        {
-            string file = FileOf(name);
-            return File.Exists(file) ? File.GetLastWriteTimeUtc(file) : DateTime.MinValue;
-        }
-
-        public static List<Entry> List()
-        {
-            List<Entry> entries = new List<Entry>();
-            if (!Directory.Exists(Folder))
-                return entries;
-            foreach (string file in Directory.GetFiles(Folder, "*.txt"))
-                entries.Add(new Entry { Name = Path.GetFileNameWithoutExtension(file), Time = File.GetLastWriteTime(file) });
-            entries.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
-            return entries;
-        }
-
-        /// <summary>The preset of that name from the shared folder, or null when there is none or the file is half written.</summary>
-        public static TerrainSettingsPreset TryLoad(string name)
-        {
-            try
-            {
-                string file = FileOf(name);
-                return File.Exists(file) ? TerrainSettingsPresetManager.ParsePreset(File.ReadAllText(file)) : null;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public static void Save(TerrainSettingsPreset preset)
-        {
-            Directory.CreateDirectory(Folder);
-            preset.FormatVersion = TerrainSettingsPreset.CurrentFormatVersion;
-            File.WriteAllText(FileOf(preset.Name), JsonUtility.ToJson(preset) + "\n");
-        }
-
-        public static void Delete(string name)
-        {
-            string file = FileOf(name);
-            if (File.Exists(file))
-                File.Delete(file);
-        }
-        #endregion
 
 
         #region Live link

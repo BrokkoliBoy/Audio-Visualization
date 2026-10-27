@@ -7,8 +7,8 @@ namespace Gavi
     /// <summary>
     /// Lets a build in debug mode use the preset files of the Unity project (Assets/StreamingAssets/Presets) instead of its own copy. With it, Save in
     /// the menu of a build writes straight into the project, so the preset is there in the Editor and in the next build.
-    /// The choice is made in the debug window and is read once per start of the game (the preset list of the menu is loaded once), so it applies
-    /// after a restart. In the Editor the menu already works in the project files, so nothing changes there.
+    /// The choice is made in the debug window (the project files are the default in debug mode); after a change the menu reads its preset list
+    /// again (<see cref="TerrainGroupUIPresets.ReloadPresets"/>). In the Editor the menu already works in the project files, so nothing changes there.
     /// </summary>
     public static class ProjectPresets
     {
@@ -17,11 +17,10 @@ namespace Gavi
         private const string PathFile = "_project.path";
         private const int MaxLevelsUp = 8;
 
-        private static bool _resolved;
-        private static string _root;
+        private static string _found;
 
-        /// <summary>The user wants the project files (remembered, used at the next start).</summary>
-        public static bool Wanted => PlayerPrefs.GetInt(WantedKey, 0) == 1;
+        /// <summary>The user wants the project files (remembered; on unless switched off in the debug window).</summary>
+        public static bool Wanted => PlayerPrefs.GetInt(WantedKey, 1) == 1;
 
         public static void SetWanted(bool wanted)
         {
@@ -31,18 +30,17 @@ namespace Gavi
 
         /// <summary>
         /// The StreamingAssets folder of the Unity project this game reads and writes presets in, or null for the normal folders (always null in the
-        /// Editor). Fixed when first asked, so Save, Load and Delete of one run all use the same folder.
+        /// Editor, and when debug mode is off or the project was not found). The folder search is done once, until it succeeds.
         /// </summary>
         public static string Root
         {
             get
             {
-                if (!_resolved)
-                {
-                    _resolved = true;
-                    _root = Application.isEditor || !SharedPresets.DebugOn || !Wanted ? null : Find();
-                }
-                return _root;
+                if (Application.isEditor || !SharedPresets.DebugOn || !Wanted)
+                    return null;
+                if (_found == null)
+                    _found = Find();
+                return _found;
             }
         }
 

@@ -1,16 +1,13 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Gavi
 {
     /// <summary>
-    /// The debug window (F12) for the shared space: save the current setup into the shared folder, load and delete shared presets, and keep the Editor
-    /// and a build in step. Only there in debug mode: in the Editor, in a development build, or after Ctrl+F12 in any build.
+    /// The debug window (F12). Only there in debug mode: in the Editor, in a development build, or after Ctrl+F12 in any build.
     /// <list type="bullet">
-    /// <item>Follow file: when the file of the loaded preset changes in the shared folder, the setup is applied again.</item>
-    /// <item>Live link: one side sends its settings whenever they change, the other receives them (a few times a second).</item>
+    /// <item>Preset files of the menu: a build uses its own files or those of the Unity project (see <see cref="ProjectPresets"/>).</item>
+    /// <item>Live link: one program sends its settings whenever they change, the other receives them (a few times a second).</item>
     /// </list>
     /// </summary>
     public class SharedPresetsWindow : MonoBehaviour
@@ -29,26 +26,17 @@ namespace Gavi
         private float _scale = 1f;
 
         private readonly string _id = Guid.NewGuid().ToString("N");
-        private List<SharedPresets.Entry> _entries = new List<SharedPresets.Entry>();
 
         private bool _visible;
         private bool _placed;
         private Rect _rect;
-        private Vector2 _scroll;
         private GUISkin _skin;
         private string _status = "";
 
         private LiveMode _live = LiveMode.Off;
-        private bool _follow = true;
-        private string _currentName = "";
-        private string _lastBaseline;
-        private DateTime _followStamp = DateTime.MinValue;
         private DateTime _liveStamp = DateTime.MinValue;
         private string _lastLiveJson = "";
         private float _nextPoll;
-        private float _nextList;
-        private string _confirmDelete = "";
-        private float _confirmUntil;
 
         private TerrainSettingsPreset Current => TerrainSettingsManager.Instance != null ? TerrainSettingsManager.Instance.CurrentPreset : null;
 
@@ -66,21 +54,9 @@ namespace Gavi
         }
 
         #region Mono
-        private IEnumerator Start()
+        private void Start()
         {
             ProjectPresets.WriteEditorPath();
-            // The menu loads the preset of the last session a frame after the scene started; a shared version of that preset replaces it.
-            // Not when the menu works in the project files: those are the truth then, an older shared file must not replace them.
-            yield return new WaitForSecondsRealtime(1f);
-            string baseline = TerrainGroupUIPresets.Instance != null ? TerrainGroupUIPresets.Instance.BaselinePresetName : null;
-            if (!SharedPresets.DebugOn || ProjectPresets.Root != null || Current == null || string.IsNullOrEmpty(baseline))
-                yield break;
-            TerrainSettingsPreset shared = SharedPresets.TryLoad(baseline);
-            if (shared != null)
-            {
-                Apply(shared);
-                SetCurrent(baseline);
-            }
         }
 
         private void Update()
@@ -96,57 +72,21 @@ namespace Gavi
             if (!SharedPresets.DebugOn)
                 _visible = false;
             UpdateBlocker();
-            if (!SharedPresets.DebugOn)
+            if (!SharedPresets.DebugOn || _live == LiveMode.Off)
                 return;
 
             if (Time.unscaledTime < _nextPoll || Current == null)
                 return;
             _nextPoll = Time.unscaledTime + PollSeconds;
-            Poll();
+            if (_live == LiveMode.Send)
+                SendLive();
+            else
+                ReceiveLive();
         }
         #endregion
 
 
-        #region Keeping in step
-        private void Poll()
-        {
-            string baseline = TerrainGroupUIPresets.Instance != null ? TerrainGroupUIPresets.Instance.BaselinePresetName : null;
-            if (baseline != _lastBaseline)
-            {
-                _lastBaseline = baseline;
-                if (!string.IsNullOrEmpty(baseline))
-                    SetCurrent(baseline);
-            }
-
-            if (_live == LiveMode.Send)
-                SendLive();
-            else if (_live == LiveMode.Receive)
-                ReceiveLive();
-            else if (_follow)
-                FollowFile();
-        }
-
-        private void SetCurrent(string name)
-        {
-            _currentName = name;
-            _followStamp = SharedPresets.StampOf(name);
-        }
-
-        private void FollowFile()
-        {
-            if (_currentName.Length == 0)
-                return;
-            DateTime stamp = SharedPresets.StampOf(_currentName);
-            if (stamp == DateTime.MinValue || stamp == _followStamp)
-                return;
-            _followStamp = stamp;
-            TerrainSettingsPreset preset = SharedPresets.TryLoad(_currentName);
-            if (preset == null)
-                return;
-            Apply(preset);
-            _status = "Applied '" + _currentName + "' (file changed) " + DateTime.Now.ToString("HH:mm:ss");
-        }
-
+        #region Live link
         private void SendLive()
         {
             Current.ExtractPresetFromUI();
@@ -188,14 +128,9 @@ namespace Gavi
             if (preset == null)
                 return;
             _lastLiveJson = json;
-            Apply(preset);
-            _status = "Live setup received " + DateTime.Now.ToString("HH:mm:ss");
-        }
-
-        private void Apply(TerrainSettingsPreset preset)
-        {
             Current.CopyFromPreset(preset);
             Current.ApplyPresetToUI();
+            _status = "Live setup received " + DateTime.Now.ToString("HH:mm:ss");
         }
         #endregion
 
@@ -220,7 +155,7 @@ namespace Gavi
             }
 
             _rect.height = 10f;
-            _rect = GUILayout.Window(WindowId, _rect, DrawWindow, "Debug: shared presets   (F12 hides)");
+            _rect = GUILayout.Window(WindowId, _rect, DrawWindow, "Debug   (F12 hides)");
             RightEdge = _rect.xMax + 10f;
             _lastHeight = _rect.height;
             _scale = scale;
@@ -272,20 +207,6 @@ namespace Gavi
 
         private void DrawWindow(int id)
         {
-            GUILayout.Label("Folder: " + SharedPresets.Folder);
-            if (GUILayout.Button("Open folder"))
-                Application.OpenURL("file:///" + SharedPresets.Folder.Replace('\\', '/'));
-
-            GUILayout.Space(6f);
-            GUILayout.Label("Current preset: " + (_currentName.Length > 0 ? _currentName : "(none)"));
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Save to shared"))
-                SaveShared(_currentName.Length > 0 ? _currentName : "Shared setup");
-            if (GUILayout.Button("Save as copy"))
-                SaveShared(NextFreeName(_currentName.Length > 0 ? _currentName : "Shared setup"));
-            GUILayout.EndHorizontal();
-
-            GUILayout.Space(6f);
             DrawProjectFiles();
 
             GUILayout.Space(6f);
@@ -297,29 +218,13 @@ namespace Gavi
                 _lastLiveJson = "";
                 _liveStamp = DateTime.MinValue;
             }
-            _follow = GUILayout.Toggle(_follow, "Follow the file of the current preset (when live is off)");
-
-            GUILayout.Space(6f);
-            GUILayout.Label("Shared presets");
-            if (Time.unscaledTime >= _nextList)
-            {
-                _nextList = Time.unscaledTime + 1f;
-                _entries = SharedPresets.List();
-            }
-
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(Mathf.Min(220f, 28f * Mathf.Max(1, _entries.Count) + 4f)));
-            if (_entries.Count == 0)
-                GUILayout.Label("Nothing saved yet.");
-            foreach (SharedPresets.Entry entry in _entries)
-                DrawEntry(entry);
-            GUILayout.EndScrollView();
 
             if (_status.Length > 0)
                 GUILayout.Label(_status);
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 22f));
         }
 
-        /// <summary>The switch between the preset files of this build and those of the Unity project (applies at the next start).</summary>
+        /// <summary>The switch between the preset files of this build and those of the Unity project. The menu reads its list again at once.</summary>
         private void DrawProjectFiles()
         {
             GUILayout.Label("Preset files of the menu (Save, Load, Delete)");
@@ -335,92 +240,16 @@ namespace Gavi
             {
                 wanted = choice == 1;
                 ProjectPresets.SetWanted(wanted);
+                if (TerrainGroupUIPresets.Instance != null)
+                    TerrainGroupUIPresets.Instance.ReloadPresets();
+                _status = "Preset list read again from the " + (ProjectPresets.Root != null ? "Unity project" : "files of this build");
             }
 
             string active = ProjectPresets.Root;
             if (wanted && active == null)
-            {
-                string found = ProjectPresets.Find();
-                GUILayout.Label(found == null
-                    ? "Unity project not found. Build into the project folder, or press Play in the Editor once. Applies after a restart."
-                    : "Applies after a restart. Project: " + found);
-            }
-            else if (!wanted && active != null)
-                GUILayout.Label("Applies after a restart. Right now: " + active);
+                GUILayout.Label("Unity project not found, using the files of this build. Build into the project folder, or press Play in the Editor once.");
             else
                 GUILayout.Label(active != null ? "Now in the project: " + active : "Now in the files of this build.");
-        }
-
-        private void DrawEntry(SharedPresets.Entry entry)
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(entry.Name + "   " + entry.Time.ToString("dd.MM. HH:mm"), GUILayout.ExpandWidth(true));
-            if (GUILayout.Button("Load", GUILayout.Width(55f)))
-                LoadShared(entry.Name);
-            bool confirming = _confirmDelete == entry.Name && Time.unscaledTime < _confirmUntil;
-            if (GUILayout.Button(confirming ? "Sure?" : "Delete", GUILayout.Width(60f)))
-            {
-                if (confirming)
-                {
-                    SharedPresets.Delete(entry.Name);
-                    _status = "Deleted '" + entry.Name + "'";
-                    _nextList = 0f;
-                    _confirmDelete = "";
-                }
-                else
-                {
-                    _confirmDelete = entry.Name;
-                    _confirmUntil = Time.unscaledTime + 3f;
-                }
-            }
-            GUILayout.EndHorizontal();
-        }
-
-        private void SaveShared(string name)
-        {
-            if (Current == null)
-                return;
-            Current.ExtractPresetFromUI();
-            TerrainSettingsPreset preset = new TerrainSettingsPreset();
-            preset.CopyFromPreset(Current);
-            preset.Name = name;
-            try
-            {
-                SharedPresets.Save(preset);
-            }
-            catch (Exception e)
-            {
-                _status = "Save failed: " + e.Message;
-                return;
-            }
-
-            SetCurrent(name);
-            _nextList = 0f;
-            _status = "Saved '" + name + "' to the shared folder " + DateTime.Now.ToString("HH:mm:ss");
-        }
-
-        private void LoadShared(string name)
-        {
-            TerrainSettingsPreset preset = SharedPresets.TryLoad(name);
-            if (preset == null || Current == null)
-            {
-                _status = "Could not read '" + name + "'";
-                return;
-            }
-
-            Apply(preset);
-            SetCurrent(name);
-            _status = "Loaded '" + name + "'";
-        }
-
-        private static string NextFreeName(string baseName)
-        {
-            for (int number = 2; ; number++)
-            {
-                string candidate = baseName + " " + number;
-                if (!SharedPresets.Exists(candidate))
-                    return candidate;
-            }
         }
         #endregion
     }

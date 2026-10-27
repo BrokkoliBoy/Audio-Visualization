@@ -121,7 +121,7 @@ namespace Gavi
             }
         }
 
-        private void ImportPresetsFromJson()
+        public void ImportPresetsFromJson()
         {
             try
             {

@@ -425,6 +425,18 @@ namespace Gavi
             ApplyBloom();
         }
 
+        /// <summary>Reads the palette files again (the folder changed). The colors on the terrain stay; a palette that the new folder lacks becomes Custom.</summary>
+        public void ReloadPalettes()
+        {
+            _palettes = TerrainColorPaletteStore.LoadAll();
+            if (_baseName != null && FindPalette(_baseName) == null)
+            {
+                _baseName = null;
+                _modified = false;
+            }
+            RebuildDropdown();
+        }
+
         private void RebuildDropdown()
         {
             _rebuildPending = false;

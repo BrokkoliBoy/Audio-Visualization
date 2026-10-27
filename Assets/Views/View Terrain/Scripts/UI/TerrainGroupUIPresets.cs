@@ -150,6 +150,38 @@ namespace Gavi
                 TerrainSettingsPresetManager.Instance.ExportPresetsFromJson(preset);
         }
 
+        /// <summary>
+        /// Reads the preset and palette files again, for when the folder they come from changed (debug window). The setup on the terrain stays as it
+        /// is. The dropdown shows the preset of the same name; when the new folder has none, an unsaved copy of the setup under that name, so Save
+        /// never overwrites a different preset.
+        /// </summary>
+        public void ReloadPresets()
+        {
+            CurrentPreset.ExtractPresetFromUI();
+            string shown = _baselineName;
+            _presets.Clear();
+            _dropdownPreset.options.Clear();
+            TerrainSettingsPresetManager.Instance.ImportPresetsFromJson();
+
+            int index = _presets.FindIndex(p => p.Name == shown);
+            if (index < 0 && !string.IsNullOrEmpty(shown))
+            {
+                TerrainSettingsPreset copy = new TerrainSettingsPreset();
+                copy.CopyFromPreset(CurrentPreset);
+                copy.Name = shown;
+                AddPreset(copy, false);
+                index = _presets.Count - 1;
+            }
+            _dropdownPreset.SetValueWithoutNotify(Mathf.Max(index, 0));
+            _dropdownPreset.RefreshShownValue();
+
+            foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
+            {
+                if (group is TerrainColorGroupUI colors)
+                    colors.ReloadPalettes();
+            }
+        }
+
         /// <summary>Loads the preset of the last session (the first one if there is none), so the start state is what the dropdown shows.</summary>
         public void LoadStartPreset()
         {
