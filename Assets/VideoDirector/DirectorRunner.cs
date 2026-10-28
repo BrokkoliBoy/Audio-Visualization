@@ -234,11 +234,14 @@ namespace Gavi.VideoDirector
             _pending.AddRange(timeline.Events);
             _pending.Sort((a, b) => a.Beat.CompareTo(b.Beat));
             _lastEvent = "";
-            if (startBeat > 0.01f)
+            // the take starts at the StartBeat of the timeline, a jump can only go later than that
+            float seekBeat = Mathf.Max(startBeat, timeline.StartBeat);
+            if (seekBeat > 0.01f)
             {
-                if (SeekSong(startBeat))
-                    CatchUp(startBeat);
-                _lastEvent = "Jump to beat " + startBeat.ToString("0.0");
+                if (SeekSong(seekBeat))
+                    CatchUp(seekBeat);
+                if (startBeat > timeline.StartBeat + 0.01f)
+                    _lastEvent = "Jump to beat " + startBeat.ToString("0.0");
             }
             _clock.Reset();
             _overlay.StartTake(timeline.EndBeat);
@@ -372,6 +375,7 @@ namespace Gavi.VideoDirector
         private void EndTake()
         {
             _state = State.Idle;
+            AudioListener.volume = 1f;
             _pending.Clear();
             _active.Clear();
             Cursor.visible = true;

@@ -8,19 +8,25 @@ namespace Gavi.VideoDirector
     /// </summary>
     public static class HeroVideoTimeline
     {
+        /// <summary>Third song of the player (DEAFKEV, 100 BPM). The app starts with it on this branch (<see cref="DirectorSong"/>), the take plays it.</summary>
+        public const string SongName = "Invincible";
+
         public static DirectorTimeline Build()
         {
             DirectorTimeline take = new DirectorTimeline("Hero video")
             {
-                // Song = "In Motion",
+                Song = SongName,
+                StartBeat = 8f,                            // the song starts here: the slow first 8 beats are left out, the drop (beat 18.5) comes 10.5 beats into the take
                 EndBeat = 68f
             };
 
             take.StartBlack()
+                .StartMute()
                 .StartMenu(false)
                 .StartWith("Video Spacewarp");
 
-            take.Fade(0f, 4f, 0f)                          // fade in from black, one bar
+            take.Fade(8f, 4f, 0f)                          // fade in from black, one bar
+                .Volume(8f, 8f, 1f, Ease.In)               // the music comes up from mute to full, slowly at first, and is at full volume shortly before the drop
                 .Morph(20f, 8f, "Video Ocean")             // Spacewarp glides into Ocean, patterns and mesh detail switch at beat 24
                 .Bump("TerrainHeight", 0.2f)               // terrain sinks almost flat while that happens
                 .Bump("MorphAmount", 0f, 0.5f)             // the twist is fully unwound at the switch, then the flag grows from 0 to Ocean's amount

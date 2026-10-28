@@ -11,6 +11,8 @@ namespace Gavi.VideoDirector
         public string Name;
         /// <summary>Part of the name of the song object to play ("In Motion"). Empty = the song that plays now, from the start.</summary>
         public string Song = "";
+        /// <summary>The take starts here: the song is put at this beat when it starts, so a slow beginning of the song can be left out. Events stay at the beats of the song.</summary>
+        public float StartBeat;
         /// <summary>The take ends at this beat.</summary>
         public float EndBeat;
 
@@ -22,6 +24,8 @@ namespace Gavi.VideoDirector
         #region Before the song
         public DirectorTimeline StartWith(string preset) { Preroll.Add(new CutEvent(preset)); return this; }
         public DirectorTimeline StartBlack() { Preroll.Add(new FadeEvent(1f)); return this; }
+        /// <summary>The output is mute when the song starts, so <see cref="Volume"/> can fade it in.</summary>
+        public DirectorTimeline StartMute() { Preroll.Add(new VolumeEvent(0f)); return this; }
         public DirectorTimeline StartMenu(bool open) { Preroll.Add(new MenuEvent(open)); return this; }
         public DirectorTimeline StartSet(string path, object value) { Preroll.Add(new SetEvent(path, value)); return this; }
         #endregion
@@ -83,6 +87,12 @@ namespace Gavi.VideoDirector
             return Add(new FadeEvent(to), beat, beats, ease);
         }
 
+        /// <summary>Fades the music to a volume (0 = mute, 1 = full), e.g. <c>Volume(8, 8, 1, Ease.In)</c> after <see cref="StartMute"/>.</summary>
+        public DirectorTimeline Volume(float beat, float beats, float to, Ease ease = Ease.Smooth)
+        {
+            return Add(new VolumeEvent(to), beat, beats, ease);
+        }
+
         /// <summary>Camera to a pose: yaw and pitch in degrees, scale = distance as a multiple of the start distance (below 1 = closer).</summary>
         public DirectorTimeline Camera(float beat, float beats, float yaw, float pitch, float scale, Ease ease = Ease.Smooth)
         {
@@ -92,17 +102,17 @@ namespace Gavi.VideoDirector
 
 
         /// <summary>
-        /// The beats the jump keys (F6 / F7) go to: the start of the take and <paramref name="leadBeats"/> before every change of the picture
+        /// The beats the jump keys (F6 / F7) go to: the start of the take (<see cref="StartBeat"/>) and <paramref name="leadBeats"/> before every change of the picture
         /// (Cut, Morph, fade to black), so a transition can be watched again without playing the take from the start.
         /// </summary>
         public List<float> JumpPoints(float leadBeats = 4f)
         {
-            List<float> points = new List<float> { 0f };
+            List<float> points = new List<float> { StartBeat };
             foreach (DirectorEvent e in Events)
             {
                 bool change = e is CutEvent || e is MorphEvent || (e is FadeEvent fade && fade.To >= 0.5f);
                 float beat = e.Beat - leadBeats;
-                if (change && beat > 0.5f && !points.Exists(p => UnityEngine.Mathf.Abs(p - beat) < 1f))
+                if (change && beat > StartBeat + 0.5f && !points.Exists(p => UnityEngine.Mathf.Abs(p - beat) < 1f))
                     points.Add(beat);
             }
             points.Sort();

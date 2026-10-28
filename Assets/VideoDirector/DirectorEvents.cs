@@ -202,6 +202,21 @@ namespace Gavi.VideoDirector
         public override void Tick(DirectorContext context, float t) { context.Fade.Alpha = Mathf.Lerp(_from, _to, t); }
     }
 
+    /// <summary>
+    /// Fades the volume of the whole output (<c>AudioListener.volume</c>, 0 = mute, 1 = full). The volume slider of the player and the spectrum
+    /// that drives the picture are not touched; the Runner puts it back to 1 when the take ends.
+    /// </summary>
+    public class VolumeEvent : DirectorEvent
+    {
+        private readonly float _to;
+        private float _from;
+        public VolumeEvent(float to) { _to = to; }
+        public override string Describe() => "Volume to " + _to.ToString("0.00") + " over " + Duration + " beats";
+
+        public override void Begin(DirectorContext context) { _from = AudioListener.volume; }
+        public override void Tick(DirectorContext context, float t) { AudioListener.volume = Mathf.Lerp(_from, _to, t); }
+    }
+
     /// <summary>Moves the camera to a pose, see <see cref="DirectorCamera.Pose"/>: yaw and pitch in degrees, scale = distance as a multiple of the start distance.</summary>
     public class CameraEvent : DirectorEvent
     {
