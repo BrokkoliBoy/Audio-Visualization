@@ -42,6 +42,61 @@ namespace Gavi.VideoDirector
         }
 
         /// <summary>
+        /// A morph that starts <paramref name="gapBeats"/> after the END of the morph before it, so moving or shortening the first one moves the second with it.
+        /// </summary>
+        public DirectorTimeline MorphAfter(float gapBeats, float beats, string preset, float switchAt = 0.5f, Ease ease = Ease.Smooth)
+        {
+            float end = 0f;
+            foreach (DirectorEvent e in Events)
+            {
+                if (e is MorphEvent)
+                    end = e.Beat + e.Duration;
+            }
+            if (end <= 0f)
+                UnityEngine.Debug.LogWarning("[Director] MorphAfter needs a Morph before it, it starts at beat " + gapBeats + ".");
+            return Morph(end + gapBeats, beats, preset, switchAt, ease);
+        }
+
+        /// <summary>
+        /// A morph that starts <paramref name="offsetBeats"/> after the START of the morph before it (e.g. every 4 beats, on the bar), so moving the first one moves
+        /// the second with it. Warns when the first one is still running at that beat, two morphs at once would fight over the same values.
+        /// </summary>
+        public DirectorTimeline MorphFromStart(float offsetBeats, float beats, string preset, float switchAt = 0.5f, Ease ease = Ease.Smooth)
+        {
+            float start = 0f, end = 0f;
+            foreach (DirectorEvent e in Events)
+            {
+                if (e is MorphEvent)
+                {
+                    start = e.Beat;
+                    end = e.Beat + e.Duration;
+                }
+            }
+            if (end <= 0f)
+                UnityEngine.Debug.LogWarning("[Director] MorphFromStart needs a Morph before it, it starts at beat " + offsetBeats + ".");
+            else if (start + offsetBeats < end)
+                UnityEngine.Debug.LogWarning("[Director] The morph into " + preset + " starts at beat " + (start + offsetBeats) + " while the one before it runs until beat " + end + ".");
+            return Morph(start + offsetBeats, beats, preset, switchAt, ease);
+        }
+
+        /// <summary>
+        /// For the morph just added: the part after the switch takes only <paramref name="share"/> of its time (0.5 = half). The morph gets shorter by that;
+        /// what happens before the switch stays as it was.
+        /// </summary>
+        public DirectorTimeline AfterSwitchTime(float share)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
+            {
+                share = UnityEngine.Mathf.Clamp(share, 0.05f, 1f);
+                morph.Duration *= morph.SwitchAt + (1f - morph.SwitchAt) * share;
+                morph.AfterTimeShare = share;
+            }
+            else
+                UnityEngine.Debug.LogWarning("[Director] AfterSwitchTime needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>
         /// For the morph just added: a number moves to <paramref name="peak"/> around the switch and back, so the jump of the patterns and the mesh detail is hidden.
         /// <c>.Bump("TerrainHeight", 0.2f)</c> sinks the terrain, <c>.Bump("PerlinSpeedY", -10f)</c> speeds the scroll up.
         /// </summary>
@@ -108,12 +163,17 @@ namespace Gavi.VideoDirector
         public List<float> JumpPoints(float leadBeats = 4f)
         {
             List<float> points = new List<float> { StartBeat };
+            float previousEnd = 0f;
             foreach (DirectorEvent e in Events)
             {
                 bool change = e is CutEvent || e is MorphEvent || (e is FadeEvent fade && fade.To >= 0.5f);
-                float beat = e.Beat - leadBeats;
-                if (change && beat > StartBeat + 0.5f && !points.Exists(p => UnityEngine.Mathf.Abs(p - beat) < 1f))
+                // not before the end of the change before it (plus half a beat), so a jump never lands inside the animation of the previous transition
+                // and if that leaves less than a beat before the change (they follow each other directly), the change has no point of its own
+                float beat = UnityEngine.Mathf.Max(e.Beat - leadBeats, change && previousEnd > 0f ? previousEnd + 0.5f : 0f);
+                if (change && beat < e.Beat - 1f && beat > StartBeat + 0.5f && !points.Exists(p => UnityEngine.Mathf.Abs(p - beat) < 1f))
                     points.Add(beat);
+                if (change)
+                    previousEnd = e.Beat + e.Duration;
             }
             points.Sort();
             return points;

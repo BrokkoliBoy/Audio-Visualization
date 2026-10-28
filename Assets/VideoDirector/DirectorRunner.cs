@@ -280,7 +280,7 @@ namespace Gavi.VideoDirector
                 if (unfinished)
                 {
                     float progress = (beat - skipped.Beat) / skipped.Duration;
-                    TryRun(skipped, () => skipped.Tick(_context, DirectorEvent.Apply(skipped.Ease, progress)));
+                    TryRun(skipped, () => skipped.Tick(_context, skipped.Evaluate(progress)));
                     _active.Add(skipped);
                 }
                 else
@@ -409,7 +409,7 @@ namespace Gavi.VideoDirector
                 DirectorEvent running = _active[i];
                 float progress = (beat - running.Beat) / running.Duration;
                 bool done = progress >= 1f;
-                TryRun(running, () => running.Tick(_context, DirectorEvent.Apply(running.Ease, progress)));
+                TryRun(running, () => running.Tick(_context, running.Evaluate(progress)));
                 if (done)
                 {
                     TryRun(running, () => { running.Tick(_context, 1f); running.End(_context); });

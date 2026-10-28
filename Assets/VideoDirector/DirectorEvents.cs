@@ -42,6 +42,9 @@ namespace Gavi.VideoDirector
         public virtual void Tick(DirectorContext context, float t) { }
         public virtual void End(DirectorContext context) { }
 
+        /// <summary>Turns the progress of the event in time (0 to 1) into the value handed to Tick. Normally just the ease.</summary>
+        public virtual float Evaluate(float progress) { return Apply(Ease, progress); }
+
         public static float Apply(Ease ease, float t)
         {
             t = Mathf.Clamp01(t);
@@ -94,6 +97,12 @@ namespace Gavi.VideoDirector
         /// <summary>Own switch point for the mesh morph shape (share of the morph, below 0 = it switches at <see cref="SwitchAt"/> like the rest). The generator then glides to the new shape over <see cref="ShapeBlendSeconds"/>.</summary>
         public float ShapeAt = -1f;
         public float ShapeBlendSeconds = TerrainGenerator.DefaultMorphBlendSeconds;
+        /// <summary>
+        /// Share of its normal time the part after the switch takes (1 = as long as the part before, 0.5 = half the time). The glide of the part before
+        /// and the shape of the curve stay the same, only the way from the switch to the end is run through faster. <see cref="DirectorEvent.Duration"/> already
+        /// holds the shortened length (set by <see cref="DirectorTimeline.AfterSwitchTime"/>).
+        /// </summary>
+        public float AfterTimeShare = 1f;
         public readonly System.Collections.Generic.List<MorphBump> Bumps = new System.Collections.Generic.List<MorphBump>();
 
         private readonly string _preset;
@@ -101,6 +110,20 @@ namespace Gavi.VideoDirector
 
         public MorphEvent(string preset) { _preset = preset; }
         public override string Describe() => "Morph into " + _preset + " over " + Duration + " beats";
+
+        /// <summary>Time to progress: the part before the switch keeps its pace, the part after it is run through in <see cref="AfterTimeShare"/> of the time.</summary>
+        public override float Evaluate(float progress)
+        {
+            if (AfterTimeShare >= 0.999f)
+                return base.Evaluate(progress);
+
+            float switchProgress = SwitchAt / (SwitchAt + (1f - SwitchAt) * AfterTimeShare);
+            progress = Mathf.Clamp01(progress);
+            float raw = progress <= switchProgress
+                ? progress / switchProgress * SwitchAt
+                : SwitchAt + (progress - switchProgress) / (1f - switchProgress) * (1f - SwitchAt);
+            return Apply(Ease, raw);
+        }
 
         public override void Begin(DirectorContext context)
         {

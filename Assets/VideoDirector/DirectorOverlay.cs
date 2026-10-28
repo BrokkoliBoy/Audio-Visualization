@@ -238,7 +238,7 @@ namespace Gavi.VideoDirector
             for (int i = 0; i < 20; i++)
             {
                 float mid = (low + high) * 0.5f;
-                if (DirectorEvent.Apply(morph.Ease, mid) >= morph.SwitchAt)
+                if (morph.Evaluate(mid) >= morph.SwitchAt)
                     high = mid;
                 else
                     low = mid;

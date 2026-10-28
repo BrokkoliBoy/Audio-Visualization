@@ -15,7 +15,7 @@ namespace Gavi.VideoDirector
         private static void Create()
         {
             DirectorSdr.SwitchOffHdrOnStart();
-            DirectorSong.SelectStartSong(HeroVideoTimeline.SongName);            // Runs before the Start of the menu, which loads the preset of the last session: this makes it the start preset.
+            // Runs before the Start of the menu, which loads the preset of the last session: this makes it the start preset.
             PlayerPrefs.SetString(LastPresetKey, StartPreset);
             if (DirectorRunner.Instance != null)
                 return;
