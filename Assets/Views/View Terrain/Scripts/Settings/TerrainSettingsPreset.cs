@@ -119,6 +119,7 @@ namespace Gavi
         [Tooltip("TerrainGenerator.MorphShape: 1 = Dome, 2 = Planet, 3 = Tube, 5 = Pringle, 6 = Flag, 7 = Twist. Other numbers (removed shapes) give the dome.")]
         public int MorphShape = (int)TerrainGenerator.MorphShape.Planet;
         public float MorphAmount = 0.5f;
+        public float MorphBlendSeconds = TerrainGenerator.DefaultMorphBlendSeconds;
         [Header("- Morph motion -")]
         public float MotionBeat = 0f;
         public float MotionAttack = TerrainGenerator.DefaultMotionAttack;
@@ -240,6 +241,7 @@ namespace Gavi
             ApplyMorph = preset.ApplyMorph;
             MorphShape = preset.MorphShape;
             MorphAmount = preset.MorphAmount;
+            MorphBlendSeconds = preset.MorphBlendSeconds;
             MotionBeat = preset.MotionBeat;
             MotionAttack = preset.MotionAttack;
             MotionRelease = preset.MotionRelease;
@@ -334,6 +336,7 @@ namespace Gavi
             ApplyMorph = terrain.ApplyMorph;
             MorphShape = terrain.Morph;
             MorphAmount = terrain.MorphAmount;
+            MorphBlendSeconds = terrain.MorphBlendSeconds;
             MotionBeat = terrain.MotionBeat;
             MotionAttack = terrain.MotionAttack;
             MotionRelease = terrain.MotionRelease;
@@ -440,6 +443,7 @@ namespace Gavi
             terrain.ApplyMorph = ApplyMorph;
             terrain.Morph = MorphShape;
             terrain.MorphAmount = MorphAmount;
+            terrain.MorphBlendSeconds = MorphBlendSeconds;
             terrain.MotionBeat = MotionBeat;
             terrain.MotionAttack = MotionAttack;
             terrain.MotionRelease = MotionRelease;

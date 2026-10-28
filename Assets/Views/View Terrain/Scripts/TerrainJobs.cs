@@ -491,16 +491,30 @@ namespace Gavi
         public float CenterX;
         public float CenterZ;
         public float Seconds;
+        /// <summary>While the shape changes: the old shape (0 = none), its amount and lift. <see cref="Blend"/> 0 shows only the old one, 1 only the new one.</summary>
+        public int FromShape;
+        public float FromAmount;
+        public float FromLift;
+        public float Blend;
         [ReadOnly] public NativeArray<Vector3> Flat;
         [WriteOnly] public NativeArray<Vector3> Bent;
 
         public void Execute(int i)
         {
+            Vector3 flat = Flat[i];
+            Vector3 bent = Bend(flat, Shape, Amount, Lift);
+            // the positions of both shapes are mixed, so a change of the shape glides instead of moving every vertex in one frame
+            if (FromShape != 0 && Blend < 1f)
+                bent = Vector3.Lerp(Bend(flat, FromShape, FromAmount, FromLift), bent, Blend);
+            Bent[i] = bent;
+        }
+
+        private Vector3 Bend(Vector3 flat, int shape, float amount, float liftHeight)
+        {
             float planetRadius = Half / PlanetAngle;
             // the tube rolls up further the more the amount grows, its radius shrinks with it so the width stays the same
-            float tubeRadius = Half / (Mathf.Max(Amount, 0.0005f) * TubeAngle);
+            float tubeRadius = Half / (Mathf.Max(amount, 0.0005f) * TubeAngle);
 
-            Vector3 flat = Flat[i];
             float dx = flat.x - CenterX;
             float dz = flat.z - CenterZ;
             float u = dx / Half;
@@ -508,20 +522,20 @@ namespace Gavi
             float h = flat.y;
             Vector3 bent = flat;
 
-            switch ((TerrainGenerator.MorphShape)Shape)
+            switch ((TerrainGenerator.MorphShape)shape)
             {
                 case TerrainGenerator.MorphShape.Dome:
-                    bent.y = h + Amount * BendHeight * Half * (1f - (u * u + v * v));
+                    bent.y = h + amount * BendHeight * Half * (1f - (u * u + v * v));
                     break;
                 case TerrainGenerator.MorphShape.Pringle:
-                    bent.y = h + Amount * PringleHeight * Half * (u * u - v * v);
+                    bent.y = h + amount * PringleHeight * Half * (u * u - v * v);
                     break;
                 case TerrainGenerator.MorphShape.Flag:
-                    bent.y = h + Amount * FlagHeight * Half * Mathf.Sin(u * 5f + v * 2.5f - Seconds * 2.5f);
+                    bent.y = h + amount * FlagHeight * Half * Mathf.Sin(u * 5f + v * 2.5f - Seconds * 2.5f);
                     break;
                 case TerrainGenerator.MorphShape.Twist:
                 {
-                    float angle = Amount * TwistAngle * Mathf.Sqrt(u * u + v * v);
+                    float angle = amount * TwistAngle * Mathf.Sqrt(u * u + v * v);
                     float sin = Mathf.Sin(angle), cos = Mathf.Cos(angle);
                     bent.x = CenterX + dx * cos - dz * sin;
                     bent.z = CenterZ + dx * sin + dz * cos;
@@ -535,17 +549,17 @@ namespace Gavi
                     float ring = (planetRadius + h) * Mathf.Sin(angle);
                     float lift = (planetRadius + h) * Mathf.Cos(angle) - planetRadius;
                     float scale = r > 0.0001f ? ring / (r * Half) : 1f;
-                    bent.x = CenterX + Mathf.Lerp(dx, dx * scale, Amount);
-                    bent.z = CenterZ + Mathf.Lerp(dz, dz * scale, Amount);
-                    bent.y = Mathf.Lerp(h, lift, Amount) + Lift;
+                    bent.x = CenterX + Mathf.Lerp(dx, dx * scale, amount);
+                    bent.z = CenterZ + Mathf.Lerp(dz, dz * scale, amount);
+                    bent.y = Mathf.Lerp(h, lift, amount) + liftHeight;
                     break;
                 }
                 case TerrainGenerator.MorphShape.Tube:
                 {
                     // the terrain rolls up along its width, at full amount to a closed tube
-                    float angle = u * Amount * TubeAngle;
+                    float angle = u * amount * TubeAngle;
                     bent.x = CenterX + (tubeRadius + h) * Mathf.Sin(angle);
-                    bent.y = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius + Lift;
+                    bent.y = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius + liftHeight;
                     break;
                 }
                 case TerrainGenerator.MorphShape.Pillar:
@@ -553,22 +567,22 @@ namespace Gavi
                     // the tube of above, which then stands up: the depth of the terrain becomes the height of the pillar (the near edge,
                     // where the bass is, ends up at the bottom), the roll becomes the round of the pillar, the height of the terrain
                     // becomes the distance from its axis. The stand-up turn is around the top of the tube, so nothing jumps at amount 0.
-                    float angle = u * Amount * TubeAngle;
+                    float angle = u * amount * TubeAngle;
                     float tubeX = (tubeRadius + h) * Mathf.Sin(angle);
                     float tubeY = (tubeRadius + h) * Mathf.Cos(angle) - tubeRadius;
-                    float stand = Amount * 0.5f * Mathf.PI;
+                    float stand = amount * 0.5f * Mathf.PI;
                     float sin = Mathf.Sin(stand), cos = Mathf.Cos(stand);
                     // at full amount the tube has the radius Half / PI, the axis is moved into the middle of the terrain by that
                     float axis = Half / Mathf.PI * sin;
                     // the whole thing shrinks with the amount, so the standing column fits on the screen at the start zoom
-                    float fit = Mathf.Lerp(1f, PillarFit, Amount);
+                    float fit = Mathf.Lerp(1f, PillarFit, amount);
                     bent.x = CenterX + tubeX * fit;
                     bent.y = (tubeY * cos + dz * sin) * fit;
                     bent.z = CenterZ + (dz * cos - tubeY * sin - axis) * fit;
                     break;
                 }
             }
-            Bent[i] = bent;
+            return bent;
         }
     }
 }

@@ -188,6 +188,11 @@ namespace Gavi
         [Range(0, 1)]
         [SerializeField] private float _morphAmount = 0.5f;
         public float MorphAmount { get => _morphAmount; set => _morphAmount = Mathf.Clamp01(value); }
+        [Tooltip("Seconds the old shape takes to change into a new one (the vertices glide between the two bends). 0 = the shape jumps.")]
+        [Range(0f, 5f)]
+        [SerializeField] private float _morphBlendSeconds = DefaultMorphBlendSeconds;
+        public const float DefaultMorphBlendSeconds = 1f;
+        public float MorphBlendSeconds { get => _morphBlendSeconds; set => _morphBlendSeconds = Mathf.Clamp(value, 0f, 5f); }
 
         [Header("--- Morph motion ---")]
         [Tooltip("How much the amount rises on every beat (added to the amount). 0 = off.")]
@@ -1382,6 +1387,7 @@ namespace Gavi
                 _morphLift = 0f;
                 // the lift starts in place the next time the morph is on (no shape is nothing the morph can have)
                 _liftShape = (MorphShape)0;
+                _blendFromShape = (MorphShape)0;
                 return false;
             }
 
@@ -1391,16 +1397,32 @@ namespace Gavi
             // a new shape starts with its lift in place, only changes of the amount glide
             if (_morphShape != _liftShape)
             {
+                // the old shape stays in the picture and glides out; the first shape after "off" starts at once
+                bool blend = _liftShape != 0 && _morphBlendSeconds > 0.01f;
+                _blendFromShape = blend ? _liftShape : (MorphShape)0;
+                _blendFromLift = _morphLift;
+                _blendProgress = 0f;
                 _liftShape = _morphShape;
                 _morphLift = liftTarget;
             }
             else
                 _morphLift = Mathf.Lerp(_morphLift, liftTarget, 1f - Mathf.Exp(-MorphLiftSmoothing * Time.unscaledDeltaTime));
+
+            if (_blendFromShape != 0)
+            {
+                _blendProgress += Time.unscaledDeltaTime / Mathf.Max(0.01f, _morphBlendSeconds);
+                if (_blendProgress >= 1f)
+                    _blendFromShape = (MorphShape)0;
+            }
             var job = new TerrainMorphJob
             {
                 Shape = (int)_morphShape,
                 Amount = amount,
                 Lift = _morphLift,
+                FromShape = (int)_blendFromShape,
+                FromAmount = Mathf.Max(amount, _blendFromShape == MorphShape.Twist ? -1f : 0f),
+                FromLift = _blendFromLift,
+                Blend = Mathf.SmoothStep(0f, 1f, _blendProgress),
                 Half = half,
                 CenterX = _terrainSizeX * 0.5f,
                 CenterZ = _terrainSizeZ * 0.5f,
@@ -1422,6 +1444,10 @@ namespace Gavi
         private const float MorphLiftRest = 0.002f;
         private float _morphLift;
         private MorphShape _liftShape;
+        // while the shape changes: the shape that glides out (0 = none), its lift and how far the change is (0..1)
+        private MorphShape _blendFromShape;
+        private float _blendFromLift;
+        private float _blendProgress;
 
         /// <summary>How far the bent mesh is lifted, in local units of the terrain.</summary>
         private float MorphLiftTarget()
