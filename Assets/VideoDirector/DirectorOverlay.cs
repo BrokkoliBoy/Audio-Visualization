@@ -175,7 +175,7 @@ namespace Gavi.VideoDirector
                 Fill(new Rect(headX - 1f, timelineTop, 2f, y - timelineTop), new Color(1f, 0.25f, 0.25f, 0.95f));
             }
 
-            Label(new Rect(x, y + 4f, PanelWidth - 2f * Pad, 16f), "F9 start   F6 / F7 jump (yellow lines)   F5 own jump point   F8 marker   F10 abort   F11 hide      orange = jumps (whole numbers), blue/green = glides", _text, new Color(1f, 1f, 1f, 0.55f));
+            Label(new Rect(x, y + 4f, PanelWidth - 2f * Pad, 16f), "F9 start   F6 / F7 jump (yellow lines)   F8 marker   F10 abort   F11 hide      orange = jumps (whole numbers), blue/green = glides", _text, new Color(1f, 1f, 1f, 0.55f));
 
             GUI.matrix = oldMatrix;
             GUI.color = oldColor;

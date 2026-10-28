@@ -19,10 +19,9 @@ namespace Gavi.VideoDirector
         private const KeyCode AbortKey = KeyCode.F10;
         private const KeyCode InfoKey = KeyCode.F11;
         private const KeyCode MarkKey = KeyCode.F8;
-        private const KeyCode SetJumpKey = KeyCode.F5;
         private const KeyCode PreviousJumpKey = KeyCode.F6;
         private const KeyCode NextJumpKey = KeyCode.F7;
-        private const string JumpMarkerPref = "VideoDirector.JumpMarker";
+        private const string OldJumpMarkerPref = "VideoDirector.JumpMarker";
         /// <summary>F6 within this many seconds after a jump point goes to the one before it (like "previous" in a media player).</summary>
         private const float PreviousGraceSeconds = 1f;
         /// <summary>Time between loading the first preset and the start of the song, so the terrain is built when the picture opens.</summary>
@@ -51,6 +50,8 @@ namespace Gavi.VideoDirector
             Instance = this;
             _context.Fade = new DirectorFade(transform);
             _context.Camera = new DirectorCamera();
+            // the own jump point of the removed F5 key was stored in the player prefs, it is deleted so it does not stay around
+            PlayerPrefs.DeleteKey(OldJumpMarkerPref);
         }
 
         private void Update()
@@ -65,8 +66,6 @@ namespace Gavi.VideoDirector
                     _showInfo = !_showInfo;
                 else if (Input.GetKeyDown(MarkKey))
                     SetMarker();
-                else if (Input.GetKeyDown(SetJumpKey))
-                    SetJumpMarker();
                 else if (Input.GetKeyDown(PreviousJumpKey))
                     JumpStep(-1);
                 else if (Input.GetKeyDown(NextJumpKey))
@@ -128,7 +127,7 @@ namespace Gavi.VideoDirector
                 if (_pending.Count > 0)
                     text += "\nNEXT   " + _pending[0].Describe() + "   at beat " + _pending[0].Beat + "   (in " + ((_pending[0].Beat - beat) * _clock.SecondsPerBeat).ToString("0.0") + " s)";
                 text += "\nLAST   " + _lastEvent;
-                text += "\n" + Values() + "\nF8 = marker (screenshot + values to the log folder), F6 / F7 = jump, F5 = own jump point, F10 = abort";
+                text += "\n" + Values() + "\nF8 = marker (screenshot + values to the log folder), F6 / F7 = jump, F10 = abort";
             }
             else if (_state == State.Idle)
                 text += "   F9 start, F6 / F7 jump, F10 abort, F11 hide";
@@ -287,34 +286,12 @@ namespace Gavi.VideoDirector
         }
 
         #region Jump points
-        /// <summary>The beats F6 / F7 go to: the automatic ones of the timeline and the own one of F5, in order.</summary>
+        /// <summary>The beats F6 / F7 go to: the start and one bar before every change of the picture, see <see cref="DirectorTimeline.JumpPoints"/>.</summary>
         private List<float> JumpBeats()
         {
             if (_timeline == null)
                 _timeline = HeroVideoTimeline.Build();
-            List<float> points = _timeline.JumpPoints();
-            if (PlayerPrefs.HasKey(JumpMarkerPref))
-            {
-                float own = PlayerPrefs.GetFloat(JumpMarkerPref);
-                if (!points.Exists(p => Mathf.Abs(p - own) < 0.5f))
-                    points.Add(own);
-            }
-            points.Sort();
-            return points;
-        }
-
-        /// <summary>F5: the beat that plays now becomes a jump point of its own. It is remembered across takes and restarts of the game.</summary>
-        private void SetJumpMarker()
-        {
-            if (_state != State.Running || !_clock.IsValid)
-            {
-                _lastEvent = "Own jump point: only while a take runs";
-                return;
-            }
-            float beat = Mathf.Max(0f, _clock.Beat);
-            PlayerPrefs.SetFloat(JumpMarkerPref, beat);
-            PlayerPrefs.Save();
-            _lastEvent = "Own jump point at beat " + beat.ToString("0.0");
+            return _timeline.JumpPoints();
         }
 
         /// <summary>F6 / F7: jumps to the previous / next jump point. Without a running take F7 starts at the first one after the start.</summary>

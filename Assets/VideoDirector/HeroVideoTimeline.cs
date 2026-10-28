@@ -23,7 +23,15 @@ namespace Gavi.VideoDirector
             take.Fade(0f, 4f, 0f)                          // fade in from black, one bar
                 .Morph(20f, 8f, "Video Ocean")             // Spacewarp glides into Ocean, patterns and mesh detail switch at beat 24
                 .Bump("TerrainHeight", 0.2f)               // terrain sinks almost flat while that happens
+                .Bump("MorphAmount", 0f, 0.5f)             // the twist is fully unwound at the switch, then the flag grows from 0 to Ocean's amount
+                .Bump("MotionWaveDepth", 0f, 0.5f)        // the slow swing (swing size) goes to 0 at the switch and then to the value of Ocean
+                .Bump("ColorPatternHue", 0f, 0.5f, false, 0.15f, 3.5f)   // the colors that follow the pattern go out at the switch (they would jump with it):
+                .Bump("ColorBandHue", 0f, 0.5f, false, 0.15f, 3.5f)      // slowly down from the start of the morph (4 beats), steep at the switch, back up in 1.2 beats
+                .Bump("ColorPatternGlow", 0f, 0.5f, false, 0.15f, 3.5f)
+                .Bump("FloorShare", 0f, 0.5f, false, 0.15f, 3.5f)        // floor glow
+                .Bump("Shapes[0].Zoom", 0.68f, 0.3f, true)        // the circle of Spacewarp opens up to the whole square, so the corners are not drawn in one frame at the switch
                 .Morph(40f, 8f, "Video Jungle")            // Ocean glides into Jungle, switch at beat 44 (where the cut was)
+                .ShapeStart(1.1f, 3.1f)                    // but the flag turns into the pillar already 0.5 s after the start and glides for 3.1 s (until the end of the morph)
                 .Bump("TerrainHeight", 0.2f)
                 .Fade(60f, 6f, 1f);                        // fade out to black
 

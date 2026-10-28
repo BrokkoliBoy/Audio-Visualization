@@ -41,12 +41,28 @@ namespace Gavi.VideoDirector
         /// For the morph just added: a number moves to <paramref name="peak"/> around the switch and back, so the jump of the patterns and the mesh detail is hidden.
         /// <c>.Bump("TerrainHeight", 0.2f)</c> sinks the terrain, <c>.Bump("PerlinSpeedY", -10f)</c> speeds the scroll up.
         /// </summary>
-        public DirectorTimeline Bump(string path, float peak, float width = 0.3f)
+        public DirectorTimeline Bump(string path, float peak, float width = 0.3f, bool rampOnly = false, float widthAfter = 0f, float sharpness = 0f)
         {
             if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
-                morph.Bumps.Add(new MorphBump { Path = path, Peak = peak, Width = width });
+                morph.Bumps.Add(new MorphBump { Path = path, Peak = peak, Width = width, RampOnly = rampOnly, WidthAfter = widthAfter, Sharpness = sharpness });
             else
                 UnityEngine.Debug.LogWarning("[Director] Bump " + path + " needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>
+        /// For the morph just added: the mesh morph shape (twist, flag, pillar...) starts to change <paramref name="afterBeats"/> after the start of the morph
+        /// instead of at the switch, and glides over <paramref name="blendSeconds"/> seconds (the generator's own glide, default 1 s). Everything else still switches at the middle.
+        /// </summary>
+        public DirectorTimeline ShapeStart(float afterBeats, float blendSeconds)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph && morph.Duration > 0.01f)
+            {
+                morph.ShapeAt = UnityEngine.Mathf.Clamp01(afterBeats / morph.Duration);
+                morph.ShapeBlendSeconds = blendSeconds;
+            }
+            else
+                UnityEngine.Debug.LogWarning("[Director] ShapeStart needs a Morph right before it and was skipped.");
             return this;
         }
 

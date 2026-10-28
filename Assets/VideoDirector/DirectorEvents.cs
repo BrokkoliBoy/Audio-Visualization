@@ -76,6 +76,12 @@ namespace Gavi.VideoDirector
         public float Peak;
         /// <summary>Half width of the bump as a share of the morph (0.3 = from 0.2 to 0.8 when the switch is at 0.5).</summary>
         public float Width;
+        /// <summary>Only the way up counts: at the switch the number snaps back to the glide of the morph (the new preset's own value), it does not glide back.</summary>
+        public bool RampOnly;
+        /// <summary>Half width after the switch as a share of the morph; 0 or less = same as <see cref="Width"/>. A shorter one makes the way back faster than the way down.</summary>
+        public float WidthAfter;
+        /// <summary>0 = smooth bump. Above 0 the bump is a pointed dip: slow start, steep end at the switch, steep start after it, slow tail (the share to the power of this number).</summary>
+        public float Sharpness;
     }
 
     /// <summary>
@@ -85,6 +91,9 @@ namespace Gavi.VideoDirector
     public class MorphEvent : DirectorEvent
     {
         public float SwitchAt = 0.5f;
+        /// <summary>Own switch point for the mesh morph shape (share of the morph, below 0 = it switches at <see cref="SwitchAt"/> like the rest). The generator then glides to the new shape over <see cref="ShapeBlendSeconds"/>.</summary>
+        public float ShapeAt = -1f;
+        public float ShapeBlendSeconds = TerrainGenerator.DefaultMorphBlendSeconds;
         public readonly System.Collections.Generic.List<MorphBump> Bumps = new System.Collections.Generic.List<MorphBump>();
 
         private readonly string _preset;
@@ -103,10 +112,18 @@ namespace Gavi.VideoDirector
         public override void Tick(DirectorContext context, float t)
         {
             PresetBlender.Blend(_from, _to, _scratch, t, t >= SwitchAt);
+            if (ShapeAt >= 0f)
+            {
+                _scratch.MorphShape = t >= ShapeAt ? _to.MorphShape : _from.MorphShape;
+                _scratch.MorphBlendSeconds = ShapeBlendSeconds;
+            }
             foreach (MorphBump bump in Bumps)
             {
-                float k = Mathf.Clamp01(1f - Mathf.Abs(t - SwitchAt) / Mathf.Max(0.01f, bump.Width));
-                k = k * k * (3f - 2f * k);
+                bool after = t >= SwitchAt;
+                float width = after && bump.WidthAfter > 0f ? bump.WidthAfter : bump.Width;
+                float distance = bump.RampOnly && after ? float.PositiveInfinity : Mathf.Abs(t - SwitchAt);
+                float k = Mathf.Clamp01(1f - distance / Mathf.Max(0.01f, width));
+                k = bump.Sharpness > 0f ? Mathf.Pow(k, bump.Sharpness) : k * k * (3f - 2f * k);
                 FieldPath.Set(_scratch, bump.Path, Mathf.Lerp(FieldPath.GetFloat(_scratch, bump.Path), bump.Peak, k));
             }
             context.Current.CopyFromPreset(_scratch);
