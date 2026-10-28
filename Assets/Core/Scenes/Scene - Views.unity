@@ -121632,7 +121632,7 @@ MonoBehaviour:
   - {fileID: 819917774}
   - {fileID: 148223552}
   - {fileID: 1058278750}
-  _audioStartIndex: 0
+  _audioStartIndex: 2
 --- !u!114 &1495652579
 MonoBehaviour:
   m_ObjectHideFlags: 0
