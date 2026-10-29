@@ -30,7 +30,7 @@ namespace Gavi.VideoDirector
 
             take.Fade(4f, 4f, 0f)                          // fade in from black, one bar
                 .Volume(4f, 4f, 1f, Ease.In)               // the music comes up from mute to full within 4 beats, slowly at first
-                .Morph(DropBeat + 4f, 6f, "Video Thunderstorm")  // TRY: Spacewarp glides into Video Thunderstorm (instead of Video Ocean), starts 4 beats after the drop (beat 22.5), patterns and mesh detail switch at beat 25.5, ends at beat 28.5 (3 beats in, 3 beats out, no shortened second half)
+                .Morph(DropBeat + 3f, 6f, "Video Thunderstorm")  // TRY: Spacewarp glides into Video Thunderstorm (instead of Video Ocean), starts 3 beats after the drop (beat 21.5), patterns and mesh detail switch at beat 24.5, ends at beat 27.5 (3 beats in, 3 beats out, no shortened second half)
                 .ShapeStart(0.825f, 2.3f)                  // the mesh morph (Twist to Planet) starts early like at the second transition (same share of the morph, about 0.9 s after the start) and glides for 2.3 s, until about the end of the morph
                 .SnapPatternZoom()                         // the zoom of the patterns switches with the pattern at beat 25.5 (before it keeps the start value); .SnapPatternZoom(true) lets it glide before the switch as a decorative pull
                 .LateGlide("Shapes[0].Zoom")             // the zoom of the audio shape keeps its start value until the switch and only then glides to the zoom of Thunderstorm, so the circle does not shrink and show the undrawn corners in the first half
@@ -40,14 +40,14 @@ namespace Gavi.VideoDirector
                 .Bump("ColorBandHue", 0f, 0.5f, false, 0.15f, 3.5f)      // slowly down from the start of the morph (3 beats), steep at the switch, back up in about 0.9 beats
                 .Bump("ColorPatternGlow", 0f, 0.5f, false, 0.15f, 3.5f)
                 .Bump("FloorShare", 0f, 0.5f, false, 0.15f, 3.5f)        // floor glow
-                .MorphFromStart(7f, 8f, "Video Jungle")    // starts 7 beats after the start of the Ocean morph (beat 29.5, the number the F11 overlay shows), switch at beat 33.5, ends 37.5
-                .StartShape(TerrainShape.AudioShape.Square) // audio shape Circle becomes Square at once when the morph starts (bass stays in the middle, the new corner vertices hide behind the Planet morph), at the switch (beat 33.5) the shape of Jungle follows
-                .SnapPatternZoom()                         // pattern zooms switch with the pattern at beat 33.5
+                .MorphFromStart(9f, 8f, "Video Jungle")    // starts 9 beats after the start of the Thunderstorm morph (beat 30.5, the number the F11 overlay shows), switch at beat 34.5, ends 38.5
+                .StartShape(TerrainShape.AudioShape.Square) // audio shape Circle becomes Square at once when the morph starts (bass stays in the middle, the new corner vertices hide behind the Planet morph), at the switch (beat 34.5) the shape of Jungle follows
+                .SnapPatternZoom()                         // pattern zooms switch with the pattern at beat 34.5
                 .ShapeStart(1.1f, 3.1f)                  // but the flag turns into the pillar already 0.5 s after the start and glides for 3.1 s (until the end of the morph)
                 .Bump("TerrainHeight", 0.2f)
                 .Fade(52f, 6f, 1f);                        // fade out to black
 
-            // Live part after the Jungle transition (ends at beat 37.5): hard cuts on the beat, one change every 2 beats. The rest follows.
+            // Live part after the Jungle transition (ends at beat 38.5): hard cuts on the beat, one change every 2 beats. The rest follows.
             take.Pattern(42.5f, TerrainNoise.Pattern.Checker)       // Tiles becomes Checker
                 .Pattern(44.5f, TerrainNoise.Pattern.Hexagons)
                 .Pattern(46.5f, TerrainNoise.Pattern.Ripples)
