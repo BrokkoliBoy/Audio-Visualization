@@ -110,6 +110,39 @@ namespace Gavi.VideoDirector
         }
 
         /// <summary>
+        /// For the morph just added: a number takes the value of the new preset at once at the switch, like the pattern does. Before the switch it keeps its start value,
+        /// or with <paramref name="glideBefore"/> it still glides towards the new value (a decorative pull) and snaps to it at the switch.
+        /// Needed for the zoom of the patterns: while it glided, the pattern that is already switched ran with a zoom between the two presets (fine grain).
+        /// </summary>
+        public DirectorTimeline SnapAtSwitch(string path, bool glideBefore = false)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
+                morph.Snaps.Add(new MorphSnap { Path = path, GlideBefore = glideBefore });
+            else
+                UnityEngine.Debug.LogWarning("[Director] SnapAtSwitch " + path + " needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>For the morph just added: the zoom of the main pattern and of layers 2 and 3 snap at the switch (see <see cref="SnapAtSwitch"/>).</summary>
+        public DirectorTimeline SnapPatternZoom(bool glideBefore = false)
+        {
+            return SnapAtSwitch("PerlinZoom", glideBefore).SnapAtSwitch("NoiseLayer2.Zoom", glideBefore).SnapAtSwitch("NoiseLayer3.Zoom", glideBefore);
+        }
+
+        /// <summary>
+        /// For the morph just added: a number keeps the value it had at the start until <paramref name="startShare"/> of the morph (default: the switch) and only then
+        /// glides to the value of the preset, reaching it at the end. <c>.LateGlide("Shapes[0].Zoom")</c> keeps the audio shape zoom, so shapes do not shrink while the first half runs.
+        /// </summary>
+        public DirectorTimeline LateGlide(string path, float startShare = -1f)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
+                morph.LateGlides.Add(new MorphLateGlide { Path = path, StartAt = startShare < 0f ? morph.SwitchAt : startShare });
+            else
+                UnityEngine.Debug.LogWarning("[Director] LateGlide " + path + " needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>
         /// For the morph just added: the mesh morph shape (twist, flag, pillar...) starts to change <paramref name="afterBeats"/> after the start of the morph
         /// instead of at the switch, and glides over <paramref name="blendSeconds"/> seconds (the generator's own glide, default 1 s). Everything else still switches at the middle.
         /// </summary>
@@ -122,6 +155,19 @@ namespace Gavi.VideoDirector
             }
             else
                 UnityEngine.Debug.LogWarning("[Director] ShapeStart needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>
+        /// For the morph just added: the first audio shape changes to <paramref name="shape"/> at once when the morph starts (not at the switch), e.g. Circle to Square
+        /// so the undrawn corners appear while the mesh morph hides it, but the bass stays in the middle. At the switch the shape of the target preset follows.
+        /// </summary>
+        public DirectorTimeline StartShape(TerrainShape.AudioShape shape)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
+                morph.StartShape = (int)shape;
+            else
+                UnityEngine.Debug.LogWarning("[Director] StartShape needs a Morph right before it and was skipped.");
             return this;
         }
 

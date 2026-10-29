@@ -91,6 +91,22 @@ namespace Gavi.VideoDirector
         public float Sharpness;
     }
 
+    /// <summary>A number that keeps its start value until a later point of the morph and only then glides to the value of the preset.</summary>
+    public class MorphLateGlide
+    {
+        public string Path;
+        /// <summary>Share of the morph at which the glide starts (0.5 = at the switch). It reaches the value of the preset at the end of the morph.</summary>
+        public float StartAt;
+    }
+
+    /// <summary>A number that belongs to the pattern: it takes the value of the new preset at once at the switch, together with the pattern, instead of gliding.</summary>
+    public class MorphSnap
+    {
+        public string Path;
+        /// <summary>False = the number keeps its start value until the switch. True = it glides as usual before the switch (a decorative move towards the new value) and still snaps to the target at the switch.</summary>
+        public bool GlideBefore;
+    }
+
     /// <summary>
     /// Glides from the current setup into a preset. Fields that cannot glide (patterns, switches, shapes, the detail of the mesh) change at <see cref="SwitchAt"/>.
     /// <see cref="Bumps"/> hide that moment, e.g. the terrain height sinks to almost flat while the patterns change.
@@ -107,7 +123,11 @@ namespace Gavi.VideoDirector
         /// holds the shortened length (set by <see cref="DirectorTimeline.AfterSwitchTime"/>).
         /// </summary>
         public float AfterTimeShare = 1f;
+        /// <summary>Audio shape (<c>TerrainShape.AudioShape</c> as a number) the first shape takes at once when the morph starts, so the bands move to a shape that fits both ends before the shape of the preset comes at the switch. -1 = off.</summary>
+        public int StartShape = -1;
         public readonly System.Collections.Generic.List<MorphBump> Bumps = new System.Collections.Generic.List<MorphBump>();
+        public readonly System.Collections.Generic.List<MorphLateGlide> LateGlides = new System.Collections.Generic.List<MorphLateGlide>();
+        public readonly System.Collections.Generic.List<MorphSnap> Snaps = new System.Collections.Generic.List<MorphSnap>();
 
         private readonly string _preset;
         private TerrainSettingsPreset _from, _to, _scratch;
@@ -132,6 +152,8 @@ namespace Gavi.VideoDirector
         public override void Begin(DirectorContext context)
         {
             _from = context.Snapshot();
+            if (StartShape >= 0 && _from.Shapes.Count > 0)
+                _from.Shapes[0].Shape = StartShape;
             _to = DirectorPresets.Load(_preset);
             _scratch = new TerrainSettingsPreset();
         }
@@ -143,6 +165,18 @@ namespace Gavi.VideoDirector
             {
                 _scratch.MorphShape = t >= ShapeAt ? _to.MorphShape : _from.MorphShape;
                 _scratch.MorphBlendSeconds = ShapeBlendSeconds;
+            }
+            foreach (MorphSnap snap in Snaps)
+            {
+                if (t >= SwitchAt)
+                    FieldPath.Set(_scratch, snap.Path, FieldPath.GetFloat(_to, snap.Path));
+                else if (!snap.GlideBefore)
+                    FieldPath.Set(_scratch, snap.Path, FieldPath.GetFloat(_from, snap.Path));
+            }
+            foreach (MorphLateGlide late in LateGlides)
+            {
+                float k = Mathf.Clamp01((t - late.StartAt) / Mathf.Max(0.01f, 1f - late.StartAt));
+                FieldPath.Set(_scratch, late.Path, Mathf.Lerp(FieldPath.GetFloat(_from, late.Path), FieldPath.GetFloat(_to, late.Path), k));
             }
             foreach (MorphBump bump in Bumps)
             {
