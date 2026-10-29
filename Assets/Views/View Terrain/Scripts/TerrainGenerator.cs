@@ -392,6 +392,7 @@ namespace Gavi
         private NativeArray<byte> _noiseSlots;
         private int _noiseIntervalUsed = 1;
         private int _noiseSlotSignature;
+        private int _noiseShapeSignature;
         private int _noiseGridWidth;
         private int _noiseGridHeight;
 
@@ -873,6 +874,15 @@ namespace Gavi
                 _noiseValid = false;
             }
 
+            // A new zoom or pattern is calculated for all points at once. Spread over the slots, every point would blend over 8 to 16 frames from its old
+            // pattern with its own start, which looks like grainy ripples.
+            int shapeSignature = NoiseShapeSignature();
+            if (shapeSignature != _noiseShapeSignature)
+            {
+                _noiseShapeSignature = shapeSignature;
+                _noiseValid = false;
+            }
+
             if (!_noiseValid)
             {
                 CalculateNoise(false);
@@ -894,6 +904,23 @@ namespace Gavi
                     _noiseNext = older;
                     CalculateNoise(false);
                 }
+            }
+        }
+
+        /// <summary>Changes when the pattern or the zoom of the main pattern or of a switched on layer changes.</summary>
+        private int NoiseShapeSignature()
+        {
+            unchecked
+            {
+                int signature = ((int)_noisePattern * 31) + _noiseZoom.GetHashCode();
+                for (int i = 0; i < _extraLayers.Length; i++)
+                {
+                    if (!_extraLayers[i].Enabled)
+                        continue;
+                    signature = signature * 31 + _extraLayers[i].Pattern + 1;
+                    signature = signature * 31 + _extraLayers[i].Zoom.GetHashCode();
+                }
+                return signature;
             }
         }
 

@@ -112,7 +112,7 @@ Code lives in `Assets/Views/View Terrain/Scripts/`.
   audio shape is cached until a shape or the face count changes; triangles and UVs are only rebuilt
   when needed.
 - **`TerrainBeatWave`** detects beats from the bass and the song's BPM and runs the ring waves.
-  **`TerrainLensDirt`** is the beat-pulsed lens dirt, **`TerrainRotator`** turns the terrain with the
+  **`TerrainLensDirt`** is the beat-pulsed lens dirt and also sets the vignette of the volume (added to the runtime profile when missing), **`TerrainRotator`** turns the terrain with the
   mouse, **`TerrainBandPicker`** is the band editor of the test signal.
 - **Test signal** (`AudioTestSignal`, `Gavi.Audio`) replaces the spectrum with a fixed one; hotkey T.
 - **Settings and presets** (`Settings/`): `TerrainSettingsPreset` holds every saved value,

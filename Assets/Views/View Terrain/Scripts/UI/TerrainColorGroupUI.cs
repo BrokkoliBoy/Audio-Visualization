@@ -62,6 +62,8 @@ namespace Gavi
         [Tooltip("Optional. Track of the dirt strength slider: from a clean dark lens to a dirty, lit one.")]
         [SerializeField] private UiSliderGradient _gradientDirtStrength;
         [SerializeField] private SliderG _sliderDirtBeat;
+        [Tooltip("Optional. Strength of the vignette (dark screen edges), part of the preset.")]
+        [SerializeField] private SliderG _sliderVignette;
 
         [Header("--- Gradient keys ---")]
         [Tooltip("For every key of the terrain gradient: which color (index of the entries) it belongs to.")]
@@ -131,6 +133,7 @@ namespace Gavi
         private bool DirtOn => _toggleDirt == null || _toggleDirt.isOn;
         private float DirtStrength => _sliderDirtStrength != null ? _sliderDirtStrength.Value : TerrainLensDirt.DefaultStrength;
         private float DirtBeat => _sliderDirtBeat != null ? _sliderDirtBeat.Value : TerrainLensDirt.DefaultBeat;
+        private float Vignette => _sliderVignette != null ? _sliderVignette.Value : TerrainLensDirt.DefaultVignette;
         private float TintBackground => _sliderTintBackground != null ? _sliderTintBackground.Value : 1f;
         private TiltMode Mode => _dropdownTiltMode != null ? (TiltMode)_dropdownTiltMode.value : (TiltMode)TerrainColorPalette.DefaultTiltDirection;
         /// <summary>The lowest vertices get this share of the glow of the base color.</summary>
@@ -188,6 +191,7 @@ namespace Gavi
             ListenToSlider(_sliderBloomScatter, TerrainColorPalette.DefaultBloomScatter, OnBloomChanged);
             ListenToSlider(_sliderDirtStrength, TerrainLensDirt.DefaultStrength, OnDirtChanged);
             ListenToSlider(_sliderDirtBeat, TerrainLensDirt.DefaultBeat, OnDirtChanged);
+            ListenToSlider(_sliderVignette, TerrainLensDirt.DefaultVignette, OnDirtChanged);
             ListenToSlider(_sliderCurveFloor, TerrainColorPalette.DefaultFloorShare, OnCurveChanged);
             ListenToSlider(_sliderColorShift, TerrainColorPalette.DefaultColorShift, OnCurveChanged);
             ListenToSlider(_sliderColorHold, BlendFromHold(TerrainColorPalette.DefaultColorHold), OnCurveChanged);
@@ -279,6 +283,7 @@ namespace Gavi
             preset.DirtEnabled = DirtOn;
             preset.DirtStrength = DirtStrength;
             preset.DirtBeat = DirtBeat;
+            preset.VignetteStrength = Vignette;
             preset.TintBackground = TintBackground;
             preset.ColorValues = new List<Vector3>();
             foreach (TerrainColorEntryUI entry in _entries)
@@ -292,7 +297,7 @@ namespace Gavi
                 return;
 
             // The lens dirt belongs to the preset whether or not the preset carries its own color values.
-            SetDirtSliders(preset.DirtStrength, preset.DirtBeat);
+            SetDirtSliders(preset.DirtStrength, preset.DirtBeat, preset.VignetteStrength);
             if (_sliderTintBackground != null)
                 _sliderTintBackground.Value = preset.TintBackground;
             if (_toggleBloom != null)
@@ -538,10 +543,12 @@ namespace Gavi
             _suppress = wasSuppressed;
         }
 
-        private void SetDirtSliders(float strength, float beat)
+        private void SetDirtSliders(float strength, float beat, float vignette)
         {
             bool wasSuppressed = _suppress;
             _suppress = true;
+            if (_sliderVignette != null)
+                _sliderVignette.Value = vignette;
             if (_sliderDirtStrength != null)
                 _sliderDirtStrength.Value = strength;
             if (_sliderDirtBeat != null)
@@ -1075,6 +1082,7 @@ namespace Gavi
             _lensDirt.Enabled = DirtOn;
             _lensDirt.Strength = DirtStrength;
             _lensDirt.BeatAmount = DirtBeat;
+            _lensDirt.VignetteStrength = Vignette;
         }
 
         /// <summary>

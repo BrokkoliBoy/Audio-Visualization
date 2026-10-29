@@ -99,6 +99,8 @@ namespace Gavi
         [Tooltip("Lens dirt on the glow: fixed strength and extra strength on the beat.")]
         public float DirtStrength = TerrainLensDirt.DefaultStrength;
         public float DirtBeat = TerrainLensDirt.DefaultBeat;
+        [Tooltip("Darkening of the screen edges.")]
+        public float VignetteStrength = TerrainLensDirt.DefaultVignette;
         [Tooltip("How far the background takes the hue of the base color: 0 = untinted, 1 = fully tinted.")]
         public float TintBackground = 1f;
         [Tooltip("How much the color comes from the band activity instead of the height: gradient position, brightness, glow. 0 = from the height.")]
@@ -227,6 +229,7 @@ namespace Gavi
             DirtEnabled = preset.DirtEnabled;
             DirtStrength = preset.DirtStrength;
             DirtBeat = preset.DirtBeat;
+            VignetteStrength = preset.VignetteStrength;
             TintBackground = preset.TintBackground;
             ColorBandHue = preset.ColorBandHue;
             ColorBandBrightness = preset.ColorBandBrightness;
