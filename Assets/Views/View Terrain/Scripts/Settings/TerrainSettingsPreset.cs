@@ -9,7 +9,7 @@ namespace Gavi
     public class TerrainSettingsPreset
     {
         /// <summary>Version of the file format. 0 = files from before versions existed. Raise CurrentFormatVersion when a change needs old files to be converted.</summary>
-        public const int CurrentFormatVersion = 4;
+        public const int CurrentFormatVersion = 5;
         public int FormatVersion;
         public string Name = "Terrain Preset";
         
