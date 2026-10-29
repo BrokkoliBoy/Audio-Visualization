@@ -130,15 +130,50 @@ namespace Gavi.VideoDirector
         }
 
         /// <summary>
+        /// For the morph just added: a number moves to the value of the new preset in three parts: slowly up to <paramref name="before"/> of the way until shortly before
+        /// the switch, steeply to <paramref name="after"/> of the way around the switch (<paramref name="width"/> = half length as a share of the morph), then slowly the rest. With <paramref name="startAfterBeats"/> the number keeps its start value for that many beats after the start of the morph.
+        /// </summary>
+        public DirectorTimeline Pull(string path, float before = 0.3f, float after = 0.7f, float width = 0.05f, float startAfterBeats = 0f)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph && morph.Duration > 0.01f)
+                morph.Pulls.Add(new MorphPull { Path = path, Before = before, After = after, Width = width, StartAt = UnityEngine.Mathf.Clamp01(startAfterBeats / morph.Duration) });
+            else
+                UnityEngine.Debug.LogWarning("[Director] Pull " + path + " needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>For the morph just added: the zoom of the main pattern and of layers 2 and 3 move with <see cref="Pull"/> (small move first, strong one at the switch, slow rest).</summary>
+        public DirectorTimeline PullPatternZoom(float before = 0.3f, float after = 0.7f, float width = 0.05f, float startAfterBeats = 0f)
+        {
+            return Pull("PerlinZoom", before, after, width, startAfterBeats).Pull("NoiseLayer2.Zoom", before, after, width, startAfterBeats).Pull("NoiseLayer3.Zoom", before, after, width, startAfterBeats);
+        }
+
+        /// <summary>
         /// For the morph just added: a number keeps the value it had at the start until <paramref name="startShare"/> of the morph (default: the switch) and only then
         /// glides to the value of the preset, reaching it at the end. <c>.LateGlide("Shapes[0].Zoom")</c> keeps the audio shape zoom, so shapes do not shrink while the first half runs.
         /// </summary>
-        public DirectorTimeline LateGlide(string path, float startShare = -1f)
+        public DirectorTimeline LateGlide(string path, float startShare = -1f, bool smooth = false)
         {
             if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph)
-                morph.LateGlides.Add(new MorphLateGlide { Path = path, StartAt = startShare < 0f ? morph.SwitchAt : startShare });
+                morph.LateGlides.Add(new MorphLateGlide { Path = path, StartAt = startShare < 0f ? morph.SwitchAt : startShare, Smooth = smooth });
             else
                 UnityEngine.Debug.LogWarning("[Director] LateGlide " + path + " needs a Morph right before it and was skipped.");
+            return this;
+        }
+
+        /// <summary>
+        /// For the morph just added: the zoom of the main pattern and of layers 2 and 3 keep their start value for <paramref name="afterBeats"/> beats and then glide
+        /// smoothly (eased in and out) to the zoom of the new preset over the rest of the morph, arriving at its end.
+        /// </summary>
+        public DirectorTimeline LateGlidePatternZoom(float afterBeats)
+        {
+            if (Events.Count > 0 && Events[Events.Count - 1] is MorphEvent morph && morph.Duration > 0.01f)
+            {
+                float share = DirectorEvent.Apply(morph.Ease, afterBeats / morph.Duration);   // Tick gets the eased progress, so the start in beats is eased too
+                LateGlide("PerlinZoom", share, true).LateGlide("NoiseLayer2.Zoom", share, true).LateGlide("NoiseLayer3.Zoom", share, true);
+            }
+            else
+                UnityEngine.Debug.LogWarning("[Director] LateGlidePatternZoom needs a Morph right before it and was skipped.");
             return this;
         }
 

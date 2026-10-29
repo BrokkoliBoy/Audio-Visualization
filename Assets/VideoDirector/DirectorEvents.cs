@@ -97,6 +97,42 @@ namespace Gavi.VideoDirector
         public string Path;
         /// <summary>Share of the morph at which the glide starts (0.5 = at the switch). It reaches the value of the preset at the end of the morph.</summary>
         public float StartAt;
+        /// <summary>True = the glide eases in and out (smoothstep over the way), so it starts and ends without a kink instead of running straight.</summary>
+        public bool Smooth;
+    }
+
+    /// <summary>
+    /// A number that moves to the value of the preset in three parts: slowly up to <see cref="Before"/> of the way until shortly before the switch, steeply to
+    /// <see cref="After"/> of the way around the switch, then slowly (decelerating) the rest until the end of the morph.
+    /// </summary>
+    public class MorphPull
+    {
+        public string Path;
+        /// <summary>Share of the way to the value of the preset that is reached when the steep part starts.</summary>
+        public float Before;
+        /// <summary>Share of the way that is reached when the steep part ends.</summary>
+        public float After;
+        /// <summary>Half length of the steep part as a share of the morph (it is centred on the switch).</summary>
+        public float Width;
+        /// <summary>Share of the morph at which the number starts to move at all (0 = with the morph). Before it the number keeps its start value.</summary>
+        public float StartAt;
+
+        /// <summary>Share of the way (0 to 1) at the share <paramref name="t"/> of the morph.</summary>
+        public float Progress(float t, float switchAt)
+        {
+            float start = Mathf.Max(0.01f, switchAt - Width);
+            float end = Mathf.Min(0.99f, switchAt + Width);
+            float first = Mathf.Min(StartAt, start - 0.01f);
+            if (t < start)
+                return t <= first ? 0f : Before * Mathf.Pow((t - first) / (start - first), 1.5f);
+            if (t < end)
+            {
+                float k = (t - start) / (end - start);
+                return Mathf.Lerp(Before, After, k * k * (3f - 2f * k));
+            }
+            float rest = Mathf.Clamp01((t - end) / (1f - end));
+            return Mathf.Lerp(After, 1f, 1f - (1f - rest) * (1f - rest));
+        }
     }
 
     /// <summary>A number that belongs to the pattern: it takes the value of the new preset at once at the switch, together with the pattern, instead of gliding.</summary>
@@ -128,6 +164,7 @@ namespace Gavi.VideoDirector
         public readonly System.Collections.Generic.List<MorphBump> Bumps = new System.Collections.Generic.List<MorphBump>();
         public readonly System.Collections.Generic.List<MorphLateGlide> LateGlides = new System.Collections.Generic.List<MorphLateGlide>();
         public readonly System.Collections.Generic.List<MorphSnap> Snaps = new System.Collections.Generic.List<MorphSnap>();
+        public readonly System.Collections.Generic.List<MorphPull> Pulls = new System.Collections.Generic.List<MorphPull>();
 
         private readonly string _preset;
         private TerrainSettingsPreset _from, _to, _scratch;
@@ -173,9 +210,13 @@ namespace Gavi.VideoDirector
                 else if (!snap.GlideBefore)
                     FieldPath.Set(_scratch, snap.Path, FieldPath.GetFloat(_from, snap.Path));
             }
+            foreach (MorphPull pull in Pulls)
+                FieldPath.Set(_scratch, pull.Path, Mathf.Lerp(FieldPath.GetFloat(_from, pull.Path), FieldPath.GetFloat(_to, pull.Path), pull.Progress(t, SwitchAt)));
             foreach (MorphLateGlide late in LateGlides)
             {
                 float k = Mathf.Clamp01((t - late.StartAt) / Mathf.Max(0.01f, 1f - late.StartAt));
+                if (late.Smooth)
+                    k = k * k * (3f - 2f * k);
                 FieldPath.Set(_scratch, late.Path, Mathf.Lerp(FieldPath.GetFloat(_from, late.Path), FieldPath.GetFloat(_to, late.Path), k));
             }
             foreach (MorphBump bump in Bumps)
