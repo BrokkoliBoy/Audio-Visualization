@@ -76,7 +76,22 @@ namespace Gavi
                 MigrateToHeightLayers(preset);
                 preset.FormatVersion = 4;
             }
+            // Version 5: Honeycomb is pits (low cells, high rims) by itself, it used to be the other way round, so its invert is turned to keep the look.
+            if (preset.FormatVersion < 5)
+            {
+                MigrateHoneycomb(preset);
+                preset.FormatVersion = 5;
+            }
             return preset;
+        }
+
+        private static void MigrateHoneycomb(TerrainSettingsPreset preset)
+        {
+            if (preset.NoisePattern == (int)TerrainNoise.Pattern.Honeycomb)
+                preset.NoiseInvert = !preset.NoiseInvert;
+            foreach (TerrainNoiseLayerData layer in new[] { preset.NoiseLayer2, preset.NoiseLayer3 })
+                if (layer != null && layer.Pattern == (int)TerrainNoise.Pattern.Honeycomb)
+                    layer.Invert = !layer.Invert;
         }
 
         /// <summary>The patterns that were turned upside down by themselves before version 4.</summary>

@@ -460,11 +460,11 @@ namespace Gavi
             return (0.55f + 0.45f * Hash(rq, rr, 29)) * faceHeight;
         }
 
-        /// <summary>Hexagonal pits: the cells are low, the rims between them stay high.</summary>
+        /// <summary>Hexagonal pits: the cells are low, the rims between them stay high (before preset version 5 it was the other way round and every Honeycomb layer was inverted for it).</summary>
         private static float Honeycomb(float x, float y)
         {
             HexCell(x, y, out _, out _, out _, out _, out float edge);
-            return Smooth((1f - edge) / 0.45f);
+            return 1f - Smooth((1f - edge) / 0.45f);
         }
         #endregion
 
