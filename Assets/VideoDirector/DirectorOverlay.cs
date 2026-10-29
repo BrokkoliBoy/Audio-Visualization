@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Gavi.VideoDirector
@@ -158,7 +159,7 @@ namespace Gavi.VideoDirector
             {
                 Label(new Rect(x, y, LabelWidth, 16f), "EVENTS", _text, new Color(1f, 1f, 1f, 0.5f));
                 y += 18f;
-                foreach (DirectorEvent e in timeline.Events)
+                foreach (DirectorEvent e in OrderedEvents(timeline))
                 {
                     DrawEventRow(e, x, graphX, y, beat, spb, hasBeat);
                     y += EventRowHeight;
@@ -195,6 +196,22 @@ namespace Gavi.VideoDirector
 
             GUI.matrix = oldMatrix;
             GUI.color = oldColor;
+        }
+
+        private DirectorTimeline _orderedFor;
+        private int _orderedCount;
+        private List<DirectorEvent> _ordered;
+
+        /// <summary>The rows in the order they happen (events at the same beat keep the order of the script), the fade to black always last.</summary>
+        private List<DirectorEvent> OrderedEvents(DirectorTimeline timeline)
+        {
+            if (_ordered == null || _orderedFor != timeline || _orderedCount != timeline.Events.Count)
+            {
+                _orderedFor = timeline;
+                _orderedCount = timeline.Events.Count;
+                _ordered = new List<DirectorEvent>(timeline.Events.OrderBy(e => e is FadeEvent fade && fade.To >= 0.5f ? 1 : 0).ThenBy(e => e.Beat));
+            }
+            return _ordered;
         }
 
         private void DrawEventRow(DirectorEvent e, float x, float graphX, float y, float beat, float spb, bool hasBeat)

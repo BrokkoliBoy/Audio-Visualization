@@ -18,8 +18,13 @@ namespace Gavi.VideoDirector
 
         public readonly List<DirectorEvent> Preroll = new List<DirectorEvent>();
         public readonly List<DirectorEvent> Events = new List<DirectorEvent>();
+        /// <summary>Jump points set by hand, in addition to the ones <see cref="JumpPoints"/> finds before every change of the picture.</summary>
+        public readonly List<float> ExtraJumpPoints = new List<float>();
 
         public DirectorTimeline(string name) { Name = name; }
+
+        /// <summary>Adds a jump point for the jump keys (F6 / F7), e.g. in front of the live part that has no transition of its own.</summary>
+        public DirectorTimeline JumpPoint(float beat) { ExtraJumpPoints.Add(beat); return this; }
 
         #region Before the song
         public DirectorTimeline StartWith(string preset) { Preroll.Add(new CutEvent(preset)); return this; }
@@ -245,7 +250,7 @@ namespace Gavi.VideoDirector
 
         /// <summary>
         /// The beats the jump keys (F6 / F7) go to: the start of the take (<see cref="StartBeat"/>) and <paramref name="leadBeats"/> before every change of the picture
-        /// (Cut, Morph, fade to black), so a transition can be watched again without playing the take from the start.
+        /// (Cut, Morph; the fade to black has none), so a transition can be watched again without playing the take from the start.
         /// </summary>
         public List<float> JumpPoints(float leadBeats = 4f)
         {
@@ -253,7 +258,7 @@ namespace Gavi.VideoDirector
             float previousEnd = 0f;
             foreach (DirectorEvent e in Events)
             {
-                bool change = e is CutEvent || e is MorphEvent || (e is FadeEvent fade && fade.To >= 0.5f);
+                bool change = e is CutEvent || e is MorphEvent;
                 // not before the end of the change before it (plus half a beat), so a jump never lands inside the animation of the previous transition
                 // and if that leaves less than a beat before the change (they follow each other directly), the change has no point of its own
                 float beat = UnityEngine.Mathf.Max(e.Beat - leadBeats, change && previousEnd > 0f ? previousEnd + 0.5f : 0f);
@@ -262,6 +267,9 @@ namespace Gavi.VideoDirector
                 if (change)
                     previousEnd = e.Beat + e.Duration;
             }
+            foreach (float extra in ExtraJumpPoints)
+                if (!points.Exists(p => UnityEngine.Mathf.Abs(p - extra) < 0.5f))
+                    points.Add(extra);
             points.Sort();
             return points;
         }

@@ -239,7 +239,18 @@ namespace Gavi.VideoDirector
         private readonly string _path;
         private readonly object _value;
         public SetEvent(string path, object value) { _path = path; _value = value; }
-        public override string Describe() => "Set " + _path + " = " + _value;
+        public override string Describe() => IsMainPattern ? "Noise: " + ValueText() : "Set " + _path + " = " + ValueText();
+
+        /// <summary>The switch of the main pattern (shown as "Noise: name" in the F11 panel).</summary>
+        public bool IsMainPattern => _path == "NoisePattern";
+
+        /// <summary>A pattern number is shown with the name of the pattern.</summary>
+        private string ValueText()
+        {
+            if (_path.EndsWith("Pattern") && _value is int index && index >= 0 && index < TerrainNoise.Names.Length)
+                return TerrainNoise.Names[index];
+            return _value.ToString();
+        }
 
         public override void Begin(DirectorContext context)
         {
@@ -257,7 +268,7 @@ namespace Gavi.VideoDirector
     {
         private readonly string _palette;
         public PaletteEvent(string palette) { _palette = palette; }
-        public override string Describe() => "Palette " + _palette;
+        public override string Describe() => "Palette: " + _palette;
 
         public override void Begin(DirectorContext context)
         {

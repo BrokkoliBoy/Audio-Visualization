@@ -47,14 +47,18 @@ namespace Gavi.VideoDirector
                 .Bump("TerrainHeight", 0.2f)
                 .Fade(52f, 6f, 1f);                        // fade out to black
 
-            // Live part after the Jungle transition (ends at beat 38.5): hard cuts on the beat, one change every 2 beats. The rest follows.
-            take.Pattern(42.5f, TerrainNoise.Pattern.Checker)       // Tiles becomes Checker
-                .Pattern(44.5f, TerrainNoise.Pattern.Hexagons)
-                .Pattern(46.5f, TerrainNoise.Pattern.Ripples)
-                .Pattern(48.5f, TerrainNoise.Pattern.Zigzag)        // still open: Dots, Bricks
-                .Palette(46.5f, "Thunderstorm")                     // towards the end the colors switch too, starting from the palette of Video Jungle
-                .Palette(48.5f, "Lava River")
-                .Palette(50.5f, "Video Spacewarp");
+            // Live part after the Jungle transition (ends at beat 38.5): hard cuts on the beat. The pattern changes every 2 beats, the palette every 4 beats on the same beat as a pattern change, so each palette shows two patterns.
+            take.Pattern(42.5f, TerrainNoise.Pattern.Hexagons)      // Tiles becomes Hexagons
+                .Pattern(44.5f, TerrainNoise.Pattern.Checker)
+                .Pattern(46.5f, TerrainNoise.Pattern.Zigzag)
+                .Pattern(48.5f, TerrainNoise.Pattern.Dots)
+                .Pattern(50.5f, TerrainNoise.Pattern.Bricks)
+                .Pattern(52.5f, TerrainNoise.Pattern.Ripples)       // already inside the fade to black
+                .Palette(42.5f, "Thunderstorm")                     // the colors switch too, starting from the palette of Video Jungle
+                .Palette(46.5f, "Video Spacewarp")
+                .Palette(50.5f, "Lava River");
+
+            take.JumpPoint(38.5f);                                  // end of the Jungle transition, 4 beats before the first live switch: F6 / F7 land here to repeat the live part
 
             // Examples for the live part (menu open, one thing changes in front of the viewer):
             // take.Menu(24f, true)
