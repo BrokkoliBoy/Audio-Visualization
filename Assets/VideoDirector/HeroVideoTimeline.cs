@@ -20,7 +20,7 @@ namespace Gavi.VideoDirector
             {
                 Song = SongName,
                 StartBeat = 4f,                            // the song starts here: the slow first 4 beats are left out, the drop (DropBeat) comes 14.5 beats into the take
-                EndBeat = 60f
+                EndBeat = 68f
             };
 
             take.StartBlack()
@@ -45,16 +45,19 @@ namespace Gavi.VideoDirector
                 .LateGlidePatternZoom(3f)                  // the pattern zoom stays for the first 3 beats of the 8 (until beat 33.5) and then glides smoothly over the remaining 5 beats (clouds stay recognizable)
                 .ShapeStart(1.1f, 3.1f)                  // but the flag turns into the pillar already 0.5 s after the start and glides for 3.1 s (until the end of the morph)
                 .Bump("TerrainHeight", 0.2f)
-                .Fade(52f, 6f, 1f);                        // fade out to black
+                .Fade(60f, 6f, 1f);                        // fade out to black, so late that the last pattern (Waveform from 56.5) is shown for 3.5 beats first
 
-            // Live part after the Jungle transition (ends at beat 38.5): hard cuts on the beat. The pattern changes every 2 beats, the palette every 4 beats on the same beat as a pattern change, so each palette shows two patterns.
-            take.Pattern(42.5f, TerrainNoise.Pattern.Hexagons)      // Tiles becomes Hexagons
-                .Pattern(44.5f, TerrainNoise.Pattern.Checker)
-                .Pattern(46.5f, TerrainNoise.Pattern.Zigzag)
-                .Pattern(48.5f, TerrainNoise.Pattern.Dots)
-                .Pattern(50.5f, TerrainNoise.Pattern.Bricks)
-                .Pattern(52.5f, TerrainNoise.Pattern.Ripples)       // already inside the fade to black
-                .Palette(42.5f, "Thunderstorm")                     // the colors switch too, starting from the palette of Video Jungle
+            // Every pattern of the live part sets its own look; what a line leaves out is the value of Video Jungle (a pattern does not keep the override of the one before).
+            // Zoom is the number the slider shows next to the handle (5 = middle of the handle); every pattern has its own range, so the value differs (read from the slider).
+            LivePattern(take, 42.5f, TerrainNoise.Pattern.Mosaic, zoom: 0.4081f, depth: 0.85f, layer2Operation: TerrainNoise.LayerOperation.Highest);           // Tiles becomes Mosaic; layer 2 depth stays at Jungle
+            LivePattern(take, 44.5f, TerrainNoise.Pattern.Hexagons, zoom: 0.3822f, layer2Operation: TerrainNoise.LayerOperation.Subtract, layer2Depth: 0.4f);      // zoom 6
+            LivePattern(take, 46.5f, TerrainNoise.Pattern.Zigzag, zoom: 0.2601f, depth: 0.72f, speedY: 7.3f, layer2Operation: TerrainNoise.LayerOperation.Highest, layer2Depth: 0.4f);
+            LivePattern(take, 48.5f, TerrainNoise.Pattern.Dots, zoom: 0.3079f, depth: 0.55f, layer2Operation: TerrainNoise.LayerOperation.Highest, layer2Depth: 0.86f);   // zoom 5.5
+            LivePattern(take, 50.5f, TerrainNoise.Pattern.Bricks, zoom: 0.5522f, depth: 0.45f, layer2Operation: TerrainNoise.LayerOperation.Highest, layer2Depth: 0.75f);   // zoom 7.2
+            LivePattern(take, 52.5f, TerrainNoise.Pattern.Cracks, zoom: 0.2463f, layer2Operation: TerrainNoise.LayerOperation.Subtract, layer2Depth: 0.4f);
+            LivePattern(take, 54.5f, TerrainNoise.Pattern.Ripples, zoom: 0.2745f, depth: 0.4f, speedX: 0f, speedY: 1.6f, layer2Operation: TerrainNoise.LayerOperation.Multiply, layer2Depth: 0.75f);   
+            LivePattern(take, 56.5f, TerrainNoise.Pattern.Waveform, zoom: 0.2125f, layer2Operation: TerrainNoise.LayerOperation.Subtract, layer2Depth: 0.4f);
+            take.Palette(42.5f, "Thunderstorm")                     // the colors switch too, starting from the palette of Video Jungle
                 .Palette(46.5f, "Video Spacewarp")
                 .Palette(50.5f, "Lava River");
 
@@ -66,6 +69,27 @@ namespace Gavi.VideoDirector
             //     .Glide(32f, 8f, "MorphAmount", 0.9f)         // slider glides
             //     .Camera(36f, 8f, 25f, 10f, 0.8f);            // yaw, pitch, distance
             return take;
+        }
+
+        // Values of Video Jungle, to which a pattern of the live part returns when it sets nothing of its own.
+        private const float JungleZoom = 0.42724f;
+        private const float JungleDepth = 0.475f;
+        private const float JungleSpeedX = -1.4224f;
+        private const float JungleSpeedY = -1.13334f;
+        private const TerrainNoise.LayerOperation JungleLayer2Operation = TerrainNoise.LayerOperation.Subtract;
+        private const float JungleLayer2Depth = 0.7f;
+
+        /// <summary>Switches the main pattern and sets zoom, depth, scroll speed X and Y and operation and depth of layer 2 (Domain Warp) on the same beat; what is left out falls back to Video Jungle.</summary>
+        private static void LivePattern(DirectorTimeline take, float beat, TerrainNoise.Pattern pattern, float zoom = JungleZoom, float depth = JungleDepth, float speedX = JungleSpeedX, float speedY = JungleSpeedY,
+            TerrainNoise.LayerOperation layer2Operation = JungleLayer2Operation, float layer2Depth = JungleLayer2Depth)
+        {
+            take.Pattern(beat, pattern)
+                .Set(beat, "PerlinZoom", zoom)
+                .Set(beat, "PerlinDepth", depth)
+                .Set(beat, "PerlinSpeedX", speedX)
+                .Set(beat, "PerlinSpeedY", speedY)
+                .Set(beat, "NoiseLayer2.Operation", (int)layer2Operation)
+                .Set(beat, "NoiseLayer2.Depth", layer2Depth);
         }
     }
 }
