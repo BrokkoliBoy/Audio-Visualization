@@ -12,10 +12,14 @@ namespace Gavi.VideoDirector
 
         public TerrainSettingsPreset Current => TerrainSettingsManager.Instance.CurrentPreset;
 
-        /// <summary>Shows the current preset in the menu; the menu then passes it on to the terrain (as it does for every slider).</summary>
+        /// <summary>
+        /// Shows the current preset in the menu and tells the terrain to take it over. Sliders pass their change on by themselves, but a dropdown that is
+        /// set without a notification (the noise pattern) does not, so a single Set of the pattern stayed unseen by the terrain until a slider moved.
+        /// </summary>
         public void ShowCurrent()
         {
             Current.ApplyPresetToUI();
+            TerrainSettingsManager.Instance.MarkUIChanged();
         }
 
         /// <summary>The current state of the menu as a copy, to glide away from.</summary>
@@ -166,6 +170,41 @@ namespace Gavi.VideoDirector
         {
             context.Snapshot();
             FieldPath.Set(context.Current, _path, _value);
+            context.ShowCurrent();
+        }
+    }
+
+    /// <summary>
+    /// Switches to another color palette at once, like picking it in the dropdown of the color menu: the colors and the look that belong to the palette
+    /// (intensity, bloom, tilt, floor share, shift, hold, plateau, relief, hue balance) are taken over. Looked up by name in the palette files.
+    /// </summary>
+    public class PaletteEvent : DirectorEvent
+    {
+        private readonly string _palette;
+        public PaletteEvent(string palette) { _palette = palette; }
+        public override string Describe() => "Palette " + _palette;
+
+        public override void Begin(DirectorContext context)
+        {
+            TerrainColorPalette palette = TerrainColorPaletteStore.LoadAll().Find(p => p.Name == _palette);
+            if (palette == null)
+                throw new System.IO.FileNotFoundException("Video Director: no color palette named '" + _palette + "'");
+
+            context.Snapshot();
+            TerrainSettingsPreset preset = context.Current;
+            preset.ColorPaletteName = palette.Name;
+            preset.ColorValues = new System.Collections.Generic.List<Vector3>(palette.Colors);
+            preset.ColorOverallIntensity = palette.OverallIntensity;
+            preset.BloomThreshold = palette.BloomThreshold;
+            preset.BloomIntensity = palette.BloomIntensity;
+            preset.BloomScatter = palette.BloomScatter;
+            preset.TiltDirection = palette.TiltDirection;
+            preset.FloorShare = palette.FloorShare;
+            preset.ColorShift = palette.ColorShift;
+            preset.ColorHold = palette.ColorHold;
+            preset.PlateauTilt = palette.PlateauTilt;
+            preset.ReliefStrength = palette.ReliefStrength;
+            preset.HueBalance = palette.HueBalance;
             context.ShowCurrent();
         }
     }

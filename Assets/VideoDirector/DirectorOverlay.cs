@@ -62,6 +62,10 @@ namespace Gavi.VideoDirector
         private float _endBeat = 68f;
 
         private GUIStyle _text;
+        // The graphs are folded away at first, a click on their title opens them.
+        private bool _graphsOpen;
+        private Rect _graphsHeader;
+        private float _lastScale = 1f;
 
         public DirectorOverlay()
         {
@@ -117,17 +121,26 @@ namespace Gavi.VideoDirector
         #region Draw
         public void Draw(string header, DirectorTimeline timeline, float beat, float secondsPerBeat, bool hasBeat, List<float> jumpBeats = null)
         {
-            if (Event.current.type != EventType.Repaint)
+            Event current = Event.current;
+            // a click on the title of the graphs opens or closes them (the panel is drawn scaled, the mouse is in screen pixels)
+            if (current.type == EventType.MouseDown && current.button == 0 && _graphsHeader.Contains(current.mousePosition / _lastScale))
+            {
+                _graphsOpen = !_graphsOpen;
+                current.Use();
+                return;
+            }
+            if (current.type != EventType.Repaint)
                 return;
             EnsureStyles();
 
             float scale = Mathf.Max(0.75f, Screen.height / 1080f);
+            _lastScale = scale;
             Matrix4x4 oldMatrix = GUI.matrix;
             Color oldColor = GUI.color;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
             int eventCount = timeline != null ? timeline.Events.Count : 0;
-            float height = Pad + 22f + (eventCount > 0 ? 18f + eventCount * EventRowHeight : 0f) + 18f + Metrics.Length * GraphRowHeight + 22f + Pad;
+            float height = Pad + 22f + (eventCount > 0 ? 18f + eventCount * EventRowHeight : 0f) + 18f + (_graphsOpen ? Metrics.Length * GraphRowHeight : 0f) + 22f + Pad;
             // Next to the debug window when it is open and there is room, so the two do not cover each other.
             float left = SharedPresetsWindow.RightEdge > 0f && SharedPresetsWindow.RightEdge + PanelWidth < Screen.width / scale ? SharedPresetsWindow.RightEdge : 10f;
             Rect panel = new Rect(left, 10f, PanelWidth, height);
@@ -152,14 +165,17 @@ namespace Gavi.VideoDirector
                 }
             }
 
-            Label(new Rect(x, y, LabelWidth, 16f), "SETTINGS OVER TIME", _text, new Color(1f, 1f, 1f, 0.5f));
+            _graphsHeader = new Rect(x, y, LabelWidth, 18f);
+            Label(new Rect(x, y, LabelWidth, 16f), (_graphsOpen ? "[-] " : "[+] ") + "SETTINGS OVER TIME", _text, new Color(1f, 1f, 1f, _graphsOpen ? 0.5f : 0.8f));
             DrawTimeScale(graphX, y, spb);
             y += 18f;
-            float graphsTop = y;
-            for (int i = 0; i < Metrics.Length; i++)
+            if (_graphsOpen)
             {
-                DrawGraphRow(i, x, graphX, y);
-                y += GraphRowHeight;
+                for (int i = 0; i < Metrics.Length; i++)
+                {
+                    DrawGraphRow(i, x, graphX, y);
+                    y += GraphRowHeight;
+                }
             }
 
             // yellow lines = where F6 / F7 jump to
@@ -175,7 +191,7 @@ namespace Gavi.VideoDirector
                 Fill(new Rect(headX - 1f, timelineTop, 2f, y - timelineTop), new Color(1f, 0.25f, 0.25f, 0.95f));
             }
 
-            Label(new Rect(x, y + 4f, PanelWidth - 2f * Pad, 16f), "F9 start   F6 / F7 jump (yellow lines)   F8 marker   F10 abort   F11 hide      orange = jumps (whole numbers), blue/green = glides", _text, new Color(1f, 1f, 1f, 0.55f));
+            Label(new Rect(x, y + 4f, PanelWidth - 2f * Pad, 16f), "F9 start   F6 / F7 jump (yellow lines)   F8 marker   F10 abort   F11 hide   [+] graphs: orange = jumps, blue/green = glides", _text, new Color(1f, 1f, 1f, 0.55f));
 
             GUI.matrix = oldMatrix;
             GUI.color = oldColor;

@@ -40,10 +40,19 @@ namespace Gavi.VideoDirector
                 .Bump("ColorPatternGlow", 0f, 0.5f, false, 0.15f, 3.5f)
                 .Bump("FloorShare", 0f, 0.5f, false, 0.15f, 3.5f)        // floor glow
                 .Bump("Shapes[0].Zoom", 0.68f, 0.3f, true)        // the circle of Spacewarp opens up to the whole square, so the corners are not drawn in one frame at the switch
-                .MorphFromStart(8f, 8f, "Video Jungle")    // starts 8 beats after the start of the Ocean morph (beat 30.5, the number the F11 overlay shows), switch at beat 34.5
+                .MorphFromStart(7f, 8f, "Video Jungle")    // starts 7 beats after the start of the Ocean morph (beat 29.5, the number the F11 overlay shows), switch at beat 33.5, ends 37.5
                 .ShapeStart(1.1f, 3.1f)                    // but the flag turns into the pillar already 0.5 s after the start and glides for 3.1 s (until the end of the morph)
                 .Bump("TerrainHeight", 0.2f)
                 .Fade(52f, 6f, 1f);                        // fade out to black
+
+            // Live part after the Jungle transition (ends at beat 37.5): hard cuts on the beat, one change every 2 beats. The rest follows.
+            take.Pattern(42.5f, TerrainNoise.Pattern.Checker)       // Tiles becomes Checker
+                .Pattern(44.5f, TerrainNoise.Pattern.Hexagons)
+                .Pattern(46.5f, TerrainNoise.Pattern.Ripples)
+                .Pattern(48.5f, TerrainNoise.Pattern.Zigzag)        // still open: Dots, Bricks
+                .Palette(46.5f, "Thunderstorm")                     // towards the end the colors switch too, starting from the palette of Video Jungle
+                .Palette(48.5f, "Lava River")
+                .Palette(50.5f, "Video Spacewarp");
 
             // Examples for the live part (menu open, one thing changes in front of the viewer):
             // take.Menu(24f, true)

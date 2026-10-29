@@ -128,6 +128,12 @@ namespace Gavi.VideoDirector
         /// <summary>Sets one value at once: <c>Set(40, "NoisePattern", 12)</c>, <c>Set(40, "NoiseLayer2.Enabled", true)</c>.</summary>
         public DirectorTimeline Set(float beat, string path, object value) { return Add(new SetEvent(path, value), beat, 0f); }
 
+        /// <summary>Switches the main pattern of the terrain at once: <c>Pattern(42.5f, TerrainNoise.Pattern.Checker)</c>.</summary>
+        public DirectorTimeline Pattern(float beat, TerrainNoise.Pattern pattern) { return Set(beat, "NoisePattern", (int)pattern); }
+
+        /// <summary>Switches the color palette at once (name as in the palette files, e.g. "Video Spacewarp"), with the look that belongs to it.</summary>
+        public DirectorTimeline Palette(float beat, string palette) { return Add(new PaletteEvent(palette), beat, 0f); }
+
         /// <summary>Glides one slider to a value: <c>Glide(40, 8, "MorphAmount", 0.9f)</c>.</summary>
         public DirectorTimeline Glide(float beat, float beats, string path, float to, Ease ease = Ease.Smooth)
         {
