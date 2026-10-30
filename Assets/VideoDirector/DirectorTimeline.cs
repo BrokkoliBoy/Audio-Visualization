@@ -217,7 +217,7 @@ namespace Gavi.VideoDirector
         /// <summary>Switches the main pattern of the terrain at once: <c>Pattern(42.5f, TerrainNoise.Pattern.Checker)</c>.</summary>
         public DirectorTimeline Pattern(float beat, TerrainNoise.Pattern pattern) { return Set(beat, "NoisePattern", (int)pattern); }
 
-        /// <summary>Switches the color palette at once (name as in the palette files, e.g. "Video Spacewarp"), with the look that belongs to it.</summary>
+        /// <summary>Switches the color palette at once (name as in the palette files, e.g. "Hero-Video Spacewarp Live"), with the look that belongs to it.</summary>
         public DirectorTimeline Palette(float beat, string palette) { return Add(new PaletteEvent(palette), beat, 0f); }
 
         /// <summary>Glides one slider to a value: <c>Glide(40, 8, "MorphAmount", 0.9f)</c>.</summary>

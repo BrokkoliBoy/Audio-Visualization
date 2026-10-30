@@ -6,7 +6,7 @@ namespace Gavi.VideoDirector
     public static class DirectorBootstrap
     {
         /// <summary>The preset the scene starts with on this branch, the first setup of the take.</summary>
-        public const string StartPreset = "Video Spacewarp";
+        public const string StartPreset = "Hero-Video Spacewarp Live";
 
         /// <summary>Position of the volume slider at the start, estimated from a screenshot of the slider at the loudness of the video (handle at about 62 % of the track).</summary>
         public const float StartVolumeSlider = 0.62f;
