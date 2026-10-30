@@ -2,7 +2,7 @@ namespace Gavi.VideoDirector
 {
     /// <summary>
     /// The script of the hero video. Test version: only the three setups in a row (Spacewarp, Ocean, Jungle), no live changes yet.
-    /// It uses the copies "Hero-Video Spacewarp Live", "Hero-Video Ocean" and "Hero-Video Jungle Live", so the shipped presets stay untouched (see <see cref="DirectorBootstrap.StartPreset"/>).
+    /// It uses the copies "Hero-Video Spacewarp Live", "Hero-Video Ocean" and "Hero-Video Jungle Live", so the shipped presets stay untouched (the start preset is in <see cref="DirectorProfiles"/>).
     /// Beats count from the first beat of the song; at 134 BPM (In Motion) one bar of four beats is 1.8 s, so the take is about 30 s long.
     /// Which presets come when and what happens with the menu open is decided with the shot list (checklist C01).
     /// </summary>

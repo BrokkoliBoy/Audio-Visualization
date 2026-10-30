@@ -15,6 +15,7 @@ namespace Gavi.VideoDirector
     {
         public static DirectorRunner Instance { get; private set; }
 
+        private const KeyCode ProfileKey = KeyCode.F5;
         private const KeyCode StartKey = KeyCode.F9;
         private const KeyCode AbortKey = KeyCode.F10;
         private const KeyCode InfoKey = KeyCode.F11;
@@ -54,7 +55,7 @@ namespace Gavi.VideoDirector
             Instance = this;
             _context.Fade = new DirectorFade(transform);
             _context.Camera = new DirectorCamera();
-            // the own jump point of the removed F5 key was stored in the player prefs, it is deleted so it does not stay around
+            // the own jump point of the removed old F5 key was stored in the player prefs, it is deleted so it does not stay around
             PlayerPrefs.DeleteKey(OldJumpMarkerPref);
         }
 
@@ -62,7 +63,9 @@ namespace Gavi.VideoDirector
         {
             if (!UiPointer.IsTyping)
             {
-                if (Input.GetKeyDown(StartKey))
+                if (Input.GetKeyDown(ProfileKey))
+                    SwitchProfile();
+                else if (Input.GetKeyDown(StartKey))
                     StartTake();
                 else if (Input.GetKeyDown(AbortKey))
                     AbortTake();
@@ -118,10 +121,10 @@ namespace Gavi.VideoDirector
                 return;
 
             if (_timeline == null)
-                _timeline = HeroVideoTimeline.Build();
+                _timeline = DirectorProfiles.Current.Build();
 
             bool hasBeat = _state != State.Idle && _clock.IsValid;
-            string header = "Director: " + _state;
+            string header = "Director: " + DirectorProfiles.Current.Name + ", " + _state;
             if (hasBeat)
                 header += "     beat " + _clock.Beat.ToString("0.0") + "     bar " + (Mathf.FloorToInt(_clock.Beat / 4f) + 1) + "     " + (_clock.Beat * _clock.SecondsPerBeat).ToString("0.0") + " s";
             if (_lastEvent.Length > 0)
@@ -142,7 +145,7 @@ namespace Gavi.VideoDirector
         /// <summary>The text of the info overlay (F11) and of a marker (F8): where the take is, what runs, and the numbers that matter at a transition.</summary>
         private string BuildInfo()
         {
-            string text = "Director: " + _state;
+            string text = "Director: " + DirectorProfiles.Current.Name + ", " + _state;
             if (_state == State.Running && _clock.IsValid)
             {
                 float beat = _clock.Beat;
@@ -159,7 +162,7 @@ namespace Gavi.VideoDirector
                 text += "\n" + Values() + "\nF8 = marker (screenshot + values to the log folder), F6 / F7 = jump, F10 = abort";
             }
             else if (_state == State.Idle)
-                text += "   F9 start, F6 / F7 jump, F10 abort, F11 hide";
+                text += "   F5 video, F9 start, F6 / F7 jump, F10 abort, F11 hide";
             if (_problem.Length > 0)
                 text += "\n" + _problem;
             return text;
@@ -199,6 +202,23 @@ namespace Gavi.VideoDirector
 
 
         #region Take
+        /// <summary>F5: the next video becomes the current one and its start preset and volume are loaded, so a take can start at once (F9). Not while a take runs.</summary>
+        private void SwitchProfile()
+        {
+            if (_state != State.Idle)
+                return;
+            VideoProfile profile = DirectorProfiles.Next();
+            _timeline = null;
+            _problem = "";
+            _lastEvent = "Video " + profile.Name;
+            TryRun(new CutEvent(profile.StartPreset), () =>
+            {
+                _context.Current.CopyFromPreset(DirectorPresets.Load(profile.StartPreset));
+                _context.ShowCurrent();
+            });
+            SimpleControl.Instance?.SetVolume(SimpleControl.SliderToVolume(profile.StartVolumeSlider));
+        }
+
         public void StartTake()
         {
             BeginTake(0f);
@@ -220,7 +240,7 @@ namespace Gavi.VideoDirector
             bool wasRunning = _state == State.Running;
             AbortTake();
             _problem = "";
-            _timeline = HeroVideoTimeline.Build();
+            _timeline = DirectorProfiles.Current.Build();
             StartCoroutine(TakeRoutine(_timeline, startBeat, wasRunning ? 0f : PrerollSeconds));
         }
 
@@ -328,7 +348,7 @@ namespace Gavi.VideoDirector
         private List<float> JumpBeats()
         {
             if (_timeline == null)
-                _timeline = HeroVideoTimeline.Build();
+                _timeline = DirectorProfiles.Current.Build();
             return _timeline.JumpPoints();
         }
 

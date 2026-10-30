@@ -51,6 +51,14 @@ Thunderstorm to Jungle (8 beats, starts 9 beats after the start of the first mor
 
 A pattern change every 2 beats, each with its own zoom, depth, scroll speed and layer 2: Mosaic (42.5), Hexagons (44.5), Zigzag (46.5), Dots (48.5), Bricks (50.5), Cracks (52.5), Ripples (54.5), Waveform (56.5). What a pattern leaves out falls back to the value of Hero-Video Jungle Live. Palettes switch at 42.5, 46.5 and 50.5 (see above).
 
-## Intro video
+## Intro video (`IntroVideoTimeline`, first version, to be tuned)
 
-Planned, not built (checklist C45): about 15 s, Thunderstorm to Jungle morph over 8 beats, own copies with the prefix `Intro`.
+Song Invincible, beat 14.5 to 39 (about 15 s, hard cut, fade and sound in DaVinci Resolve). Menu open from the start, closes at beat 27.5. F5 switches between the Hero and Intro profile while no take runs (`DirectorProfiles`).
+
+| Preset / palette | Used for |
+|---|---|
+| Intro Thunderstorm Live | Start of the take (copy of Hero-Video Thunderstorm Live, palette of the same name). |
+| Intro Jungle Live | Target of the morph (copy of Hero-Video Jungle Live, palette of the same name). |
+
+- Drop at beat 18.5, then a pattern change every 2 beats: Hexagons (20.5), Zigzag (22.5), Dots (24.5), Bricks (26.5), each with its own zoom, depth and scroll speed stay at Thunderstorm.
+- Morph Thunderstorm to Jungle over 8 beats (28.5 to 36.5, switch at 32.5) with the same special settings as the second morph of the hero video (copied code, two places to maintain): Square at once, pattern zoom late glide 3 beats, mesh shape from 1.1 beats for 3.1 s, terrain height 0.2.
