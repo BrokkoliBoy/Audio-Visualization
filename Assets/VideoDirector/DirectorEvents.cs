@@ -41,6 +41,8 @@ namespace Gavi.VideoDirector
         public Ease Ease = Ease.Smooth;
 
         public abstract string Describe();
+        /// <summary>Events that only support another one (single numbers set with a pattern) are left out of the F11 panel and the "last" text.</summary>
+        public virtual bool Hidden => false;
         public virtual void Begin(DirectorContext context) { }
         /// <param name="t">Progress between 0 and 1 with the ease applied. The last call is always 1.</param>
         public virtual void Tick(DirectorContext context, float t) { }
@@ -240,6 +242,7 @@ namespace Gavi.VideoDirector
         private readonly object _value;
         public SetEvent(string path, object value) { _path = path; _value = value; }
         public override string Describe() => IsMainPattern ? "Noise: " + ValueText() : "Set " + _path + " = " + ValueText();
+        public override bool Hidden => !IsMainPattern;
 
         /// <summary>The switch of the main pattern (shown as "Noise: name" in the F11 panel).</summary>
         public bool IsMainPattern => _path == "NoisePattern";

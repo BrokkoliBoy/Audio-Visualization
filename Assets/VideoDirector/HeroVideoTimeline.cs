@@ -19,18 +19,14 @@ namespace Gavi.VideoDirector
             DirectorTimeline take = new DirectorTimeline("Hero video")
             {
                 Song = SongName,
-                StartBeat = 4f,                            // the song starts here: the slow first 4 beats are left out, the drop (DropBeat) comes 14.5 beats into the take
+                StartBeat = 0f,                            // the song plays from its first beat; fade in and volume are done in DaVinci Resolve
                 EndBeat = 68f
             };
 
-            take.StartBlack()
-                .StartMute()
-                .StartMenu(false)
+            take.StartMenu(false)
                 .StartWith("Video Spacewarp");
 
-            take.Fade(4f, 4f, 0f)                          // fade in from black, one bar
-                .Volume(4f, 4f, 1f, Ease.In)               // the music comes up from mute to full within 4 beats, slowly at first
-                .Morph(DropBeat + 3f, 6f, "Video Thunderstorm")  // the pattern zoom follows .PullPatternZoom() (needs Noise every = 1 in the presets, otherwise the zoom change ripples); Spacewarp glides into Video Thunderstorm (instead of Video Ocean), starts 3 beats after the drop (beat 21.5), patterns and mesh detail switch at beat 24.5, ends at beat 27.5 (3 beats in, 3 beats out, no shortened second half)
+            take.Morph(DropBeat + 3f, 6f, "Video Thunderstorm")  // the pattern zoom follows .PullPatternZoom() (needs Noise every = 1 in the presets, otherwise the zoom change ripples); Spacewarp glides into Video Thunderstorm (instead of Video Ocean), starts 3 beats after the drop (beat 21.5), patterns and mesh detail switch at beat 24.5, ends at beat 27.5 (3 beats in, 3 beats out, no shortened second half)
                 .ShapeStart(0.825f, 2.3f)                  // the mesh morph (Twist to Planet) starts early like at the second transition (same share of the morph, about 0.9 s after the start) and glides for 2.3 s, until about the end of the morph
                 .PullPatternZoom(0.2f, 0.8f)               // the zoom of the patterns moves only a little towards the new zoom first (20 %), strongly around the switch (to 80 %, within about 0.4 s) and then slowly to the end
                 .LateGlide("Shapes[0].Zoom")           // the zoom of the audio shape keeps its start value until the switch and only then glides to the zoom of Thunderstorm, so the circle does not shrink and show the undrawn corners in the first half

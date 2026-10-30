@@ -41,6 +41,10 @@ namespace Gavi.VideoDirector
         private string _lastEvent = "";
         private string _problem = "";
         private int _markerCount;
+        // the sync frame of the preroll (see TakeRoutine)
+        private bool _syncMarker;
+        private float _syncEnd;
+        private GUIStyle _syncText;
 
         public State Current => _state;
 
@@ -84,8 +88,32 @@ namespace Gavi.VideoDirector
             }
         }
 
+        /// <summary>Preroll only: a thick magenta frame around the picture and a countdown. Both vanish in the frame in which the song starts.</summary>
+        private void DrawSyncMarker()
+        {
+            if (!_syncMarker || Event.current.type != EventType.Repaint)
+                return;
+            float w = Screen.width, h = Screen.height, border = Mathf.Max(24f, h * 0.04f);
+            Color oldColor = GUI.color;
+            GUI.color = new Color(1f, 0f, 1f, 1f);
+            GUI.DrawTexture(new Rect(0f, 0f, w, border), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(0f, h - border, w, border), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(0f, 0f, border, h), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(w - border, 0f, border, h), Texture2D.whiteTexture);
+            GUI.color = new Color(0f, 0f, 0f, 0.75f);
+            Rect box = new Rect(w * 0.5f - h * 0.3f, h * 0.5f - h * 0.08f, h * 0.6f, h * 0.16f);
+            GUI.DrawTexture(box, Texture2D.whiteTexture);
+            if (_syncText == null)
+                _syncText = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+            _syncText.fontSize = Mathf.RoundToInt(h * 0.07f);
+            GUI.color = Color.white;
+            GUI.Label(box, "SYNC  " + Mathf.Max(0f, _syncEnd - Time.unscaledTime).ToString("0.0"), _syncText);
+            GUI.color = oldColor;
+        }
+
         private void OnGUI()
         {
+            DrawSyncMarker();
             if (!_showInfo)
                 return;
 
@@ -124,8 +152,9 @@ namespace Gavi.VideoDirector
                     float percent = Mathf.Clamp01((beat - running.Beat) / running.Duration) * 100f;
                     text += "\nRUNS   " + running.Describe() + "   " + percent.ToString("0") + " %   (beat " + running.Beat + " to " + (running.Beat + running.Duration) + ")";
                 }
-                if (_pending.Count > 0)
-                    text += "\nNEXT   " + _pending[0].Describe() + "   at beat " + _pending[0].Beat + "   (in " + ((_pending[0].Beat - beat) * _clock.SecondsPerBeat).ToString("0.0") + " s)";
+                DirectorEvent nextShown = _pending.Find(p => !p.Hidden);
+                if (nextShown != null)
+                    text += "\nNEXT   " + nextShown.Describe() + "   at beat " + nextShown.Beat + "   (in " + ((nextShown.Beat - beat) * _clock.SecondsPerBeat).ToString("0.0") + " s)";
                 text += "\nLAST   " + _lastEvent;
                 text += "\n" + Values() + "\nF8 = marker (screenshot + values to the log folder), F6 / F7 = jump, F10 = abort";
             }
@@ -222,7 +251,13 @@ namespace Gavi.VideoDirector
             }
 
             if (prerollSeconds > 0f)
+            {
+                // a magenta frame with a countdown shows during the preroll and is gone in the frame the song starts, so the cut can find that frame
+                _syncMarker = true;
+                _syncEnd = Time.unscaledTime + prerollSeconds;
                 yield return new WaitForSecondsRealtime(prerollSeconds);
+                _syncMarker = false;
+            }
             if (!StartSong(timeline.Song))
             {
                 EndTake();
@@ -375,6 +410,7 @@ namespace Gavi.VideoDirector
         private void EndTake()
         {
             _state = State.Idle;
+            _syncMarker = false;
             AudioListener.volume = 1f;
             _pending.Clear();
             _active.Clear();
@@ -393,7 +429,8 @@ namespace Gavi.VideoDirector
             {
                 DirectorEvent next = _pending[0];
                 _pending.RemoveAt(0);
-                _lastEvent = next.Describe();
+                if (!next.Hidden)
+                    _lastEvent = next.Describe();
                 if (!TryRun(next, () => next.Begin(_context)))
                     continue;
                 if (next.Duration > 0f)

@@ -8,6 +8,9 @@ namespace Gavi.VideoDirector
         /// <summary>The preset the scene starts with on this branch, the first setup of the take.</summary>
         public const string StartPreset = "Video Spacewarp";
 
+        /// <summary>Position of the volume slider at the start, estimated from a screenshot of the slider at the loudness of the video (handle at about 62 % of the track).</summary>
+        public const float StartVolumeSlider = 0.62f;
+
         /// <summary>Same key as the preset group of the menu uses to remember the last preset (it is private there).</summary>
         private const string LastPresetKey = "TerrainPresets.Last";
 
@@ -17,6 +20,7 @@ namespace Gavi.VideoDirector
             DirectorSdr.SwitchOffHdrOnStart();
             // Runs before the Start of the menu, which loads the preset of the last session: this makes it the start preset.
             PlayerPrefs.SetString(LastPresetKey, StartPreset);
+            SimpleControl.Instance?.SetVolume(SimpleControl.SliderToVolume(StartVolumeSlider));
             if (DirectorRunner.Instance != null)
                 return;
             GameObject director = new GameObject("Video Director");

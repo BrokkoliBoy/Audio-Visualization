@@ -140,7 +140,7 @@ namespace Gavi.VideoDirector
             Color oldColor = GUI.color;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
 
-            int eventCount = timeline != null ? timeline.Events.Count : 0;
+            int eventCount = timeline != null ? OrderedEvents(timeline).Count : 0;
             float height = Pad + 22f + (eventCount > 0 ? 18f + eventCount * EventRowHeight : 0f) + 18f + (_graphsOpen ? Metrics.Length * GraphRowHeight : 0f) + 22f + Pad;
             // Next to the debug window when it is open and there is room, so the two do not cover each other.
             float left = SharedPresetsWindow.RightEdge > 0f && SharedPresetsWindow.RightEdge + PanelWidth < Screen.width / scale ? SharedPresetsWindow.RightEdge : 10f;
@@ -202,14 +202,14 @@ namespace Gavi.VideoDirector
         private int _orderedCount;
         private List<DirectorEvent> _ordered;
 
-        /// <summary>The rows in the order they happen (events at the same beat keep the order of the script), the fade to black always last.</summary>
+        /// <summary>The rows in the order they happen (events at the same beat keep the order of the script), the fade to black always last. Hidden events (single numbers set with a pattern) get no row.</summary>
         private List<DirectorEvent> OrderedEvents(DirectorTimeline timeline)
         {
             if (_ordered == null || _orderedFor != timeline || _orderedCount != timeline.Events.Count)
             {
                 _orderedFor = timeline;
                 _orderedCount = timeline.Events.Count;
-                _ordered = new List<DirectorEvent>(timeline.Events.OrderBy(e => e is FadeEvent fade && fade.To >= 0.5f ? 1 : 0).ThenBy(e => e.Beat));
+                _ordered = new List<DirectorEvent>(timeline.Events.Where(e => !e.Hidden).OrderBy(e => e is FadeEvent fade && fade.To >= 0.5f ? 1 : 0).ThenBy(e => e.Beat));
             }
             return _ordered;
         }
