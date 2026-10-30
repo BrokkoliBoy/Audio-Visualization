@@ -32,6 +32,8 @@ namespace Gavi.VideoDirector
         /// <summary>The output is mute when the song starts, so <see cref="Volume"/> can fade it in.</summary>
         public DirectorTimeline StartMute() { Preroll.Add(new VolumeEvent(0f)); return this; }
         public DirectorTimeline StartMenu(bool open) { Preroll.Add(new MenuEvent(open)); return this; }
+        /// <summary>The menu starts on a tab (part of the tab button name); with foldWindows the windows of that tab are folded. Put it after <see cref="StartMenu"/>.</summary>
+        public DirectorTimeline StartMenuTab(string tab, bool foldWindows = false) { Preroll.Add(new MenuTabEvent(tab, foldWindows)); return this; }
         public DirectorTimeline StartSet(string path, object value) { Preroll.Add(new SetEvent(path, value)); return this; }
         #endregion
 
@@ -225,6 +227,12 @@ namespace Gavi.VideoDirector
         {
             return Add(new GlideEvent(path, to), beat, beats, ease);
         }
+
+        /// <summary>Switches the menu to a tab (see <see cref="MenuTabEvent"/>).</summary>
+        public DirectorTimeline MenuTab(float beat, string tab, bool foldWindows = false) { return Add(new MenuTabEvent(tab, foldWindows), beat, 0f); }
+
+        /// <summary>Pauses the song at a beat like the space key (see <see cref="PauseEvent"/>).</summary>
+        public DirectorTimeline Pause(float beat) { return Add(new PauseEvent(), beat, 0f); }
 
         public DirectorTimeline Menu(float beat, bool open) { return Add(new MenuEvent(open), beat, 0f); }
 

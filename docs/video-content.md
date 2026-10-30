@@ -53,12 +53,12 @@ A pattern change every 2 beats, each with its own zoom, depth, scroll speed and 
 
 ## Intro video (`IntroVideoTimeline`, first version, to be tuned)
 
-Song Invincible, beat 14.5 to 39 (about 15 s, hard cut, fade and sound in DaVinci Resolve). Menu open from the start, closes at beat 27.5. F5 switches between the Hero and Intro profile while no take runs (`DirectorProfiles`).
+Song Invincible, beat 15 to 42.5 (16.5 s), then the song is paused like with the space key and the picture stands still (cut in DaVinci Resolve). Menu open from the start on the Terrain tab with its windows folded (only the pattern stays visible), switches to the Color tab at beat 30.5 (two beats after the morph starts) and closes at beat 38.5. F5 switches between the Hero and Intro profile while no take runs (`DirectorProfiles`).
 
 | Preset / palette | Used for |
 |---|---|
 | Intro Thunderstorm Live | Start of the take (copy of Hero-Video Thunderstorm Live, palette of the same name). |
 | Intro Jungle Live | Target of the morph (copy of Hero-Video Jungle Live, palette of the same name). |
 
-- Drop at beat 18.5, then a pattern change every 2 beats: Hexagons (20.5), Zigzag (22.5), Dots (24.5), Bricks (26.5), each with its own zoom, depth and scroll speed stay at Thunderstorm.
+- Drop at beat 18.5, then a pattern change every 2 beats: Voronoi (20.25, zoom 5 (slider number), depth 0.7), Interference (22.25, zoom 7, depth 0.66), Bricks (24.25, zoom 7.2), Tiles (26.25, zoom 8; a quarter beat before the beat, the new pattern needs a moment to become visible). Invert is off for all of them, only the start pattern of Intro Thunderstorm Live is inverted.
 - Morph Thunderstorm to Jungle over 8 beats (28.5 to 36.5, switch at 32.5) with the same special settings as the second morph of the hero video (copied code, two places to maintain): Square at once, pattern zoom late glide 3 beats, mesh shape from 1.1 beats for 3.1 s, terrain height 0.2.

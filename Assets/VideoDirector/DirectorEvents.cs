@@ -389,4 +389,11 @@ namespace Gavi.VideoDirector
             });
         }
     }
+
+    /// <summary>Pauses the song like the space key of the player does, so the last picture stands still. The take does not end by itself afterwards (the beat no longer moves), F10 ends it.</summary>
+    public class PauseEvent : DirectorEvent
+    {
+        public override string Describe() => "Pause";
+        public override void Begin(DirectorContext context) { Gavi.Audio.AudioPlayer.Instance?.Pause(); }
+    }
 }

@@ -260,6 +260,15 @@ namespace Gavi.VideoDirector
             _context.Camera.Find();
             _context.Camera.ResetNow();
 
+            // The song that played before must not move the terrain during the preroll: the song of the take is loaded and paused at once (Play clears the spectrum;
+            // a stopped player has no song, and the beat modules log errors). Without a song name the current one is only paused.
+            if (prerollSeconds > 0f && AudioPlayer.Instance != null)
+            {
+                if (!string.IsNullOrEmpty(timeline.Song))
+                    StartSong(timeline.Song);
+                AudioPlayer.Instance.Pause();
+            }
+
             // The preroll steps and the checks of the preset names run first, so a typing error shows before the song starts.
             foreach (DirectorEvent step in timeline.Preroll)
             {
