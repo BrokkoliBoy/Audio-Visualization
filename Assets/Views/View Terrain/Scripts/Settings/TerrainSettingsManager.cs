@@ -8,18 +8,16 @@ namespace Gavi
     public class TerrainSettingsManager : MonoBehaviour
     {
         public static TerrainSettingsManager Instance;
-        
-        
+
         [SerializeField] private TerrainGenerator _terrain;
         public TerrainGenerator Terrain => _terrain;
-        
+
         [Header("- Groups -")]
         [SerializeField] private List<TerrainGroupUI> _groups;
         public List<TerrainGroupUI> Groups => _groups;
 
         public TerrainSettingsPreset CurrentPreset => _currentPreset;
         private TerrainSettingsPreset _currentPreset = new TerrainSettingsPreset();
-
 
         #region Mono
         private void Awake()
@@ -45,14 +43,12 @@ namespace Gavi
         }
         #endregion
 
-
         #region UI changes
         private bool _uiChanged;
 
         /// <summary>A menu value changed. The terrain follows at the end of the frame, once for all changes of this frame.</summary>
         public void MarkUIChanged() => _uiChanged = true;
         #endregion
-
 
         #region Presets
         #endregion

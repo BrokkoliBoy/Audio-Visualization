@@ -14,7 +14,6 @@ namespace Gavi.Audio
         [SerializeField] private AudioMixerGroup _mixerMusic;
         [SerializeField] private AudioMixerGroup _mixerMicrophone;
 
-
         public float CurrentClipLength => CurrentlyPlayingClip == null ? -1 : CurrentlyPlayingClip.Clip.length;
         public float CurrentPlaybackTime => _audioSource.clip == null ? -1 : _audioSource.time;
         public AudioClipContainer CurrentlyPlayingClip => _currentlyPlayingClip;
@@ -34,7 +33,6 @@ namespace Gavi.Audio
             set => _audioSource.volume = value;
         }
 
-
         #region Mono
         private void Awake()
         {
@@ -43,7 +41,6 @@ namespace Gavi.Audio
             Instance = this;
         }
         #endregion
-
 
         #region Life Cycle
         public void Play (AudioClipContainer clip)
@@ -89,7 +86,6 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         #region Microphone
         private void SwitchToMic()
         {
@@ -112,7 +108,6 @@ namespace Gavi.Audio
             _audioSource.clip = clip.Clip;
         }
         #endregion
-
 
         public void GetSpectrumData(float[] samples, int channel, FFTWindow fftWindow)
         {

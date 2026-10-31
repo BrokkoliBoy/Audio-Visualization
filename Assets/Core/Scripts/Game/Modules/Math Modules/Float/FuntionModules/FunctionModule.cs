@@ -10,7 +10,6 @@ namespace Gavi.Modules.MathModules.FunctionModules
         [SerializeField] private AnimationCurve _defaultFunction;
         [SerializeField] private float _defaultValue;
 
-
         public virtual AnimationCurve GetValue()
         {
             if (!IsValid())
@@ -21,7 +20,7 @@ namespace Gavi.Modules.MathModules.FunctionModules
 
             return _defaultFunction;
         }
-        
+
         public virtual float GetValue(float t)
         {
             if (!IsValid() || !IsValid(t))

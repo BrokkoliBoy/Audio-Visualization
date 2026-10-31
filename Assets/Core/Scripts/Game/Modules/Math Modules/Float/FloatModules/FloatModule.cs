@@ -11,7 +11,7 @@ namespace Gavi.Modules.MathModules.FloatModules
 
         // recalculation
         [SerializeField] protected float _storedValue;
-        
+
         public virtual float GetValue()
         {
             if (!IsValid())

@@ -41,7 +41,6 @@ public class GraphBase : MonoBehaviour
     [SerializeField] protected Vector3 m_textsStripesHorizontalRelativePosition = new Vector3(-0.5f, 0, 0);
     [SerializeField] protected Vector3 m_textStripeCurrentNumberRelativePosition;
 
-
     [Header("--- Prefabs ---")]
     [SerializeField] protected GameObject m_lineRendererValuesPrefab;
     [SerializeField] protected GameObject m_lineRendererStripesPrefab;
@@ -53,7 +52,6 @@ public class GraphBase : MonoBehaviour
     [SerializeField] protected GameObject m_textFirstPrefab;
     [SerializeField] protected GameObject m_textStripesHorizontalPrefab;
     [SerializeField] protected GameObject m_textStripesVerticalPrefab;
-
 
     // positions
     private Vector3 m_centerPosition;
@@ -326,7 +324,6 @@ public class GraphBase : MonoBehaviour
             lowerBound = upperBound * Mathf.Pow(0.5f, m_stripeNumberHorizontal - 1);
         }
         else { lowerBound = 0; upperBound = 1; }
-
 
         float currentValue = lowerBound;
         for (int i = 0; i < m_stripesHorizontal.Count; i++)

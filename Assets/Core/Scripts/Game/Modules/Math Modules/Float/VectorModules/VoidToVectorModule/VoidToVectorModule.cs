@@ -6,6 +6,6 @@ namespace Gavi.Modules.MathModules.VectorModules.VoidToVectorModules
 {
     public class VoidToVectorModule : VectorModule
     {
-        
+
     }
 }

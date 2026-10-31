@@ -11,7 +11,6 @@ namespace Gavi.Audio
         [SerializeField] private AudioClip _clip;
         public AudioClip Clip => _clip;
 
-
         [Header("--- Audio Settings ---")]
         [SerializeField] private AudioClipSettings _audioSettings;
         public AudioClipSettings Settings => _audioSettings;
@@ -19,7 +18,6 @@ namespace Gavi.Audio
         [Tooltip("If null, no override will be done. If not null, the settings of this _overrideSampleSettings will be used instead of the SampleSettings of the SamplesContainer.")]
         [SerializeField] private AudioSampleSettingsPrefab _overrideSampleSettings;
         public AudioSampleSettingsPrefab OverrideSampleSettings => _overrideSampleSettings;
-
 
         [Header("--- Beat ---")]
         [SerializeField] private float _bpm;

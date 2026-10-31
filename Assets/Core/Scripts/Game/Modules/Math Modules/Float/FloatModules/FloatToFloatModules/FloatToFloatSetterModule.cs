@@ -17,7 +17,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         [Header("- Float -")]
         [SerializeField] private VoidToFloatSettableModule _targetFloatModule;
         [SerializeField] private FloatModule _sourceFloatModule;
-        
 
         protected override void Recalculate()
         {

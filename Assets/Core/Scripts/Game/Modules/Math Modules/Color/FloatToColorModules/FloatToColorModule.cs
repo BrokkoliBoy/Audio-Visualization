@@ -10,8 +10,6 @@ namespace Gavi.Modules.MathModules.ColorModules.FloatToColorModules
         [Header("--- Float to Color Module ---")]
         [SerializeField] protected FloatModule _inputValue;
 
-
-
         protected override string GetName()
         {
             return "FloatToColorModule";

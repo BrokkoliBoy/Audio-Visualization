@@ -38,7 +38,6 @@ namespace Gavi.Utility
             }
             m_showText = true;
 
-
             m_lastUpdateTimes = new Queue<float>();
             m_sizeActual = m_considerLastFramesNumber;
             if (m_sizeActual < 1)

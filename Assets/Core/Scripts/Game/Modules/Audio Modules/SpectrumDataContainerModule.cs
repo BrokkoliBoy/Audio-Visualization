@@ -11,7 +11,7 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
         [Header("--- Spectrum Data Container Module ---")]
         [SerializeField] private AudioSampleSettingsPrefab _sampleSettings;
         public AudioSampleSettings Settings => _audioSettings;
-        
+
         public int BandSize => _audioSettings.BandSize;
         public float Average => _average;
         private float _average;
@@ -51,7 +51,7 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
                 _audioSettings.SetData(_sampleSettings.Settings);
                 //sampleSettings = new AudioSampleSettings(_sampleSettings.Settings);
             }
-            
+
             // applying clip settings manually here
             AudioClipSettings clipSettings = new AudioClipSettings(AudioSampler.Instance.AudioPlayer.CurrentlyPlayingClip.Settings);
             //sampleSettings.AmplitudeModifierOverall *= clipSettings.AmplitudeModifierOverall;
@@ -59,13 +59,13 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
             for (int i = 0; i < clipSettings.AmplitudeModifierWeightedList.Count; i++)
                 _audioSettings.AmplitudeModifierWeightedList.Add(clipSettings.AmplitudeModifierWeightedList[i]);
                 //sampleSettings.AmplitudeModifierWeightedList.Add(clipSettings.AmplitudeModifierWeightedList[i]);
- 
+
             _value = AudioSampler.Instance.GenerateSpectrumData(_audioSettings);
             AudioTestSignal.Override(_value);
             // _value =AudioSampler.Instance.GenerateSpectrumData(sampleSettings);
             CalculatAverage();
         }
-        
+
         private void CalculatAverage()
         {
             _average = 0;
@@ -77,7 +77,6 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
             _average /= _value.Length;
         }
 
-        
         #region Overrides
         protected override void InitializeArray()
         {
@@ -94,7 +93,7 @@ namespace Gavi.Modules.DataModules.ArrayModules.FloatArrayModules.VoidToFloatArr
                 return 0;
             return _audioSettings.BandSize;
         }
-        
+
         protected override bool IsValid()
         {
             if (_sampleSettings == null)

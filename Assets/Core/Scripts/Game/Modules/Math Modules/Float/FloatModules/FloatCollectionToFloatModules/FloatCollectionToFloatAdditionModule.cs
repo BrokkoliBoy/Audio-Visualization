@@ -22,7 +22,7 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatCollectionToFloatModule
             for (int i = 1; i < inputValue.Length(); i++)
             {
                 float f = inputValue.GetValue(i);
-                
+
                 value += f;
             }
 

@@ -13,7 +13,7 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.VoidToFloatArrayModules
         {
             //if (_isArrayInitialized)
             //    return;
-            
+
             // if (!_recalculateAtStart)
             //     return;
 

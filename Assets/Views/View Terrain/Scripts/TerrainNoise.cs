@@ -288,7 +288,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Noise
         /// <summary>Classic perlin noise, 0..1. Not Mathf.PerlinNoise, because that cannot run in a Burst job.</summary>
         private static float Perlin(float x, float y)
@@ -384,7 +383,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Cells
         /// <summary>
         /// Voronoi: distance to the nearest (f1) and second nearest (f2) random point, and a random value
@@ -416,7 +414,6 @@ namespace Gavi
             }
         }
         #endregion
-
 
         #region Hexagons
         /// <summary>
@@ -467,7 +464,6 @@ namespace Gavi
             return 1f - Smooth((1f - edge) / 0.45f);
         }
         #endregion
-
 
         #region Grids
         /// <summary>Rows of bricks, every second row shifted by half a brick. A brick is twice as wide as high, each has its own height.</summary>
@@ -523,7 +519,6 @@ namespace Gavi
             return (0.3f + 0.7f * Hash(ix, iy, 19)) * Smooth(edge / 0.3f);
         }
         #endregion
-
 
         #region Waves
         /// <summary>Three wave sources placed around the center, the waves add up and cancel out.</summary>

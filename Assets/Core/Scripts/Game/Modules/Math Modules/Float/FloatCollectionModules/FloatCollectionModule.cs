@@ -25,7 +25,7 @@ namespace Gavi.Modules.MathModules.FloatCollectionModules
         {
             if (!IsValid() || !IsValid(index))
                 return _defaultValue;
-            
+
             return GetValue()[index].GetValue();
         }
 
@@ -45,7 +45,6 @@ namespace Gavi.Modules.MathModules.FloatCollectionModules
             }
             return true;
         }
-
 
         #region Overrides
         protected override bool IsValid()

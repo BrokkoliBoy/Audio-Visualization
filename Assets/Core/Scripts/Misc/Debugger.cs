@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-
 namespace Gavi.Utility
 {
     public class Debugger : MonoBehaviour
@@ -97,7 +96,7 @@ namespace Gavi.Utility
             Debug.LogError("AssertionFail: " + o.ToString());
 #endif
         }
-        
+
         public static void LogInstanceError(System.Type type)
         {
             if (Instance == null)

@@ -14,7 +14,7 @@ namespace Gavi.Modules.MathModules.FunctionModules.VoidToFunctionModules
         {
             if (!IsValid())
                 return DefaultFunction();
-            
+
             if (_returnType == ReturnType.BeatMap)
                 return AudioPlayer.Instance.CurrentlyPlayingClip.BeatMapModule.GetValue();
             return DefaultFunction();

@@ -31,7 +31,7 @@ namespace Gavi.Modules.MathModules.FloatModules.VoidToFloatModules
 
             if ((_timeInfo == TimeInfo.TimeLeft || _timeInfo == TimeInfo.TimePlayed || _timeInfo == TimeInfo.TimePlayedRate) && !AudioPlayer.Instance.IsPlaying)
                 return false;
-            
+
             return base.IsValid();
         }
 

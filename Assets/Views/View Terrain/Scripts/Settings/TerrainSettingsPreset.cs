@@ -12,13 +12,13 @@ namespace Gavi
         public const int CurrentFormatVersion = 5;
         public int FormatVersion;
         public string Name = "Terrain Preset";
-        
+
         #region Settings Variables
         [Header("- Terrain -")]
         public int FaceCountX = 90;
         public int FaceCountY = 90;
         public float TerrainHeight = 2;
-        
+
         [Header("- Perlin -")]
         public bool ApplyPerlin = true;
         public float PerlinDepth = 0.6f;
@@ -144,29 +144,27 @@ namespace Gavi
         public bool TestSignalBeatFromSong = false;
         public bool TestSignalFreezeNoise = false;
         #endregion
-        
-        
+
         #region Constructor
         public static TerrainSettingsPreset ImportPreset(string path)
         {
             TerrainSettingsPreset preset = new TerrainSettingsPreset();
-            
+
             return preset;
         }
         #endregion
-
 
         #region Reading
         public void CopyFromPreset(TerrainSettingsPreset preset)
         {
             if (preset == null)
                 return;
-            
+
             // Terrain
             FaceCountX = preset.FaceCountX;
             FaceCountY = preset.FaceCountY;
             TerrainHeight = preset.TerrainHeight;
-            
+
             // Perlin
             ApplyPerlin = preset.ApplyPerlin;
             PerlinDepth = preset.PerlinDepth;
@@ -268,16 +266,16 @@ namespace Gavi
             foreach (TerrainShapeData shapeData in preset.Shapes)
                 Shapes.Add(new TerrainShapeData(shapeData));
         }
-        
+
         public void CopyFromTerrainSettings()
         {
             TerrainGenerator terrain = TerrainSettingsManager.Instance.Terrain;
-            
+
             // Terrain
             FaceCountX = terrain.FaceCountX;
             FaceCountY = terrain.FaceCountZ;
             TerrainHeight = terrain.TerrainSizeY;
-            
+
             // Perlin
             ApplyPerlin = terrain.ApplyPerlinNoise;
             PerlinDepth = terrain.PerlinStrength;
@@ -366,15 +364,14 @@ namespace Gavi
             foreach (TerrainShape shapeSettings in terrain.Shapes)
                 Shapes.Add(new TerrainShapeData(shapeSettings));
         }
-        
+
         public void ExtractPresetFromUI()
         {
             foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
-                group.ExtractPreset(this); 
+                group.ExtractPreset(this);
         }
         #endregion
-        
-        
+
         #region Writing
         public void ApplyPresetToTerrain()
         {
@@ -385,7 +382,7 @@ namespace Gavi
             terrain.FaceCountX = FaceCountX;
             terrain.FaceCountZ = FaceCountY;
             terrain.TerrainSizeY = TerrainHeight;
-            
+
             // Perlin
             terrain.ApplyPerlinNoise = ApplyPerlin;
             terrain.PerlinStrength = PerlinDepth;
@@ -485,16 +482,15 @@ namespace Gavi
                 terrainShape.ApplyCustomAudioBandWidth = presetShape.BroadenInnerBands;
             }
         }
-        
+
         public void ApplyPresetToUI()
         {
             foreach (TerrainGroupUI group in TerrainSettingsManager.Instance.Groups)
-                group.ShowPreset(this); 
+                group.ShowPreset(this);
         }
         #endregion
     }
 
-    
     [System.Serializable]
     public class TerrainShapeData
     {
@@ -513,7 +509,7 @@ namespace Gavi
             Zoom = 1f;
             Operation = 3;
         }
-        
+
         public TerrainShapeData(TerrainShape preset)
         {
             ApplyShape = preset.ApplyShape;
@@ -524,7 +520,7 @@ namespace Gavi
             Operation = (int) preset.Operation;
             BroadenInnerBands = preset.ApplyCustomAudioBandWidth;
         }
-        
+
         public TerrainShapeData(TerrainShapeData preset)
         {
             ApplyShape = preset.ApplyShape;

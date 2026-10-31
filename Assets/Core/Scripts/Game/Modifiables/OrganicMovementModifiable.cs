@@ -8,7 +8,6 @@ namespace Gavi.Modifiables
     {
         [SerializeField] private List<Transform> _targetTransforms;
 
-
         [Header("--- Motion ---")]
         [SerializeField] private bool _applyMovement = true;
         [Header("- X -")]
@@ -63,8 +62,6 @@ namespace Gavi.Modifiables
         private float _currentTRotationZ;
         private Dictionary<Transform, Quaternion> _defaultLocalRotation = new Dictionary<Transform, Quaternion>();
         private Dictionary<Transform, Vector3> _defaultLocalPositions = new Dictionary<Transform, Vector3>();
-
-
 
         #region Init
         private void Awake()

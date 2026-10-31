@@ -8,26 +8,26 @@ namespace Gavi
     public class TerrainViewMenuUI : MonoBehaviour
     {
         public static TerrainViewMenuUI Instance;
-        
+
         [Header("--- Menu Toggle ---")]
         [Tooltip("Opens the menu when the pointer comes near the handle and closes it when the pointer leaves.")]
         [SerializeField] private UiHoverReveal _hoverReveal;
         [Tooltip("Pins the menu open or closes it.")]
         [SerializeField] private KeyCode _keyCodeToggleMenu = KeyCode.Tab;
         [SerializeField] private float _lerpSpeed = 0.1f;
-        
+
         [Header("- Menu Transforms -")]
         [SerializeField] private RectTransform _menuTransform;
         [SerializeField] private RectTransform _menuActiveMenuTransform;
         [SerializeField] private RectTransform _menuInactiveMenuTransform;
-        
+
         [Header("- Camera Transforms -")]
         [Tooltip("If true, the camera moves aside while the menu is open. Off by default so the terrain stays where it is.")]
         [SerializeField] private bool _moveCameraWithMenu = false;
         [SerializeField] private Transform _cameraTransform;
         [SerializeField] private Transform _menuActiveCameraTransform;
         [SerializeField] private Transform _menuInactiveCameraTransform;
-        
+
         [Header("- Button Texts -")]
         [SerializeField] private List<RectTransform> _textsButtonToggleMenu;
 
@@ -36,7 +36,6 @@ namespace Gavi
         private Coroutine _coroutineMoveCamera;
         private Coroutine _coroutineMoveMenu;
         private Coroutine _coroutineRotateButtonText;
-
 
         #region Mono
         private void Awake()
@@ -64,7 +63,6 @@ namespace Gavi
                 ToggleMenu();
         }
         #endregion
-
 
         #region Menu
         /// <summary>Hotkey: closes the menu when it is open, otherwise opens it and keeps it open.</summary>
@@ -109,11 +107,11 @@ namespace Gavi
                 StopCoroutine(_coroutineMoveCamera);
             if (_moveCameraWithMenu && _cameraTransform != null && _menuActiveCameraTransform != null && _menuInactiveCameraTransform != null)
                 _coroutineMoveCamera = StartCoroutine(MoveCamera(_menuIsActive));
-            
+
             if (_coroutineMoveMenu != null)
                 StopCoroutine(_coroutineMoveMenu);
             _coroutineMoveMenu = StartCoroutine(MoveMenuUI(_menuIsActive));
-            
+
             if (_coroutineRotateButtonText != null)
                 StopCoroutine(_coroutineRotateButtonText);
             _coroutineRotateButtonText = StartCoroutine(RotateToggleButtonText(_menuIsActive));
@@ -130,7 +128,7 @@ namespace Gavi
 
             _coroutineMoveCamera = null;
         }
-        
+
         private IEnumerator MoveMenuUI(bool menuIsActive)
         {
             Vector3 targetPosition = menuIsActive ? _menuActiveMenuTransform.position : _menuInactiveMenuTransform.position;
@@ -151,7 +149,7 @@ namespace Gavi
                 _coroutineRotateButtonText = null;
                 yield break;
             }
-            
+
             Quaternion targetRotation = Quaternion.Euler(0, 0, menuIsActive ? -180 : -361);
 
             while (Quaternion.Angle(targetRotation, _textsButtonToggleMenu[0].rotation) > 1)
@@ -166,7 +164,7 @@ namespace Gavi
                 for (int i = 0; i < _textsButtonToggleMenu.Count; i++)
                     _textsButtonToggleMenu[i].rotation = Quaternion.Euler(0, 0, menuIsActive ? -180 : 0);
             }
-            
+
             _coroutineRotateButtonText = null;
         }
         #endregion

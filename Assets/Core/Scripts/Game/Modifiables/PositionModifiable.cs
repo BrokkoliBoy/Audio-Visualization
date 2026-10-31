@@ -15,7 +15,6 @@ namespace Gavi.Modifiables
 
         private enum ScaleType { OverridePositionWorld, OverridePositionLocal, ChangePositionWorld, ChangePositionLocal }
 
-
         public void Update()
         {
             Vector3 value = _module.GetValue();

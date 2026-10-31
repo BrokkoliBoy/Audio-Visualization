@@ -11,7 +11,7 @@ namespace Gavi.Player
         public static BasicUi Instance;
 
         [SerializeField] private PanelType _startPanel;
-        
+
         [Header("--- Cursor ---")]
         [SerializeField] private CursorLockMode _cursorLockMode = CursorLockMode.Confined;
         [Tooltip("Time in seconds after the cursor should stop showing after not moving.")]
@@ -27,11 +27,10 @@ namespace Gavi.Player
         public bool IsInMenuPanel => (_menuPanel != null && _menuPanel.activeSelf) || (MainMenuUI.Instance != null && MainMenuUI.Instance.IsOpen) || (CameraMenuUI.Instance != null && CameraMenuUI.Instance.IsOpen);
         public bool IsInGamePanel => !IsInMenuPanel;
         private enum PanelType { Game, Menu }
-        
+
         private float _lastCursorMovement;
         private Vector2 _lastCursorPosition;
-            
-        
+
         #region Mono
         private void Awake()
         {
@@ -51,7 +50,6 @@ namespace Gavi.Player
         }
         #endregion
 
-
         #region Panels
         private void SetPanel(PanelType panel)
         {
@@ -62,26 +60,25 @@ namespace Gavi.Player
         }
         #endregion
 
-        
         #region Cursor
         private void CheckCursorToggle()
         {
             Vector2 currentCursorPosition = Input.mousePosition;
             if (currentCursorPosition != _lastCursorPosition)
                 _lastCursorMovement = Time.time;
-            
-            bool isInTerrainAndHasMenuActive = 
+
+            bool isInTerrainAndHasMenuActive =
                 ViewManager.Instance != null &&
                 ViewManager.Instance.CurrentView.ViewType == View.ViewTypeEnum.Terrain &&
                 TerrainViewMenuUI.Instance != null &&
                 TerrainViewMenuUI.Instance.MenuIsActive;
 
-            bool showCursor = 
+            bool showCursor =
                 (isInTerrainAndHasMenuActive ||
                 IsInMenuPanel ||
                 currentCursorPosition != _lastCursorPosition ||
                 _lastCursorMovement + _toggleCursorTime > Time.time);
-            
+
             // The cursor is hidden while the mouse steers the camera.
             Cursor.visible = showCursor && !UiPointer.IsLocked;
             _lastCursorPosition = currentCursorPosition;

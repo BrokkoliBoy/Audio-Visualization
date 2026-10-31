@@ -25,7 +25,7 @@ namespace Gavi
             Terrain = 1,
             Dumbbell = 2
         }
-        
+
         public void StartView()
         {
             if (_isActive)
@@ -35,13 +35,13 @@ namespace Gavi
             }
 
             _isActive = true;
-            _viewObject.SetActive(true); 
+            _viewObject.SetActive(true);
         }
 
         public void StopView()
         {
             _isActive = false;
-            _viewObject.SetActive(false); 
+            _viewObject.SetActive(false);
         }
 
         public void RestartView()
@@ -51,7 +51,7 @@ namespace Gavi
                 Debugger.LogError("Tried to restart view though it is not active on " + gameObject.name);
                 return;
             }
-            
+
             AudioPlayer.Instance.Replay();
         }
     }

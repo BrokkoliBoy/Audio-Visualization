@@ -13,13 +13,13 @@ namespace Gavi
     {
         [SerializeField] private float _minValue = 0;
         [SerializeField] private float _maxValue = 1;
-        
+
         [SerializeField] private bool _isInteger;
         [SerializeField] private int _textDecimals = 1;
         [Tooltip("Optional: below this value the text shows the decimals below instead. -1 = off.")]
         [SerializeField] private float _moreDecimalsBelow = -1f;
         [SerializeField] private int _textDecimalsBelow = 2;
-        
+
         [Header("--- Snap (optional) ---")]
         [Tooltip("Makes a value easy to hit: a small plateau at exactly this value, surrounded by a slow zone for fine values.")]
         [SerializeField] private bool _useSnap;
@@ -61,7 +61,7 @@ namespace Gavi
         public UnityEvent<float> OnValueChangedFloat;
         public UnityEvent<int> OnValueChangedInt;
         private int _lastInt;
-        
+
         public float Value
         {
             get => _isInteger ? Mathf.RoundToInt(PositionToValue(_slider.value)) : PositionToValue(_slider.value);
@@ -81,9 +81,7 @@ namespace Gavi
                 _slider.value = ValueToPosition(value);
             }
         }
-        
-        
-        
+
         /// <summary>The value the slider gives at a position (0-1), for previews along the track.</summary>
         /// <summary>The slider position (0-1).</summary>
         public float Position => _slider.value;

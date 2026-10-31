@@ -165,7 +165,6 @@ namespace Gavi
         private float HueBalance => _sliderHueBalance != null ? _sliderHueBalance.Value : TerrainColorPalette.DefaultHueBalance;
         private bool IsSavedPalette => _baseName != null && FindPalette(_baseName) != null;
 
-
         #region Mono
         private void Start()
         {
@@ -256,7 +255,6 @@ namespace Gavi
             slider.OnValueChangedFloat.AddListener(listener);
         }
         #endregion
-
 
         #region Preset
         public override void ExtractPreset(TerrainSettingsPreset preset)
@@ -369,7 +367,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Template
         private void BuildTemplate()
         {
@@ -394,7 +391,6 @@ namespace Gavi
             }
         }
         #endregion
-
 
         #region Palettes
         private TerrainColorPalette FindPalette(string name)
@@ -563,7 +559,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Save and delete
         private void OnPressedSave()
         {
@@ -664,7 +659,6 @@ namespace Gavi
                 _textDelete.text = "Delete palette";
         }
         #endregion
-
 
         #region Apply
         /// <summary>The values differ from the selected palette now. The dropdown shows that with "(modified)".</summary>
@@ -857,7 +851,6 @@ namespace Gavi
             }
             _terrain.SetColorTable(_curveTable);
         }
-
 
         /// <summary>
         /// Exposure steps that even out how bright a hue looks at the same glow: the eye sees green and yellow much brighter than

@@ -29,7 +29,6 @@ public class SimpleControl : MonoBehaviour
     public static SimpleControl Instance { get; private set; }
     public AudioPlayer Player => _audioPlayer;
 
-
     private void Awake()
     {
         Instance = this;
@@ -68,7 +67,6 @@ public class SimpleControl : MonoBehaviour
         if (Input.GetKey(_keyCodeVolumeDown))
             _audioPlayer.Volume = SliderToVolume(VolumeToSlider(_audioPlayer.Volume) - Time.deltaTime * _volumeChangePerSecond);
     }
-
 
     #region Public controls
     public void NextAudio()

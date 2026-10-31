@@ -19,9 +19,9 @@ namespace Gavi.Modules
         [SerializeField] private float _maxHertz;
         [Tooltip("[Cannot be null] The SpectrumDataContainerModule that the module should take its band values from.")]
         [SerializeField] private SpectrumDataContainerModule _spectrumDataContainer;
-        
+
         private List<float> _tmpSpectrumData = new List<float>();
-        
+
         protected override void Recalculate()
         {
             base.Recalculate();
@@ -40,10 +40,10 @@ namespace Gavi.Modules
                     continue;
                 if (max > _maxHertz)
                     continue;
-                
+
                 _tmpSpectrumData.Add(_spectrumDataContainer.GetValue(bandIndex));
             }
-            
+
             _value = _tmpSpectrumData.ToArray();
         }
 
@@ -63,10 +63,10 @@ namespace Gavi.Modules
             //     return 0;
             // return ViewManager.Instance.CurrentMainSamplesContainer.Length();
         }
-        
+
         protected override bool IsValid()
         {
-            if (ViewManager.Instance.CurrentMainSamplesContainer == null || 
+            if (ViewManager.Instance.CurrentMainSamplesContainer == null ||
                 ViewManager.Instance.CurrentMainSamplesContainer.Settings == null ||
                 _spectrumDataContainer == null)
                 return false;

@@ -34,12 +34,11 @@ namespace Gavi.Modules.MathModules.FloatArrayModules
             TryInitializeArray();
         }
 
-
         public virtual float[] GetValue()
         {
             if (!IsValid())
                 return __defaultValue;
-            
+
             TryRecalculate();
             return _value;
         }
@@ -83,7 +82,7 @@ namespace Gavi.Modules.MathModules.FloatArrayModules
             _isArrayInitialized = true;
         }
 
-        #region Overrides 
+        #region Overrides
         protected override bool IsValid()
         {
             if (_value != null)

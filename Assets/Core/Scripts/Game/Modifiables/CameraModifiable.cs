@@ -4,7 +4,6 @@ using UnityEngine;
 using Gavi.Audio;
 using Gavi.Modules.MathModules.FloatModules;
 
-
 namespace Gavi.Modifiables
 {
     public class CameraModifiable : MonoBehaviour

@@ -12,7 +12,7 @@ namespace Gavi
     public class TerrainGroupUIPresets : TerrainGroupUI
     {
         public static TerrainGroupUIPresets Instance;
-        
+
         [Header("- References -")]
         [SerializeField] private TMP_Dropdown _dropdownPreset;
         [SerializeField] private Button _buttonSave;
@@ -43,7 +43,6 @@ namespace Gavi
         private TerrainSettingsPreset CurrentPreset => TerrainSettingsManager.Instance.CurrentPreset;
         private TerrainSettingsPreset ActivePreset => _dropdownPreset.value >= _presets.Count ? null : _presets[_dropdownPreset.value];
 
-        
         #region Mono
         private void Awake()
         {
@@ -93,7 +92,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Preview
         // While the list is open, the preset under the pointer is shown on the terrain (DropdownWheel puts the hovered option into the
         // dropdown). The state from before is kept, so closing the list without a pick brings it back, unsaved changes included.
@@ -139,13 +137,12 @@ namespace Gavi
         }
         #endregion
 
-
         #region Presets
         public void AddPreset(TerrainSettingsPreset preset, bool exportToDisk = true)
         {
             _presets.Add(preset);
             _dropdownPreset.options.Add(new TMP_Dropdown.OptionData(preset.Name));
-            
+
             if (exportToDisk)
                 TerrainSettingsPresetManager.Instance.ExportPresetsFromJson(preset);
         }
@@ -239,7 +236,7 @@ namespace Gavi
                 if (tmpPreset.Name == name)
                     return;
             }
-            
+
             // Everything the menu shows goes into the preset, the colors too (the terrain alone does not know them).
             SavePaletteForPreset(name);
             TerrainSettingsPreset preset = new TerrainSettingsPreset();
@@ -254,7 +251,6 @@ namespace Gavi
             // return preset;
         }
         #endregion
-        
 
         #region Button Presses
         private void OnPressedNewPreset()
@@ -427,7 +423,6 @@ namespace Gavi
         }
         #endregion
 
-
         private void OnPressedAttemptRemove()
         {
             _panelButtonsPresetControl.SetActive(false);
@@ -435,7 +430,7 @@ namespace Gavi
             _labeledButtonRemove.SetActive(true);
             _dropdownPreset.interactable = false;
         }
-        
+
         private void OnPressedConfirmRemove()
         {
             RemovePresetAtIndex(_dropdownPreset.value);
@@ -444,7 +439,7 @@ namespace Gavi
             _labeledButtonRemove.SetActive(false);
             _dropdownPreset.interactable = true;
         }
-        
+
         private void OnPressedRejectRemove()
         {
             _panelButtonsPresetControl.SetActive(true);

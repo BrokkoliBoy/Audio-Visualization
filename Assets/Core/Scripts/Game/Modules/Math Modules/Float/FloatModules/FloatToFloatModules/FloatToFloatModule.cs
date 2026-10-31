@@ -9,7 +9,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         [Header("--- Float to Float Module ---")]
         [SerializeField] protected FloatModule _inputValue;
         [SerializeField] private bool _inputCanBeNull;
-        
 
         protected override bool IsValid()
         {

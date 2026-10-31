@@ -28,7 +28,6 @@ namespace Gavi
         private bool _suppress;
         private bool _hasListeners;
 
-
         #region Mono
         private void Awake()
         {
@@ -40,7 +39,6 @@ namespace Gavi
             RefreshVisuals();
         }
         #endregion
-
 
         public void SetValues(float hue, float saturation, float menuIntensity)
         {

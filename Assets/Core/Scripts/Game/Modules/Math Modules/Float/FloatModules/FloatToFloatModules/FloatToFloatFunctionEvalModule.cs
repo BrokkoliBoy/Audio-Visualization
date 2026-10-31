@@ -13,7 +13,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         [Tooltip("If this is != null, the _curve will be ignored.")]
         [SerializeField] private FunctionModule _functionModule;
 
-
         protected override void Recalculate()
         {
             base.Recalculate();

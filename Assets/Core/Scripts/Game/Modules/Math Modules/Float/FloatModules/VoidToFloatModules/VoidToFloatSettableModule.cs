@@ -17,7 +17,6 @@ namespace Gavi.Modules.MathModules.FloatModules.VoidToFloatModules
             _value = value;
         }
 
-
         protected override void Recalculate()
         {
             base.Recalculate();

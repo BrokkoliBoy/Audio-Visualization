@@ -37,7 +37,6 @@ namespace Gavi.Modifiables
         //}
         //[SerializeField] private List<VFXColorProperty> _colorProperties;
 
-
         private void Update()
         {
             foreach (VisualEffect effect in _effects)

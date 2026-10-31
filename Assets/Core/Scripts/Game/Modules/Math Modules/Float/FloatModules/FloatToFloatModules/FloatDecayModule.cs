@@ -44,7 +44,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         }
         #endregion
 
-
         #region Logic
         protected override void Recalculate()
         {
@@ -67,7 +66,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
             _currentValue += _decayRate * Time.deltaTime;
         }
         #endregion
-
 
         #region Overrides
         protected override string GetName()

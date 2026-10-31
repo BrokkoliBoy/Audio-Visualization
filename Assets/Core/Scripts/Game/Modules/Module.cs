@@ -30,7 +30,6 @@ public class Module : MonoBehaviour
         return true;
     }
 
-
     #region Override
     protected virtual void Awake()
     {

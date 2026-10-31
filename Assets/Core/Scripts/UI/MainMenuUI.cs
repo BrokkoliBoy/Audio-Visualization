@@ -33,7 +33,6 @@ namespace Gavi
 
         public bool IsOpen => _reveal != null && _reveal.IsRevealed;
 
-
         #region Mono
         private void Awake()
         {
@@ -65,7 +64,6 @@ namespace Gavi
                 ToggleMenu();
         }
         #endregion
-
 
         #region Menu
         /// <summary>Hotkey: closes the menu when it is open, otherwise opens it and keeps it open.</summary>
@@ -102,7 +100,6 @@ namespace Gavi
                 CameraMenuUI.Instance.CloseMenu();
         }
         #endregion
-
 
         #region HDR
         private void SetupHdrToggle()

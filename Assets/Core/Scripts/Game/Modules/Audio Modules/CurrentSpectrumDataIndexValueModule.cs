@@ -13,7 +13,7 @@ namespace Gavi.Modules
         [SerializeField] private int _index;
         [Tooltip("If the module is not null, the modules value will be used instead of this integer. The float value of float module will simply be casted to int.")]
         [SerializeField] private FloatModule _indexModule;
-        
+
         protected override void Recalculate()
         {
             base.Recalculate();
@@ -31,7 +31,7 @@ namespace Gavi.Modules
                 return false;
             return base.IsValid();
         }
-        
+
         protected override string GetName()
         {
             return "V2F Current Spectrum Data Index Value [" + _index + "/" + (_indexModule != null ? "+" : "-") + "]";

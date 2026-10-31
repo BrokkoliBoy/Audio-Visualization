@@ -6,9 +6,9 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.FloatArrayToFloatArrayModul
 {
     public class FloatArrayToFloatArrayMedianModule : FloatArrayToFloatArrayModule
     {
-        // this module changes the values of its array by averaging it over a variable amount of arrays values of 
+        // this module changes the values of its array by averaging it over a variable amount of arrays values of
         // the past x frames.
-        
+
         [Header("--- FA 2 FA Median Module ---")]
         [SerializeField][Min(1)] private int _numberConsiderFrames = 5;
         [SerializeField] private bool _resetWhenClipChanged = true;
@@ -49,7 +49,7 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.FloatArrayToFloatArrayModul
             base.Recalculate();
 
             float[] input = _inputValue.GetValue();
-            
+
             // check if sample size has changed. If so, reset median
             if (_queue.Count > 0 && _queue.Peek().Length != input.Length)
             {
@@ -57,7 +57,7 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.FloatArrayToFloatArrayModul
                     _value[i] = 0;
                 _queue.Clear();
             }
-            
+
             if (_queue.Count < _numberConsiderFrames)
             {
                 for (int i = 0; i < input.Length; i++)
@@ -117,7 +117,6 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.FloatArrayToFloatArrayModul
                 }
             }
         }
-
 
         protected override string GetName()
         {

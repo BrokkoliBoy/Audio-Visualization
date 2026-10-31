@@ -31,7 +31,6 @@ namespace Gavi
 
         public bool IsOpen => _reveal != null && _reveal.IsRevealed;
 
-
         #region Mono
         private void Awake()
         {
@@ -61,7 +60,6 @@ namespace Gavi
                 Instance = null;
         }
         #endregion
-
 
         #region Menu
         /// <summary>Click on the Camera button: keeps the menu open even when the pointer leaves, or lets go of it again.</summary>
@@ -94,7 +92,6 @@ namespace Gavi
                 TerrainViewMenuUI.Instance.CloseMenu();
         }
         #endregion
-
 
         #region Settings
         private void SetupSway()

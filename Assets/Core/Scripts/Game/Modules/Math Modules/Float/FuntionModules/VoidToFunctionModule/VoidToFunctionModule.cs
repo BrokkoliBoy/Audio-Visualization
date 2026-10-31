@@ -6,6 +6,6 @@ namespace Gavi.Modules.MathModules.FunctionModules.VoidToFunctionModules
 {
     public class VoidToFunctionModule : FunctionModule
     {
-        
+
     }
 }

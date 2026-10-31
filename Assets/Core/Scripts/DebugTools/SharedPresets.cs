@@ -17,7 +17,6 @@ namespace Gavi
         /// <summary>The Editor, a development build, or a build in which debug mode was switched on with Ctrl+F12 (remembered).</summary>
         public static bool DebugOn => Debug.isDebugBuild || PlayerPrefs.GetInt(DebugKey, 0) == 1;
 
-
         public static string Folder => Path.Combine(Application.persistentDataPath, "SharedPresets");
 
         public static void ToggleDebug()
@@ -25,7 +24,6 @@ namespace Gavi
             PlayerPrefs.SetInt(DebugKey, PlayerPrefs.GetInt(DebugKey, 0) == 1 ? 0 : 1);
             PlayerPrefs.Save();
         }
-
 
         #region Live link
         // One file with the whole setup. The sender writes it when its settings change, the receiver applies it. The first line names the sender,

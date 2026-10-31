@@ -40,7 +40,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
                 inputValue = Mathf.Clamp(inputValue, oldMin, oldMax);
             float value = Utility.Utility.Remap(oldMin, oldMax, newMin, newMax, inputValue);
 
-
             _storedValue = value;
         }
 
@@ -48,8 +47,8 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         {
             return "FloatRemapModule [old: ("
                 + (_oldMinFloatModule != null ? "-" : _oldMin + "") + "/"
-                + (_oldMaxFloatModule != null ? "-" : _oldMax + "") + ") || new: (" 
-                + (_newMinFloatModule != null ? "-" : _newMin + "") + "/" 
+                + (_oldMaxFloatModule != null ? "-" : _oldMax + "") + ") || new: ("
+                + (_newMinFloatModule != null ? "-" : _newMin + "") + "/"
                 + (_newMaxFloatModule != null ? "-" : _newMax + "") + ")]";
         }
     }

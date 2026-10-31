@@ -40,7 +40,6 @@ namespace Gavi
 
         private TerrainSettingsPreset Current => TerrainSettingsManager.Instance != null ? TerrainSettingsManager.Instance.CurrentPreset : null;
 
-
         private static SharedPresetsWindow _instance;
 
         /// <summary>Created from code when the scene has loaded, so no scene file holds it.</summary>
@@ -84,7 +83,6 @@ namespace Gavi
                 ReceiveLive();
         }
         #endregion
-
 
         #region Live link
         private void SendLive()
@@ -133,7 +131,6 @@ namespace Gavi
             _status = "Live setup received " + DateTime.Now.ToString("HH:mm:ss");
         }
         #endregion
-
 
         #region Window
         private void OnGUI()

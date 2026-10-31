@@ -93,7 +93,7 @@ public class ScrollGraph : GraphBase
             // position texts
             m_textsStripesVertical[i].transform.position = transform.position + m_relativePosition + new Vector3(m_width * positionPercent, 0, 0) + m_textsStripesVerticalRelativePosition;
             m_textsStripesVertical[i].text = currentNumber + "";
-            
+
             currentNumber -= m_stripeDistVertical * m_batchSize;
         }
     }

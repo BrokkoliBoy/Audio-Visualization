@@ -26,7 +26,6 @@ namespace Gavi.Modifiables
                     _lightData[i].intensity = _intensity.GetValue();
             }
 
-
             if (_range != null)
             {
                 for (int i = 0; i < _lights.Count; i++)

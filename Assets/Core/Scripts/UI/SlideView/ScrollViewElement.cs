@@ -47,10 +47,9 @@ namespace Gavi
             return true;
         }
 
-
         public virtual void UpdateInfo()
         {
-            
+
         }
     }
 }

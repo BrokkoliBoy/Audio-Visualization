@@ -10,7 +10,6 @@ namespace Gavi.Modules.MathModules.VectorModules.VectorToVectorModules
         [SerializeField] protected VectorModule _inputValue;
         [SerializeField] private bool _inputCanBeNull;
 
-
         protected override bool IsValid()
         {
             if (!_inputCanBeNull && _inputValue == null)

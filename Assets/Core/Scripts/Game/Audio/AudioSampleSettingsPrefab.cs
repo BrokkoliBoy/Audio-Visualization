@@ -21,11 +21,10 @@ namespace Gavi.Audio
         public enum Redirection { Prefab, None }
         public enum Operation { Use, MultiplyWith }
 
-
-        #region 
+        #region
         public AudioSampleSettings()
         {
-            
+
         }
         public AudioSampleSettings(AudioSampleSettings originalSettings)
         {
@@ -39,7 +38,7 @@ namespace Gavi.Audio
                 Debugger.LogError("originalSettings in AudioSampleSettings constructor is null!");
                 return;
             }
-            
+
             SampleSize = originalSettings.SampleSizeRec;
             FftWindow = originalSettings.FftWindowRec;
 
@@ -69,7 +68,6 @@ namespace Gavi.Audio
             NormalizeByVolume = originalSettings.NormalizeByVolumeRec;
         }
         #endregion
-
 
         #region General Settings
         [Header("--- Base Settings ---")]
@@ -101,7 +99,6 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         #region Band Settings
         [Header("--- Bands ---")]
 
@@ -130,7 +127,6 @@ namespace Gavi.Audio
             }
         }
         #endregion
-
 
         #region Band Bin Distribution
         [Header("--- Bin Distribution ---")]
@@ -210,7 +206,6 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         #region Amplitude Settings
         [Header("--- Amplitude Multiplier ---")]
 
@@ -264,7 +259,7 @@ namespace Gavi.Audio
             // if use prefab one, clear own list, but ONLY if no recursion has been done yet. Otherwise the prefabs list will be altered, which we do not want
             if (_amplitudeModifierWeightedOperation == Operation.Use && !isRecursive)
                 AmplitudeModifierWeightedList.Clear();
-            // else if it is Operation.Multiply and the function has been called recursively, add the own curves. You do not need to do that if it was not recursive because then 
+            // else if it is Operation.Multiply and the function has been called recursively, add the own curves. You do not need to do that if it was not recursive because then
             // the to be filled List amplitudeModifierWeighted already contains the own curves
             else if (isRecursive)
             {
@@ -274,7 +269,6 @@ namespace Gavi.Audio
             PrefabSettings.AmplitudeModifierWeightedRec(curveListToBeFilled);
         }
         #endregion
-
 
         #region Averaging
         [Header("--- Averaging Out ---")]
@@ -320,7 +314,6 @@ namespace Gavi.Audio
             }
         }
         #endregion
-
 
         #region Misc
         [Header("--- Misc ---")]

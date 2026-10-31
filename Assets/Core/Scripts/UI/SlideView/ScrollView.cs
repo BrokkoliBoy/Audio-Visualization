@@ -21,7 +21,6 @@ namespace Gavi
 
         public int ElementCount => Elements.Count;
 
-
         public void AddElement(ScrollViewElement element, int index = -1)
         {
             bool isValid = element.SetScrollView(this);

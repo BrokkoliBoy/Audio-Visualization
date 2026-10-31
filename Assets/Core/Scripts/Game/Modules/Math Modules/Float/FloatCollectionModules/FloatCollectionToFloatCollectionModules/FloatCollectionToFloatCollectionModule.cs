@@ -9,7 +9,6 @@ namespace Gavi.Modules.MathModules.FloatCollectionModules.FloatCollectionToFloat
         [Header("--- FloatCollection to FloatCollection Module ---")]
         [SerializeField] protected FloatCollectionModule _inputValue;
 
-
         public override int Length()
         {
             if (_modules != null && _modules.Count > 0)

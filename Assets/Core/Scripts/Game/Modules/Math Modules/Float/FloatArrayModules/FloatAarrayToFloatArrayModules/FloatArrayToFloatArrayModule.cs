@@ -59,7 +59,7 @@ namespace Gavi.Modules.MathModules.FloatArrayModules.FloatArrayToFloatArrayModul
 
             if (_value == null)
                 _value = new float[_inputValue.Length()];
-            
+
             if (_reInitializeOnInputLengthDifference && _inputValue.Length() != _value.Length)
                 ReInitialize();
 

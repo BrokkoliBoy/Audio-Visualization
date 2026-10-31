@@ -26,7 +26,7 @@ namespace Gavi.Audio
 
         [SerializeField] private float[] _BINS_PER_BAND_DEBUG;
         private float _minHertz;
-        
+
         private void Awake()
         {
             if (Instance != null)
@@ -49,7 +49,6 @@ namespace Gavi.Audio
             if (!settings.UseBands)
                 return _spectrumDataRaw;
 
-            
             // translate raw spectrum data into frequency bands
             float highestBandValue = 0;
             float bandSqrt = 1;//Mathf.Sqrt(settings.BandSize) / 2;
@@ -137,8 +136,6 @@ namespace Gavi.Audio
             PopulateBandDistributionByFrequency(settings);
         }
 
- 
-
         #region Band Distribution
         private void PopulateBandDistributionByFrequency(AudioSampleSettings settings)
         {
@@ -149,7 +146,7 @@ namespace Gavi.Audio
             for (int bandIndex = 0; bandIndex < settings.BandSize; bandIndex++)
             {
                 int binsThisBand = 1;
-                if (bandIndex == 0) // in first band put in 
+                if (bandIndex == 0) // in first band put in
                     binsThisBand = (int)(settings.MinHertz / herzPerBin) + 1;
                 else if (bandIndex == settings.BandSize - 1) // just put all remaining bins into the last band
                     binsThisBand = settings.SampleSize - binsCovered;
@@ -159,7 +156,7 @@ namespace Gavi.Audio
                 _binRangesPerBand[bandIndex] = binsThisBand;
             }
         }
-        
+
         private void PopulateBandDistribution(AudioSampleSettings settings)
         {
             AudioSampleSettings.BandDistributionType distributionType = settings.BandDistribution;
@@ -192,7 +189,7 @@ namespace Gavi.Audio
                 PopulateBandDistributionLogarithmic(settings);
             }
         }
-        
+
         private void PopulateBandDistributionConstant(AudioSampleSettings settings)
         {
             int frequencyToCover = Mathf.Min(AudioSettings.outputSampleRate / 2, settings.MaxHertz);
@@ -208,7 +205,7 @@ namespace Gavi.Audio
                 binsCovered += binsPerBand;
             }
         }
-        
+
         private void PopulateBandDistributionDirect(AudioSampleSettings settings)
         {
             //Debug.Log(settings.BandBinDistribution.Length);
@@ -217,7 +214,7 @@ namespace Gavi.Audio
             //for (int bandIndex = 0; bandIndex < _binsBandValues.Length; bandIndex++)
             //    targetFrequencyOnBands[bandIndex] = settings.BandBinsDistribution[bandIndex];
         }
-        
+
         private void PopulateBandDistributionPredefined(AudioSampleSettings settings)
         {
             _targetFrequencyOnBands[0] = 60f;
@@ -228,7 +225,7 @@ namespace Gavi.Audio
             _targetFrequencyOnBands[5] = 6000f;
             _targetFrequencyOnBands[6] = 20000f;
         }
-        
+
         private void PopulateBandDistributionLogarithmic(AudioSampleSettings settings)
         {
             // exponent
@@ -276,7 +273,7 @@ namespace Gavi.Audio
             //    //_BINS_PER_BAND_DEBUG[bandIndex] = binSizeThisBand;
             //}
         }
-        
+
         private void RecalculateMinimumBinCountPerBand(AudioSampleSettings settings)
         {
             int frequency = AudioSettings.outputSampleRate / 2;
@@ -293,7 +290,6 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         #region Public Getters
         public int BandCount => _binRangesPerBand == null ? 0 : _binRangesPerBand.Length;
 
@@ -302,13 +298,13 @@ namespace Gavi.Audio
             Vector2 range = new Vector2();
             if (_binRangesPerBand.Length == 0)
                 return range;
-            
+
             range.x = bandIndex == 0 ? 0 : _targetFrequencyOnBands[bandIndex - 1];
             range.y = _targetFrequencyOnBands[bandIndex];
-            
+
             return range;
         }
         #endregion
     }
-    
+
 }

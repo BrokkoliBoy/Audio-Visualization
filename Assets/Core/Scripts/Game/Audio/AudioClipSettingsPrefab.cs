@@ -34,7 +34,6 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         // Amply Modifier Overall
         [Space]
         [SerializeField] private Redirection _amplitudeModifierOverallRedirection = Redirection.Prefab;
@@ -47,7 +46,6 @@ namespace Gavi.Audio
                 return PrefabSettings.AmplitudeModifierOverallRec * (_amplitudeModifierOverallOperation == Operation.MultiplyWith ? AmplitudeModifierOverall : 1);
             }
         }
-
 
         // Amplitude Modifier Bands
         [Space]
@@ -65,7 +63,7 @@ namespace Gavi.Audio
             // if use prefab one, clear own list, but ONLY if no recursion has been done yet. Otherwise the prefabs list will be altered, which we do not want
             if (_amplitudeModifierWeightedOperation == Operation.Use && !isRecursive)
                 AmplitudeModifierWeightedList.Clear();
-            // else if it is Operation.Multiply and the function has been called recursively, add the own curves. You do not need to do that if it was not recursive because then 
+            // else if it is Operation.Multiply and the function has been called recursively, add the own curves. You do not need to do that if it was not recursive because then
             // the to be filled List amplitudeModifierWeighted already contains the own curves
             else if (isRecursive)
             {

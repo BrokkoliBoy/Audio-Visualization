@@ -159,7 +159,6 @@ public class SimpleGraph : GraphBase
         if (m_maxNumberPoints % 2 != 0)
             Debug.Log("Warning: m_maxNumberPoints should be divisable by 2!");
 
-
         bool searchForNewMaxValue = false;
         List<float> newBatchedValues = new List<float>();
         for(int i = 0; i < m_maxNumberPoints - 1; i+=2)

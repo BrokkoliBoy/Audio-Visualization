@@ -9,12 +9,12 @@ namespace Gavi
     {
         public virtual void ExtractPreset(TerrainSettingsPreset preset)
         {
-            
+
         }
-        
+
         public virtual void ShowPreset(TerrainSettingsPreset preset)
         {
-            
+
         }
 
         // The change is applied by the settings manager (see TerrainSettingsManager.LateUpdate), not by the group: a group in a

@@ -12,7 +12,7 @@ public class TerrainShape
     }
     [Tooltip("If false, the shape will be ignored.")]
     [SerializeField] private bool _applyShape = true;
-    
+
     public AudioShape Shape { get => _shape; set => _shape = value; }
     [Tooltip("Specifies the shape that the bands should be cast onto.")]
     [SerializeField] private AudioShape _shape;
@@ -39,18 +39,17 @@ public class TerrainShape
     private float EffectiveZoom => FitsDisc(_shape) ? _shapeZoom * DiscZoom : _shapeZoom;
     [Tooltip("Zoom of the shape. Will show more or less effect depending on the shape.")]
     [SerializeField] private float _shapeZoom = 1;
-    
+
     public bool Invert { get => _invertShape; set => _invertShape = value; }
     [Tooltip("If true, the bands position on the shape will be inverted. If for example using a shape of AlignmentX, the first band will be located to the most right and the last band to the most left. " +
         "If inverted, the first band will be located to the most left and the last band to the most right.")]
     [SerializeField] private bool _invertShape;
-    
+
     public AudioShapeOperation Operation { get => _operation; set => _operation = value; }
     [Tooltip("If more than one ShapeSetting is specified (for example in the TerrainGenerator), this variable will dictate what operation to perform from a current shape to its previous one. If only one shape" +
         " is specified, no operation will be applied and the values will be used rawly.")]
     [SerializeField] private AudioShapeOperation _operation;
     public enum AudioShapeOperation { Override, /*Multiply,*/ Add, Subtract, Maximum, Minimum, Average }
-    
 
     public bool ApplyCustomAudioBandWidth { get => _applyCustomAudioBandWidth; set => _applyCustomAudioBandWidth = value; }
     [Header("- Band Widths -")]
@@ -59,7 +58,6 @@ public class TerrainShape
     [Tooltip("Curve that dictates the general width of the bands. f(0) is the factor for the first band, f(1) is the factor for the last band. Make sure that the curve does not go beneath f(x)=1. This feature" +
         " was implemented quickly, so its usage might be a bit quirky.")]
     [SerializeField] private AnimationCurve _audioBandWidthCurve = new AnimationCurve(new Keyframe[] { new Keyframe(0, 2), new Keyframe(1, 1) });
-    
 
     /// <summary>
     /// Changes whenever a setting that has an effect on <see cref="GetNormalizedBandIndexByShape"/> changes, so results can be cached.

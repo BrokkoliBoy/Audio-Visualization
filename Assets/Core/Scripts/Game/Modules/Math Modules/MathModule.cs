@@ -14,7 +14,6 @@ namespace Gavi.Modules.MathModules
 
         protected bool _calculatedThisFrame;
 
-
         protected virtual void LateUpdate()
         {
             _calculatedThisFrame = false;

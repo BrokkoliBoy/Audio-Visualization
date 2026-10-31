@@ -15,8 +15,7 @@ namespace Gavi.Modules
                 return;
             _value = ViewManager.Instance.CurrentMainSamplesContainer.GetValue();
         }
-        
-        
+
         #region Overrides
         protected override void InitializeArray()
         {

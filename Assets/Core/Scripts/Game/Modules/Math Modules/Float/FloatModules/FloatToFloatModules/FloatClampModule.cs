@@ -12,7 +12,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         [SerializeField] private bool _useMax = true;
         [SerializeField] private float _maxClamp = 1f;
 
-
         protected override void Recalculate()
         {
             base.Recalculate();

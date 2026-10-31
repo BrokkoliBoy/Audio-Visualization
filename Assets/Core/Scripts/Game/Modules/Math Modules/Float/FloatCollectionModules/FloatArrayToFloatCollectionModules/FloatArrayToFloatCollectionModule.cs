@@ -25,8 +25,6 @@ namespace Gavi.Modules.MathModules.FloatCollectionModules.FloatArrayToFloatColle
             return _inputValue.GetValue(index);
         }
 
-
-
         #region Overrides
         public override int Length()
         {

@@ -231,7 +231,6 @@ namespace Gavi
         //[SerializeField] private AudioSampleSettings _audioSampleSettings;
         //[SerializeField] private AudioSampler _audioSampler;
 
-
         [Header("- Audio Shape -")]
         [Tooltip("List of shapes that the samples should be cast onto. If none are specified, no audio will be displayed.")]
         [SerializeField] private List<TerrainShape> _audioShapeSettings = new List<TerrainShape>();
@@ -252,7 +251,6 @@ namespace Gavi
         [Tooltip("If true, the out of bounds value will be capped by the value of the last band. This capping happens AFTER apply the _outOfBoundsFactor.")]
         [SerializeField] private bool _outOfBoundsMaximumIsOutestBand = true;
         public bool OutOfBoundsMaximumIsOutestBand { get => _outOfBoundsMaximumIsOutestBand; set => _outOfBoundsMaximumIsOutestBand = value; }
-
 
         [Header("- Audio Smooth between Bands -")]
         [Tooltip("If true, the vertices height of an audio band will blend into the adjacent bands height according to the specified blending curve.")]
@@ -417,7 +415,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Mesh Update
         /// <summary>
         /// True while the song is paused: the terrain time stands still (noise, waves, beats, morph animation) and the picture
@@ -441,7 +438,6 @@ namespace Gavi
             }
         }
         #endregion
-
 
         #region Mesh Generation
         private void GenerateMesh()
@@ -827,7 +823,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Noise
         /// <summary>
         /// Keeps the pattern up to date once per mesh update. The pattern is calculated row by row on all processor cores, and
@@ -993,7 +988,6 @@ namespace Gavi
             _noiseMean = SampleMean(_noiseNext);
         }
 
-
         /// <summary>The deepest carve a single pattern layer reaches, at least a small value so it can be divided by.</summary>
         private float CarveReference()
         {
@@ -1121,7 +1115,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Shape cache
         /// <summary>
         /// Calculates the band index of every vertex for every shape again when the shapes, the face count or the audio switch
@@ -1223,7 +1216,6 @@ namespace Gavi
             return anyActive;
         }
         #endregion
-
 
         #region Picking
         /// <summary>Steps of the search along a camera ray in <see cref="TryPickBand"/>.</summary>

@@ -24,7 +24,6 @@ namespace Gavi
         [Tooltip("Two swipes straight through the box in opposite directions within this time (s) switch it.")]
         [SerializeField] private float _swipeWindow = 0.6f;
 
-
         private Toggle _toggle;
         private RectTransform _box;
         private UiHoverReveal _reveal;

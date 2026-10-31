@@ -20,9 +20,8 @@ namespace Gavi.Audio
         public int BandSize { get { TryRecalculate(); return  _finalSampleSettings.BandSize; } }
 
         //[SerializeField] private AmplitudeModule _amplitudeModule;
-        //private float _amplitude; 
+        //private float _amplitude;
         //public float Amplitude { get { CalculateAmplitude(); return _amplitudeModule.GetAmplitude(_spectrumData); } }
-
 
         #region Mono
         private void Awake()
@@ -39,12 +38,10 @@ namespace Gavi.Audio
         }
         #endregion
 
-
         //public override float GetFloat(float value)
         //{
         //    return SpectrumData
         //}
-
 
         #region Recalculation
         public void TryRecalculate()

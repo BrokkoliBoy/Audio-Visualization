@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Gavi.Modules.MathModules.FloatModules.VoidToFloatModules
-{ 
+{
     public class VoidToFloatTimeModule : VoidToFloatModule
     {
         [SerializeField] private TimeType _timeType;

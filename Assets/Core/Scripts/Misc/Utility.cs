@@ -26,7 +26,7 @@ namespace Gavi.Utility
 
             if (clamp)
                 v = Mathf.Clamp(v, 0, 1);
-            
+
             return v;
         }
         public static Component GetComponentInParents<T>(Transform startTransform) where T : Component
@@ -48,7 +48,7 @@ namespace Gavi.Utility
         {
             if (e == 0)
                 return 1;
-            
+
             if (e < 0)
             {
                 Debug.Log("Warning: ExpInt doesn't take negative exponentials at the moment!");

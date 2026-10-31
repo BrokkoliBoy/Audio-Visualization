@@ -71,7 +71,6 @@ namespace Gavi
         private Vector2 _lastPosition;
         private Vector2 _velocity;
 
-
         #region Mono
         private void Awake()
         {
@@ -108,7 +107,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Control
         /// <summary>Hotkey behaviour: closes the menu when it is open, otherwise opens it and keeps it open.</summary>
         public void ToggleByKey()
@@ -141,7 +139,6 @@ namespace Gavi
             _dismissed = true;
         }
         #endregion
-
 
         #region Helpers
         private bool IsPointerNear(bool includeStayRegions)

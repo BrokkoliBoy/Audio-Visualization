@@ -11,7 +11,7 @@ namespace Gavi
     public class TerrainSettingsPresetManager : MonoBehaviour
     {
         public static TerrainSettingsPresetManager Instance;
-        
+
         private const string SubFolder = "TerrainPresets";
 
         private void Awake()
@@ -42,7 +42,7 @@ namespace Gavi
             string json = JsonUtility.ToJson(preset);
             File.WriteAllText(folder + preset.Name + ".txt", json + "\n");
         }
-        
+
         /// <summary>Reads a preset from JSON (file or clipboard) and brings old formats up to date. Null when the text is no preset.</summary>
         public static TerrainSettingsPreset ParsePreset(string json)
         {

@@ -8,7 +8,7 @@ namespace Gavi
     public class TerrainSettingsPresetContainer : MonoBehaviour
     {
         [SerializeField] private bool _export;
-        
+
         [SerializeField] private TerrainSettingsPreset _preset;
 
         private void OnDrawGizmosSelected()

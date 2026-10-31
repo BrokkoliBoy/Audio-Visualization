@@ -25,7 +25,6 @@ namespace Gavi
         private static readonly Color ButtonColor = new Color(0.2f, 0.22f, 0.27f, 1f);
         private static readonly Color DangerColor = new Color(0.55f, 0.18f, 0.16f, 1f);
 
-
         #region Hook
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
@@ -56,7 +55,6 @@ namespace Gavi
         }
         #endregion
 
-
         #region Dialog
         private void Update()
         {
@@ -84,7 +82,6 @@ namespace Gavi
             Application.Quit();
         }
         #endregion
-
 
         #region Build
         private void Build()

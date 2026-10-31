@@ -5,10 +5,9 @@ using UnityEngine;
 namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
 {
 
-
     public class FloatStoreAndDecayModule : FloatToFloatModule
     {
-        // Stores a (current) value and decays it each update/lateUpdate. 
+        // Stores a (current) value and decays it each update/lateUpdate.
         // The input value will be compared to the current value and the new current value will be evaluated by the specified StoreType.
         // GetValue() returns the current value.
 
@@ -36,7 +35,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
         private enum StoreType { Override, Min, Max }
         private enum UpdateEvent { Update, LateUpdate }
 
-
         #region Mono
         protected override void Awake()
         {
@@ -55,7 +53,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
                 ApplyDecay();
         }
         #endregion
-
 
         #region Logic
         protected override void Recalculate()
@@ -88,7 +85,6 @@ namespace Gavi.Modules.MathModules.FloatModules.FloatToFloatModules
             _currentValue += _decayRate * Time.deltaTime;
         }
         #endregion
-
 
         #region Overrides
         protected override string GetName()

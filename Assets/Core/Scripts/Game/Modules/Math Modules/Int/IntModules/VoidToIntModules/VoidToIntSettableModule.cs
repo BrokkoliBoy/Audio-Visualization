@@ -17,7 +17,6 @@ namespace Gavi.Modules.MathModules.IntModules.VoidToIntModules
             _value = (int)value;
         }
 
-
         protected override void Recalculate()
         {
             base.Recalculate();
