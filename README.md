@@ -6,7 +6,10 @@ A sandbox music visualizer for Unity (HDRP): a glowing terrain that is shaped by
 the mesh up, a noise pattern keeps it moving, waves run over it on the beat, and everything can be tuned live in a slide-in menu
 with dozens of sliders.
 
-<!-- VIDEO 1 (hero, 20-30 s): one song, camera orbit, menu stays hidden. Upload as mp4 to GitHub and paste the link here. -->
+<!-- Intro video (about 20 s, with sound): song Invincible. Starts on the Terrain tab of the menu with the Thunderstorm preset, four quick pattern changes (Voronoi, Triangles, Honeycomb, Tiles), then the menu switches to the Color tab while the terrain morphs into the Jungle preset (mesh morph, new colors), menu closes at the end. Recorded with the scripted video director on the video branch. -->
+https://github.com/user-attachments/assets/d5fe2874-6a72-4647-bc8e-21bc63c1d96f
+
+The longer demo is on YouTube: [Audio Visualization, full video](https://www.youtube.com/watch?v=qF42xZbG59Q)
 
 ## What you do here
 
