@@ -10,10 +10,10 @@ namespace Gavi
     {
         public enum Option { TabHover, WindowHover, LayerHover, LayerDip, CheckboxDip }
 
-        private const string KeyPrefix = "MenuNavigation3.";
+        private const string KeyPrefix = "MenuNavigation4.";
 
-        // hovering a tab or a window is the basic feel of the menu; switching layers by hover and the dips are easy to trigger by accident and start off
-        private static readonly bool[] Defaults = { true, true, false, false, true };
+        // only hovering a tab starts on; opening windows by hover, switching layers by hover and the dips are easy to trigger by accident
+        private static readonly bool[] Defaults = { true, false, false, false, false };
 
         private static bool _loaded;
         private static bool _master = true;
