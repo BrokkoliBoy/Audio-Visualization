@@ -17,6 +17,8 @@ choose which part of the spectrum shapes which part of the terrain, send waves o
 planet, paint it with a palette. Think of it as an instrument for pictures. When you find a look you like, save it as a preset
 and come back to it. If you only want to watch, lean back and let a song run.
 
+![The Terrain tab of the menu next to a glowing terrain](docs/images/menu-terrain.jpg)
+
 ## Why I built this
 
 This started as a side quest: I wanted a wall in a different project to move along with whatever song was playing. I quickly
@@ -48,7 +50,7 @@ does and when it matters.
 - **Mesh morph.** Bends the whole mesh into a planet, tube, pillar, dome, pringle, twist or flag.
 - **Color and light.** HDR palettes (save your own), bloom, lens dirt that pulses on the beat, and a background that takes the
   hue of the terrain.
-- **Presets.** Every setting can be saved, loaded and sent to someone else as text. Seven ship with the build.
+- **Presets.** Every setting can be saved, loaded and sent to someone else as text. Eight ship with the build.
 - **Camera.** Orbit, move and zoom with the mouse, turn the terrain by dragging it, beat-synced zoom and sway.
 - **Test signal.** Replaces the song with a calm, fixed spectrum, so an effect can be judged without a moving song. A band
   editor lets you raise and lower single bands with the mouse.
@@ -57,6 +59,17 @@ does and when it matters.
 
 Four free-to-use songs, a 20 to 20,000 Hz test sweep and live microphone input, cycled from the player bar or with the arrow keys.
 The full list with status and planned ideas is in [docs/features.md](docs/features.md).
+
+Six of the presets that ship with the build. Spacewarp is shown with the circle shape, which makes the terrain look like a
+speaker cone that moves with the beat.
+
+| Jungle | Thunderstorm |
+|---|---|
+| ![Jungle: a glowing green pillar of tiles with an orange base](docs/images/gallery-jungle.jpg) | ![Thunderstorm: a blue glowing sphere](docs/images/gallery-thunderstorm.jpg) |
+| **Zerg** | **Spacewarp** |
+| ![Zerg: a red column with dark wave bands](docs/images/gallery-zerg.jpg) | ![Spacewarp: a purple disc of concentric rings](docs/images/gallery-spacewarp.jpg) |
+| **Ocean** | **Lava River** |
+| ![Ocean: a blue wavy terrain sheet](docs/images/gallery-ocean.jpg) | ![Lava River: a red glowing disc of lava](docs/images/gallery-lava-river.jpg) |
 
 ## Controls
 
