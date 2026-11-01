@@ -31,6 +31,12 @@ namespace Gavi
         [Tooltip("If true and HDR output is available, it is switched on when the app starts.")]
         [SerializeField] private bool _enableHdrOnStart = true;
 
+        private const float HdrCheckInterval = 1f;
+
+        private bool _hdrSupported;
+        private bool _hdrSwitchedOffByUser;
+        private float _nextHdrCheck;
+
         public bool IsOpen => _reveal != null && _reveal.IsRevealed;
 
         #region Mono
@@ -62,6 +68,8 @@ namespace Gavi
         {
             if (!UiPointer.IsTyping && !QuitConfirmation.BlocksHotkeys && (Input.GetKeyDown(_keyCodeToggleMenu) || Input.GetKeyDown(_keyCodeToggleMenuAlternative)))
                 ToggleMenu();
+
+            WatchHdrAvailability();
         }
         #endregion
 
@@ -109,6 +117,7 @@ namespace Gavi
 
             HDROutputSettings hdr = HDROutputSettings.main;
             bool supported = hdr != null && hdr.available;
+            _hdrSupported = supported;
             _toggleHdr.interactable = supported;
 
             if (supported && _enableHdrOnStart && !hdr.active)
@@ -121,8 +130,34 @@ namespace Gavi
                 _textHdr.text = supported ? "HDR output" : "HDR output (not available)";
         }
 
+        /// <summary>The window can be dragged to another monitor while running, so the HDR support is looked at again about once a second.</summary>
+        private void WatchHdrAvailability()
+        {
+            if (_toggleHdr == null || Time.unscaledTime < _nextHdrCheck)
+                return;
+            _nextHdrCheck = Time.unscaledTime + HdrCheckInterval;
+
+            HDROutputSettings hdr = HDROutputSettings.main;
+            bool supported = hdr != null && hdr.available;
+
+            if (supported != _hdrSupported)
+            {
+                _hdrSupported = supported;
+                _toggleHdr.interactable = supported;
+                if (_textHdr != null)
+                    _textHdr.text = supported ? "HDR output" : "HDR output (not available)";
+
+                // moved to an HDR monitor: switch on again as at the start, unless HDR was switched off by hand
+                if (supported && _enableHdrOnStart && !_hdrSwitchedOffByUser && !hdr.active)
+                    hdr.RequestHDRModeChange(true);
+            }
+
+            _toggleHdr.SetIsOnWithoutNotify(supported && hdr.active);
+        }
+
         private void OnHdrToggled(bool on)
         {
+            _hdrSwitchedOffByUser = !on;
             HDROutputSettings hdr = HDROutputSettings.main;
             if (hdr != null && hdr.available)
                 hdr.RequestHDRModeChange(on);

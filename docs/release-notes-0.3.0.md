@@ -11,6 +11,7 @@ Changes since 0.2.7. Paste this into the GitHub release for 0.3.0.
 - **Round shapes** (circle, spiral, rings) fit the disc at zoom 1.
 - **Presets:** "Profiles" are now called presets; new and updated presets Jungle, Lava River, Ocean, Zerg, Thunderstorm, Spacewarp (Circle and Coast are gone). Test signal settings are saved in the preset. Copy setup / Paste setup sends a setup as text.
 - **Debug window (F12)** with a live link between Editor and build.
+- **HDR follows the monitor:** the HDR switch notices when the window is moved to an HDR monitor (no restart needed); a hint in the menu shows Shift + Win + Left / Right for moving the window.
 
 ## Changed
 - A zoom or pattern change is now calculated for all points in one update, so there are no grainy ripples.
