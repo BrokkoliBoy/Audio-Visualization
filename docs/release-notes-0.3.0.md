@@ -1,6 +1,6 @@
-# Release notes (draft, version number open: 1.0 or 0.3)
+# Release notes 0.3.0
 
-Changes since 0.2.7. Rename this file to `release-notes-<version>.md` when the version is set, and paste it into the GitHub release.
+Changes since 0.2.7. Paste this into the GitHub release for 0.3.0.
 
 ## New
 - **Pattern layers are heights.** Every layer has its own Depth and Mix, plus the modes Replace / Add / Subtract / Highest / Lowest / Multiply / Difference.
