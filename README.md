@@ -1,8 +1,8 @@
 # Audio Visualization
 
-**Status:** Active (Terrain view)  |  **Built:** 2017 to 2019, reworked 2026  |  **Role:** Solo developer, since 2026 together with Claude Code
+**Status:** Standby  |  **Built:** 2017 to 2019, reworked 2026  |  **Role:** Solo developer
 
-A sandbox music visualizer for Unity (HDRP): a glowing terrain that is shaped by the song that plays. Bass, mids and highs push
+A sandbox music visualizer for Unity: a glowing terrain that is shaped by the song that plays. Bass, mids and highs push
 the mesh up, a noise pattern keeps it moving, waves run over it on the beat, and everything can be tuned live in a slide-in menu
 with dozens of sliders.
 
@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/d5fe2874-6a72-4647-bc8e-21bc63c1d96f
 
 The longer demo is on YouTube: [Audio Visualization, hero video](https://www.youtube.com/watch?v=qF42xZbG59Q)
 
-## What you do here
+## What you can do here
 
 There is no goal, no score and nothing to win. Put on a song (or the microphone), open the menu and play: pick a noise pattern,
 choose which part of the spectrum shapes which part of the terrain, send waves over it on the beat, bend the whole mesh into a
@@ -23,6 +23,9 @@ and come back to it. If you only want to watch, lean back and let a song run.
 This started as a side quest: I wanted a wall in a different project to move along with whatever song was playing. I quickly
 realized the same idea could drive all kinds of visuals, so I split it off into its own project and just had fun seeing what I
 could build with it. It became a nice outlet for creativity beyond "does the gameplay work", and it still is.
+
+I built it mainly for myself, and it is shaped by what I like to look at. I put it online for anyone who wants to look
+or play along, without the claim that it suits everybody.
 
 ## How it was built
 
@@ -50,8 +53,8 @@ does and when it matters.
 - **Camera.** Orbit, move and zoom with the mouse, turn the terrain itself by dragging it, beat-synced zoom and sway.
 - **Test signal.** Replaces the song with a calm, fixed spectrum, so an effect can be judged without a moving song. A band
   editor lets you raise and lower single bands with the mouse.
-- **Menu that follows your intent.** Windows open on hover, close again when you leave, and the menu slides in before the pointer
-  arrives when it moves fast towards the edge. Tick boxes and layer tabs can be switched by a quick dip of the pointer.
+- **Menu that follows your intent.** Windows can open on hover (switch in the menu), close again when you leave, and the menu slides in before the pointer
+  arrives when it moves fast towards the edge. Tick boxes and layer tabs can optionally be switched by a quick dip of the pointer.
 
 Four free-to-use songs, a 20 to 20,000 Hz test sweep and live microphone input, cycled from the player bar or with the arrow keys.
 The full list with status and planned ideas is in [docs/features.md](docs/features.md).
@@ -81,6 +84,9 @@ opens at the bottom. The keyboard shortcuts:
 
 ## Under the hood
 
+**Rendering.** Unity 6 with the High Definition Render Pipeline (HDRP). The HDR colors, bloom, vignette and the tinted sky all
+run through its volume system, so the project does not open as is in a URP or Built-in project.
+
 **Audio.** FFT bins from Unity's spectrum sampler are folded into frequency bands (logarithmic by default, which matches how we
 perceive pitch), with optional running-average normalization so quiet and loud tracks look comparable. Every song carries its
 own BPM and beat offset; beats are also detected from the bass, so waves and flips work without a map.
@@ -89,8 +95,6 @@ own BPM and beat offset; beats are also detected from the bass, so waves and fli
 faces went from 13.6 ms to 0.7 ms, at 400 x 400 from 33 ms to 5 ms. Triangles and UVs are only rebuilt when they have to be.
 Settings like Max FPS, Efficiency (noise only every n-th update, spread over the frames) and the face count are in the menu, with
 a green-to-red background that shows what each one costs.
-
-**Frame-rate independent smoothing.** Dampening is time-based, so 60 and 240 FPS look the same and nothing overshoots.
 
 **Color pipeline.** Palette colors go through a glow scale (exposure steps), a saturation curve and a calculated color table
 instead of a plain gradient, so bright colors do not wash out and every height keeps a readable slope.
@@ -116,3 +120,8 @@ Four songs used in this project are free-to-use releases from [NCS (NoCopyrightS
 - Song: Lynxie, johnny joined - i still hear your voice · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/istillhearyourvoice · Watch: http://ncs.lnk.to/istillhearyourvoiceAT/youtube
 - Song: L3VI - in motion · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/inmotion · Watch: https://ncs.lnk.to/inmotionAT/youtube
 - Song: SILVER BULLET - Nobody Else · Music provided by NoCopyrightSounds · Free Download/Stream: http://ncs.io/S_NobodyElse · Watch: https://ncs.lnk.to/S_NobodyElseAT/youtube
+
+## License
+
+The source code is under the [MIT license](LICENSE). This does not cover the four songs above or third-party packages, which stay
+under their own licenses.
