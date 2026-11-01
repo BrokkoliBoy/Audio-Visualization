@@ -27,6 +27,7 @@ namespace Gavi
         [SerializeField] private Button _buttonResetTerrain;
 
         private const string DefaultPresetName = "Default";
+        private const string StartPresetName = "Jungle";
         private const string LastPresetKey = "TerrainPresets.Last";
 
         private readonly List<TerrainSettingsPreset> _presets = new List<TerrainSettingsPreset>();
@@ -179,13 +180,15 @@ namespace Gavi
             }
         }
 
-        /// <summary>Loads the preset of the last session (the first one if there is none), so the start state is what the dropdown shows.</summary>
+        /// <summary>Loads the preset of the last session (Jungle on a fresh start, else the first one), so the start state is what the dropdown shows.</summary>
         public void LoadStartPreset()
         {
             if (_presets.Count == 0)
                 return;
             string lastName = PlayerPrefs.GetString(LastPresetKey, "");
             int index = _presets.FindIndex(p => p.Name == lastName);
+            if (index < 0)
+                index = _presets.FindIndex(p => p.Name == StartPresetName);
             _dropdownPreset.SetValueWithoutNotify(Mathf.Max(index, 0));
             _dropdownPreset.RefreshShownValue();
             OnPressedLoad();
