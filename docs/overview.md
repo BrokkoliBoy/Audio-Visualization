@@ -26,8 +26,8 @@ release on purpose.
 |---|---|---|
 | Terrain (the visualizer, its menu, presets, palettes, camera, test signal) | yes, the only view | `Assets/Views/View Terrain/`, about 7,800 lines of C# plus the shared menu code in `Assets/Core/Scripts/UI/` (about 4,200 lines) |
 | Songs: 4 NCS releases, a 20 to 20,000 Hz sweep, live microphone | yes | See content-inventory.md; the sweep is a test tone, not a song |
-| 7 presets, 6 palettes in `StreamingAssets/Presets` | yes | Default, Jungle, Lava River, Ocean, Spacewarp, Thunderstorm, Zerg |
-| Debug window (F12, live link Editor to build) | yes, hidden | Only for development; Ctrl+F12 turns it on in any build |
+| 8 presets, 7 palettes in `StreamingAssets/Presets` | yes | Default, Jungle, Lava River, Ocean, Spacewarp, Star, Thunderstorm, Zerg (Default has no palette file of its own) |
+| Debug window (F12, live link Editor to build, button for the Screenshots folder) | yes, hidden | Only for development; Ctrl+F12 turns it on in any build |
 | Older views: View Intro, View Unity, View Dumbbell | in the scene, switched off | Not in the `ViewManager` list, so never shown. Dumbbell's lighting predates HDRP (gotchas.md). `Assets/Views/View Test` is an unused shader experiment |
 | Module pipeline (2017 to 2019: source, transform, apply) | yes, in the code | Still delivers the spectrum and the beat timing to the terrain; the camera beat zoom is still a chain of modules. About 2,600 lines |
 | Video Director (scripted takes for the demo videos) | no | Lives only on the branch `video` (`Assets/VideoDirector/`), never merged into `next` or `main` |
@@ -55,7 +55,8 @@ Four tabs: **Color** (palette and the four color windows), **Light** (gradient, 
 performance, test signal, menu navigation). The menu opens when the pointer touches the right screen edge (or with Tab),
 the player bar at the bottom edge, a small menu (HDR output, quit) with M or Esc. Windows open on hover or by click, and
 the pointer can pick tick boxes and layer tabs by a quick dip. Hotkeys: arrow keys (song, volume), Space / P pause,
-R restart, T test signal, W A S D Q E fly, C reset camera, F12 debug.
+R restart, T test signal, W A S D Q E fly, C reset camera, F2 screenshot, Shift+F2 with the menu (PNG in `Screenshots/` of the data folder,
+named after the loaded preset), F12 debug.
 
 ## Where things are
 
@@ -69,6 +70,7 @@ R restart, T test signal, W A S D Q E fly, C reset camera, F12 debug.
 | Module pipeline | `Assets/Core/Scripts/Game/Modules/`, `.../Modifiables/` |
 | Views | `Assets/Core/Scripts/Game/Views/` (`ViewManager`), scene `Assets/Core/Scenes/Scene - Views.unity` |
 | Preset and palette files | `Assets/StreamingAssets/Presets/` (user files go to the persistent data path) |
+| README pictures (menu, preset gallery, JPGs under 400 KB) | `docs/images/` |
 | Release notes | `docs/release-notes-0.3.0.md` |
 
 ## Repository and release
