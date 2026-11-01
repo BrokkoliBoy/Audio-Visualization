@@ -9,7 +9,7 @@ Changes since 0.2.7. Rename this file to `release-notes-<version>.md` when the v
 - **Vignette slider** in the Glow group (saved with the preset).
 - **Color by pattern** sliders in the new Color mapping window, new mesh morph Pillar, and the mesh now glides from the old to the new shape.
 - **Round shapes** (circle, spiral, rings) fit the disc at zoom 1.
-- **Presets:** "Profiles" are now called presets; new and updated presets Coast, Jungle, Lava River, Ocean, Zerg, Thunderstorm, Spacewarp. Test signal settings are saved in the preset. Copy setup / Paste setup sends a setup as text.
+- **Presets:** "Profiles" are now called presets; new and updated presets Jungle, Lava River, Ocean, Zerg, Thunderstorm, Spacewarp (Circle and Coast are gone). Test signal settings are saved in the preset. Copy setup / Paste setup sends a setup as text.
 - **Debug window (F12)** with a live link between Editor and build.
 
 ## Changed
