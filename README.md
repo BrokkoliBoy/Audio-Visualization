@@ -6,7 +6,6 @@ A sandbox music visualizer for Unity: a glowing terrain that is shaped by the so
 the mesh up, a noise pattern keeps it moving, waves run over it on the beat, and everything can be tuned live in a slide-in menu
 with dozens of sliders.
 
-<!-- Intro video (about 20 s, with sound): song Invincible. Starts on the Terrain tab of the menu with the Thunderstorm preset, four quick pattern changes (Voronoi, Triangles, Honeycomb, Tiles), then the menu switches to the Color tab while the terrain morphs into the Jungle preset (mesh morph, new colors), menu closes at the end. Recorded with the scripted video director on the video branch. -->
 https://github.com/user-attachments/assets/d5fe2874-6a72-4647-bc8e-21bc63c1d96f
 
 The longer demo is on YouTube: [Audio Visualization, hero video](https://www.youtube.com/watch?v=qF42xZbG59Q)
@@ -40,27 +39,24 @@ does and when it matters.
 
 ## Features
 
-- **Spectrum terrain.** Frequency bands are mapped onto up to three overlapping *audio shapes* (circle, stripes, rays, spiral,
-  star, rings and more), bass first. Each layer has its own strength, zoom, invert and blend mode.
-- **32 noise patterns** (Perlin, Domain warp, Voronoi, Hexagons, Cubes, Plasma, ...), up to three mixed into one terrain,
-  with depth, speed (x and y) and zoom per layer. "Flip beats" turns the whole pattern upside down on the beat, with a smooth morph.
-- **Beat waves.** Rings run over the terrain in time with the song's BPM. They start flat on every beat and grow when the bass
-  is strong, so quiet passages stay quiet.
-- **Mesh morph.** Bends the whole mesh into a planet, tube, dome, pringle, twist or flag, with a beat motion and a slow swing.
-- **Color and light.** HDR color palettes (save your own), a color curve with plateau tilt and slope shading so heights stay
-  readable, bloom, lens dirt that pulses on the beat, and a background that takes the hue of the terrain.
-- **Presets.** Every setting, the test signal settings included, can be saved and loaded as a preset.
-- **Camera.** Orbit, move and zoom with the mouse, turn the terrain itself by dragging it, beat-synced zoom and sway.
+- **Spectrum terrain.** Frequency bands, bass first, are mapped onto up to three overlapping *audio shapes* (circle, stripes,
+  rays, spiral, star, rings and more), each with its own strength, zoom and blend mode.
+- **32 noise patterns** (Perlin, Domain warp, Voronoi, Hexagons, Plasma, ...), up to three mixed into one terrain, each with
+  depth, speed and zoom. "Flip beats" turns the pattern upside down on the beat.
+- **Beat waves.** Rings run over the terrain in time with the song's BPM and grow when the bass is strong, so quiet passages
+  stay quiet.
+- **Mesh morph.** Bends the whole mesh into a planet, tube, pillar, dome, pringle, twist or flag.
+- **Color and light.** HDR palettes (save your own), bloom, lens dirt that pulses on the beat, and a background that takes the
+  hue of the terrain.
+- **Presets.** Every setting can be saved, loaded and sent to someone else as text. Seven ship with the build.
+- **Camera.** Orbit, move and zoom with the mouse, turn the terrain by dragging it, beat-synced zoom and sway.
 - **Test signal.** Replaces the song with a calm, fixed spectrum, so an effect can be judged without a moving song. A band
   editor lets you raise and lower single bands with the mouse.
-- **Menu that follows your intent.** Windows can open on hover (switch in the menu), close again when you leave, and the menu slides in before the pointer
-  arrives when it moves fast towards the edge. Tick boxes and layer tabs can optionally be switched by a quick dip of the pointer.
+- **A menu that gets out of the way.** It slides in before the pointer arrives, windows open on hover, and tick boxes can be
+  switched by a quick dip of the pointer.
 
 Four free-to-use songs, a 20 to 20,000 Hz test sweep and live microphone input, cycled from the player bar or with the arrow keys.
 The full list with status and planned ideas is in [docs/features.md](docs/features.md).
-
-<!-- VIDEO 2 (menu, 30-45 s): open the menu, change pattern, shape, palette, a wave. -->
-<!-- VIDEO 3 (optional, 15 s): test signal with band editor, or Mesh morph planet. -->
 
 ## Controls
 
@@ -87,30 +83,26 @@ opens at the bottom. The keyboard shortcuts:
 **Rendering.** Unity 6 with the High Definition Render Pipeline (HDRP). The HDR colors, bloom, vignette and the tinted sky all
 run through its volume system, so the project does not open as is in a URP or Built-in project.
 
-**Audio.** FFT bins from Unity's spectrum sampler are folded into frequency bands (logarithmic by default, which matches how we
-perceive pitch), with optional running-average normalization so quiet and loud tracks look comparable. Every song carries its
-own BPM and beat offset; beats are also detected from the bass, so waves and flips work without a map.
+**Audio.** FFT bins from Unity's spectrum sampler are folded into logarithmic frequency bands. Every song carries its own BPM
+and beat offset, and beats are also detected from the bass.
 
-**Burst jobs.** Heights, colors, dampening, waves, morph and noise run as Burst jobs on all cores. The mesh update at 115 x 115
-faces went from 13.6 ms to 0.7 ms, at 400 x 400 from 33 ms to 5 ms. Triangles and UVs are only rebuilt when they have to be.
-Settings like Max FPS, Efficiency (noise only every n-th update, spread over the frames) and the face count are in the menu, with
-a green-to-red background that shows what each one costs.
+**Burst jobs.** Heights, colors, waves, morph and noise run as Burst jobs on all cores. The mesh update at 115 x 115 faces went
+from 13.6 ms to 0.7 ms. Max FPS, Efficiency and the face count are in the menu, with a green-to-red background that shows what
+each one costs.
 
-**Color pipeline.** Palette colors go through a glow scale (exposure steps), a saturation curve and a calculated color table
-instead of a plain gradient, so bright colors do not wash out and every height keeps a readable slope.
+**Data-driven.** Presets and palettes are small JSON files in `StreamingAssets`; new ones go to the user's data folder.
 
-**Data-driven.** Presets and palettes are small JSON files in `StreamingAssets`; the builds ship them and new files go to the
-user's data folder.
-
-**Module pipeline (2017 to 2019).** The original source -> transform -> apply system (`VoidToFloatModule`,
-`FloatToFloatModule`, ...) is still in the project and still delivers the spectrum and the beat timing to the terrain.
-See [docs/architecture.md](docs/architecture.md).
+**Module pipeline (2017 to 2019).** The original source -> transform -> apply system is still in the project and still delivers
+the spectrum and the beat timing. See [docs/architecture.md](docs/architecture.md).
 
 ## Where it stands
 
-The Terrain view is the finished first release. The older scenes from before the rework are still in the project but switched
-off. Next up: more noise patterns and beat effects, a menu review, per-song audio settings, and long term importing your own
-music and recording video from inside the app. The ideas list is in [docs/features.md](docs/features.md).
+The visualizer is in a very finished state, and it can grow whenever I feel like it. For now it is on standby: I can come back
+at any time, but I have no plan to. If I do, the likely next steps are polish on the menu and the user experience, and new views.
+The ideas list is in [docs/features.md](docs/features.md).
+
+Only this terrain is part of the build. The project also holds other scenes, some from before the rework, that are switched off
+and not shipped.
 
 ## Credits
 
