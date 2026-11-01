@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 
 namespace Gavi
@@ -7,6 +8,7 @@ namespace Gavi
     /// The debug window (F12). Only there in debug mode: in the Editor, in a development build, or after Ctrl+F12 in any build.
     /// <list type="bullet">
     /// <item>Preset files of the menu: a build uses its own files or those of the Unity project (see <see cref="ProjectPresets"/>).</item>
+    /// <item>Button that opens the folder of the screenshots (F2, see <see cref="SimpleControl"/>).</item>
     /// <item>Live link: one program sends its settings whenever they change, the other receives them (a few times a second).</item>
     /// </list>
     /// </summary>
@@ -205,6 +207,14 @@ namespace Gavi
         private void DrawWindow(int id)
         {
             DrawProjectFiles();
+
+            GUILayout.Space(6f);
+            GUILayout.Label("Screenshots (F2 saves the picture)");
+            if (GUILayout.Button("Open the Screenshots folder"))
+            {
+                Directory.CreateDirectory(SimpleControl.ScreenshotPath);
+                Application.OpenURL("file:///" + SimpleControl.ScreenshotPath.Replace('\\', '/'));
+            }
 
             GUILayout.Space(6f);
             GUILayout.Label("Live link between Editor and build");
