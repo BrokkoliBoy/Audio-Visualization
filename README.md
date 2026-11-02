@@ -6,6 +6,8 @@ A sandbox music visualizer for Unity: a glowing terrain that is shaped by the so
 the mesh up, a noise pattern keeps it moving, waves run over it on the beat, and everything can be tuned live in a slide-in menu
 with dozens of sliders.
 
+(Turn the sound on in the player: the video is meant to be watched with music.)
+
 https://github.com/user-attachments/assets/d5fe2874-6a72-4647-bc8e-21bc63c1d96f
 
 The longer demo is on YouTube: [Audio Visualization, hero video](https://www.youtube.com/watch?v=qF42xZbG59Q)
