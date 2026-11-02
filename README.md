@@ -10,7 +10,7 @@ https://github.com/user-attachments/assets/d5fe2874-6a72-4647-bc8e-21bc63c1d96f
 
 The longer demo is on YouTube: [Audio Visualization, hero video](https://www.youtube.com/watch?v=qF42xZbG59Q)
 
-**Try it:** [Download the game](https://github.com/BrokkoliBoy/Audio-Visualization/releases/latest) (Windows), unzip it and start
+**Try it:** [Download the game](https://github.com/BrokkoliBoy/Audio-Visualization/releases/latest) (Windows, about 80 MB), unzip it and start
 `Audio Visualization.exe`. The app runs on all monitors, but it is optimized for HDR monitors (use Shift + Win + Left / Right
 arrow to move the window to another monitor).
 
