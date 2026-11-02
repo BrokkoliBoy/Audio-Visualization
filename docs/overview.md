@@ -5,7 +5,7 @@ and where to look. It says what is in the repository, what ships in the build an
 [features.md](features.md) (what the terrain can do), [architecture.md](architecture.md) (how the code is built),
 [content-inventory.md](content-inventory.md) (songs and views) and [gotchas.md](gotchas.md) (traps).
 
-Last checked against the code: 2026-11-01 (version 0.3.0, branch `next`).
+Last checked against the code: 2026-11-02 (version 0.3.0, branch `next`).
 
 ## What it is
 
@@ -14,7 +14,7 @@ pattern and beat effects set the heights, colors come from a palette, and a slid
 everything live. There is no goal and no score; it is an instrument for pictures. Setups are saved as presets.
 
 It started in 2017 to 2019 as a small audio-to-property pipeline plus a few scenes. In autumn 2026 it was picked up again
-and the terrain was built; since then it is developed with Claude Code (Chris is art director and product owner, tests
+and the terrain was built; since then it is developed with Claude Code (Chris is the art director, tests
 by eye and ear, Claude Code writes the code).
 
 ## What ships and what does not
@@ -24,7 +24,7 @@ release on purpose.
 
 | Part | In the build | Notes |
 |---|---|---|
-| Terrain (the visualizer, its menu, presets, palettes, camera, test signal) | yes, the only view | `Assets/Views/View Terrain/`, about 7,800 lines of C# plus the shared menu code in `Assets/Core/Scripts/UI/` (about 4,200 lines) |
+| Terrain (the visualizer, its menu, presets, palettes, camera, test signal) | yes, the only view | `Assets/Views/View Terrain/`, about 7,800 lines of C# plus the shared menu code in `Assets/Core/Scripts/UI/` (about 4,300 lines) |
 | Songs: 4 NCS releases, a 20 to 20,000 Hz sweep, live microphone | yes | See content-inventory.md; the sweep is a test tone, not a song |
 | 8 presets, 7 palettes in `StreamingAssets/Presets` | yes | Default, Jungle, Lava River, Ocean, Spacewarp, Star, Thunderstorm, Zerg (Default has no palette file of its own) |
 | Debug window (F12, live link Editor to build, button for the Screenshots folder) | yes, hidden | Only for development; Ctrl+F12 turns it on in any build |
@@ -76,11 +76,11 @@ named after the loaded preset), F12 debug.
 ## Repository and release
 
 - GitHub: `BrokkoliBoy/Audio-Visualization`. Branches: `main` (releases, tags 0.1.0, 0.1.1, 0.2.7 so far), `next`
-  (development, 33 commits ahead of `main`), `video` (Video Director, takes, video presets). Version 0.3.0 is set in the
+  (development, ahead of `main`), `video` (Video Director, takes, video presets). Version 0.3.0 is set in the
   Player Settings (company name Gavi Gameworks), not yet merged to `main`.
 - License: MIT for the source code; the four songs, the test sweep and third-party packages are not covered.
 - The private repo `AudioVisualization` is archived and not developed any more (it holds the original songs).
-- The public README is Claude's first version being finalized by Chris. It has no Learnings section and gets none.
+- The public README was reviewed paragraph by paragraph with Chris on 2026-11-02. It has no Learnings section and gets none.
 
 ## What is not built yet
 
