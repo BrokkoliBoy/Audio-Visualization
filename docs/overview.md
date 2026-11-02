@@ -76,8 +76,8 @@ named after the loaded preset), F12 debug.
 ## Repository and release
 
 - GitHub: `BrokkoliBoy/Audio-Visualization`. Branches: `main` (releases, tags 0.1.0, 0.1.1, 0.2.7 so far), `next`
-  (development, ahead of `main`), `video` (Video Director, takes, video presets). Version 0.3.0 is set in the
-  Player Settings (company name Gavi Gameworks), not yet merged to `main`.
+  (development, merged into `main` on 2026-11-02), `video` (Video Director, takes, video presets). Version 0.3.0 is set in the
+  Player Settings (company name Gavi Gameworks). The GitHub release 0.3.0 (tag without v) follows the merge.
 - License: MIT for the source code; the four songs, the test sweep and third-party packages are not covered.
 - The private repo `AudioVisualization` is archived and not developed any more (it holds the original songs).
 - The public README was reviewed paragraph by paragraph with Chris on 2026-11-02. It has no Learnings section and gets none.
